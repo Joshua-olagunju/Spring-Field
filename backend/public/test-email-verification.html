@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spring Field Estate - Email Verification System Test</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 32px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+        .btn-secondary {
+            background: #f59e0b;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #d97706;
+        }
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #059669;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+        }
+        .result.show {
+            display: block;
+        }
+        .result.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+        }
+        .result.error {
+            background: #fee2e2;
+            color: #7f1d1d;
+            border: 1px solid #fca5a5;
+        }
+        .result.info {
+            background: #dbeafe;
+            color: #0c2340;
+            border: 1px solid #93c5fd;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        .status-badge.verified {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .status-badge.pending {
+            background: #fef3c7;
+            color: #78350f;
+        }
+        .status-badge.unverified {
+            background: #fee2e2;
+            color: #7f1d1d;
+        }
+        .info-box {
+            background: #f3f4f6;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #333;
+        }
+        .info-box strong {
+            color: #667eea;
+        }
+        .flow-diagram {
+            grid-column: 1 / -1;
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .flow-diagram h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        .flow-steps {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .step {
+            flex: 1;
+            min-width: 150px;
+            text-align: center;
+            padding: 15px;
+            background: #f9fafb;
+            border-radius: 8px;
+            border: 2px solid #e5e7eb;
+        }
+        .step.active {
+            background: #ede9fe;
+            border-color: #667eea;
+        }
+        .step-number {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            line-height: 40px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .step.active .step-number {
+            background: #764ba2;
+        }
+        .arrow {
+            font-size: 24px;
+            color: #d1d5db;
+        }
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            .flow-steps {
+                flex-direction: column;
+            }
+            .arrow {
+                transform: rotate(90deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📧 Email Verification System Test</h1>
+        
+        <div class="flow-diagram">
+            <h2>Complete User Registration Flow</h2>
+            <div class="flow-steps">
+                <div class="step active" id="step1">
+                    <div class="step-number">1</div>
+                    <div>User Registration</div>
+                </div>
+                <div class="arrow">→</div>
+                <div class="step" id="step2">
+                    <div class="step-number">2</div>
+                    <div>OTP Sent</div>
+                </div>
+                <div class="arrow">→</div>
+                <div class="step" id="step3">
+                    <div class="step-number">3</div>
+                    <div>Email Verified</div>
+                </div>
+                <div class="arrow">→</div>
+                <div class="step" id="step4">
+                    <div class="step-number">4</div>
+                    <div>Account Active</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <strong>📝 Instructions:</strong> Follow the steps below to test the complete email verification system. 
+            For testing, OTP codes are displayed in the response. In production, they will only be sent via email.
+        </div>
+
+        <div class="grid">
+            <!-- Step 1: Register User -->
+            <div class="card">
+                <h2>Step 1: Register User</h2>
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label>First Name:</label>
+                        <input type="text" name="first_name" placeholder="John" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Last Name:</label>
+                        <input type="text" name="last_name" placeholder="Doe" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" name="email" placeholder="john@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Phone Number:</label>
+                        <input type="tel" name="phone_number" placeholder="+1234567890" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password (min 8 chars, must include uppercase, lowercase, number, special char):</label>
+                        <input type="password" name="password" placeholder="Test@12345" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Confirm Password:</label>
+                        <input type="password" name="password_confirmation" placeholder="Test@12345" required>
+                    </div>
+                    <button type="submit" class="btn-primary" style="width: 100%;">Register</button>
+                </form>
+                <div id="registerResult" class="result"></div>
+            </div>
+
+            <!-- Step 2: Send Verification OTP -->
+            <div class="card">
+                <h2>Step 2: Send Verification OTP</h2>
+                <div class="info-box">
+                    <strong>ℹ️ Note:</strong> This step happens automatically after registration, but you can resend the OTP here if needed.
+                </div>
+                <form id="sendOtpForm">
+                    <div class="form-group">
+                        <label>User ID:</label>
+                        <input type="number" name="user_id" placeholder="Enter user ID from Step 1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" name="email" placeholder="user@example.com" required>
+                    </div>
+                    <div class="button-group">
+                        <button type="submit" class="btn-secondary">Send OTP</button>
+                        <button type="button" class="btn-secondary" id="resendBtn" style="display: none;">Resend OTP</button>
+                    </div>
+                </form>
+                <div id="sendOtpResult" class="result"></div>
+            </div>
+
+            <!-- Step 3: Verify Email with OTP -->
+            <div class="card">
+                <h2>Step 3: Verify Email</h2>
+                <form id="verifyForm">
+                    <div class="form-group">
+                        <label>User ID:</label>
+                        <input type="number" name="user_id" placeholder="Enter user ID" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" name="email" placeholder="user@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>OTP Code (6 digits):</label>
+                        <input type="text" name="otp_code" placeholder="000000" maxlength="6" pattern="[0-9]{6}" required>
+                    </div>
+                    <button type="submit" class="btn-success" style="width: 100%;">Verify Email</button>
+                </form>
+                <div id="verifyResult" class="result"></div>
+            </div>
+
+            <!-- Step 4: Check Verification Status -->
+            <div class="card">
+                <h2>Step 4: Check Status</h2>
+                <form id="statusForm">
+                    <div class="form-group">
+                        <label>User ID:</label>
+                        <input type="number" name="user_id" placeholder="Enter user ID" required>
+                    </div>
+                    <button type="submit" class="btn-primary" style="width: 100%;">Check Status</button>
+                </form>
+                <div id="statusResult" class="result"></div>
+            </div>
+
+            <!-- API Documentation -->
+            <div class="card" style="grid-column: 1 / -1;">
+                <h2>📚 API Endpoints</h2>
+                <div style="font-size: 13px; line-height: 1.8;">
+                    <div style="margin-bottom: 15px;">
+                        <strong>1. Register User</strong><br>
+                        POST /api/register<br>
+                        <code style="background: #f3f4f6; padding: 5px 8px; border-radius: 3px;">
+{first_name, last_name, email, phone_number, password, password_confirmation}
+                        </code>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <strong>2. Send Verification OTP</strong><br>
+                        POST /api/email-verification/send-otp<br>
+                        <code style="background: #f3f4f6; padding: 5px 8px; border-radius: 3px;">
+{user_id, email}
+                        </code>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <strong>3. Verify Email with OTP</strong><br>
+                        POST /api/email-verification/verify<br>
+                        <code style="background: #f3f4f6; padding: 5px 8px; border-radius: 3px;">
+{user_id, email, otp_code}
+                        </code>
+                    </div>
+                    <div>
+                        <strong>4. Check Verification Status</strong><br>
+                        POST /api/email-verification/check-status<br>
+                        <code style="background: #f3f4f6; padding: 5px 8px; border-radius: 3px;">
+{user_id}
+                        </code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:8000/api';
+        let currentUserId = null;
+        let currentUserEmail = null;
+
+        async function apiRequest(endpoint, method = 'POST', data = null) {
+            try {
+                const config = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                };
+                if (data) config.body = JSON.stringify(data);
+
+                const response = await fetch(`${API_BASE}${endpoint}`, config);
+                const result = await response.json();
+                return { status: response.status, data: result, ok: response.ok };
+            } catch (error) {
+                return { status: 0, data: { error: error.message }, ok: false };
+            }
+        }
+
+        function displayResult(elementId, response, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.textContent = JSON.stringify(response.data, null, 2);
+            element.className = `result show ${type}`;
+        }
+
+        function setStep(stepNum) {
+            document.querySelectorAll('.flow-steps .step').forEach((step, idx) => {
+                if (idx < stepNum) step.classList.add('active');
+                else step.classList.remove('active');
+            });
+        }
+
+        // Register Form
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+
+            const response = await apiRequest('/register', 'POST', data);
+            displayResult('registerResult', response, response.ok ? 'success' : 'error');
+
+            if (response.ok && response.data.data?.user?.id) {
+                currentUserId = response.data.data.user.id;
+                currentUserEmail = response.data.data.user.email;
+                document.querySelector('#sendOtpForm input[name="user_id"]').value = currentUserId;
+                document.querySelector('#sendOtpForm input[name="email"]').value = currentUserEmail;
+                document.querySelector('#verifyForm input[name="user_id"]').value = currentUserId;
+                document.querySelector('#verifyForm input[name="email"]').value = currentUserEmail;
+                document.querySelector('#statusForm input[name="user_id"]').value = currentUserId;
+                setStep(2);
+            }
+        });
+
+        // Send OTP Form
+        document.getElementById('sendOtpForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+
+            const response = await apiRequest('/email-verification/send-otp', 'POST', data);
+            displayResult('sendOtpResult', response, response.ok ? 'success' : 'error');
+
+            if (response.ok && response.data.data?.otp_code) {
+                document.querySelector('#verifyForm input[name="otp_code"]').value = response.data.data.otp_code;
+                setStep(3);
+            }
+        });
+
+        // Resend OTP
+        document.getElementById('resendBtn')?.addEventListener('click', async () => {
+            const formData = new FormData(document.getElementById('sendOtpForm'));
+            const data = Object.fromEntries(formData);
+            const response = await apiRequest('/email-verification/resend-otp', 'POST', data);
+            displayResult('sendOtpResult', response, response.ok ? 'success' : 'error');
+
+            if (response.ok && response.data.data?.otp_code) {
+                document.querySelector('#verifyForm input[name="otp_code"]').value = response.data.data.otp_code;
+            }
+        });
+
+        // Verify Form
+        document.getElementById('verifyForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+
+            const response = await apiRequest('/email-verification/verify', 'POST', data);
+            displayResult('verifyResult', response, response.ok ? 'success' : 'error');
+
+            if (response.ok) {
+                setStep(4);
+            }
+        });
+
+        // Status Form
+        document.getElementById('statusForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+
+            const response = await apiRequest('/email-verification/check-status', 'POST', data);
+            displayResult('statusResult', response, response.ok ? 'success' : 'info');
+        });
+    </script>
+</body>
+</html>

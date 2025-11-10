@@ -9,139 +9,55 @@ class RegistrationCode extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
-        'code',
-        'role',
-        'status',
-        'description',
+        'house_id',
+        'code_hash',
+        'issued_by',
         'expires_at',
         'used_at',
-        'created_by',
-        'used_by',
+        'used_by_user_id',
+        'revoked',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
         'expires_at' => 'datetime',
         'used_at' => 'datetime',
+        'revoked' => 'boolean',
         'created_at' => 'datetime',
-        'updated_at' => 'datetime',
     ];
 
-    /**
-     * Status constants
-     */
-    const STATUS_ACTIVE = 'active';
-    const STATUS_USED = 'used';
-    const STATUS_INACTIVE = 'inactive';
-    const STATUS_EXPIRED = 'expired';
-
-    /**
-     * Role constants
-     */
-    const ROLE_LANDLORD = 'landlord';
-    const ROLE_RESIDENT = 'resident';
-    const ROLE_SECURITY = 'security';
-
-    /**
-     * Relationship: Registration code created by user
-     */
-    public function createdBy()
+    public function house()
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(House::class);
     }
 
-    /**
-     * Relationship: Registration code used by user
-     */
+    public function issuedBy()
+    {
+        return $this->belongsTo(User::class, 'issued_by');
+    }
+
     public function usedBy()
     {
-        return $this->belongsTo(User::class, 'used_by');
+        return $this->belongsTo(User::class, 'used_by_user_id');
     }
 
-    /**
-     * Check if code is active
-     */
-    public function isActive()
-    {
-        return $this->status === self::STATUS_ACTIVE && 
-               (!$this->expires_at || $this->expires_at->isFuture());
-    }
-
-    /**
-     * Check if code is expired
-     */
     public function isExpired()
     {
-        return $this->expires_at && $this->expires_at->isPast();
+        return $this->expires_at < now();
     }
 
-    /**
-     * Check if code is used
-     */
     public function isUsed()
     {
-        return $this->status === self::STATUS_USED;
+        return !is_null($this->used_at);
     }
 
-    /**
-     * Mark code as used
-     */
-    public function markAsUsed($userId)
+    public function isRevoked()
     {
-        $this->update([
-            'status' => self::STATUS_USED,
-            'used_at' => now(),
-            'used_by' => $userId,
-        ]);
+        return $this->revoked;
     }
 
-    /**
-     * Scope: Active codes only
-     */
-    public function scopeActive($query)
+    public function isValid()
     {
-        return $query->where('status', self::STATUS_ACTIVE);
-    }
-
-    /**
-     * Scope: Expired codes
-     */
-    public function scopeExpired($query)
-    {
-        return $query->where('expires_at', '<', now());
-    }
-
-    /**
-     * Scope: Used codes
-     */
-    public function scopeUsed($query)
-    {
-        return $query->where('status', self::STATUS_USED);
-    }
-
-    /**
-     * Scope: Filter by role
-     */
-    public function scopeRole($query, $role)
-    {
-        return $query->where('role', $role);
-    }
-
-    /**
-     * Scope: Created by specific user
-     */
-    public function scopeCreatedBy($query, $userId)
-    {
-        return $query->where('created_by', $userId);
+        return !$this->isExpired() && !$this->isUsed() && !$this->isRevoked();
     }
 }
