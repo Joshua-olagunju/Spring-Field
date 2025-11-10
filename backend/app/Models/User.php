@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
+use App\Mail\EmailVerificationMail;
 
 class User extends Authenticatable
 {
@@ -24,6 +27,7 @@ class User extends Authenticatable
         'role',
         'house_id',
         'status_active',
+        'email_verified_at',
     ];
 
     /**
@@ -45,10 +49,11 @@ class User extends Authenticatable
         'status_active' => 'boolean',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'email_verified_at' => 'datetime',
     ];
 
     /**
-     * Get the password attribute name for Laravel Auth
+     * Get the password for authentication.
      */
     public function getAuthPassword()
     {
@@ -56,7 +61,7 @@ class User extends Authenticatable
     }
 
     /**
-     * User roles enumeration
+     * User roles
      */
     const ROLE_SUPER = 'super';
     const ROLE_LANDLORD = 'landlord';
@@ -64,19 +69,83 @@ class User extends Authenticatable
     const ROLE_SECURITY = 'security';
 
     /**
-     * Check if user is super admin
+     * Get the house that the user belongs to (for residents).
      */
-    public function isSuper()
+    public function house()
     {
-        return $this->role === self::ROLE_SUPER;
+        return $this->belongsTo(House::class);
     }
 
     /**
-     * Check if user is landlord
+     * Get the houses owned by this user (for landlords).
      */
-    public function isLandlord()
+    public function ownedHouses()
     {
-        return $this->role === self::ROLE_LANDLORD;
+        return $this->hasMany(House::class, 'landlord_id');
+    }
+
+    /**
+     * Get the payments made by this user.
+     */
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    /**
+     * Get the visitor tokens issued by this resident.
+     */
+    public function visitorTokens()
+    {
+        return $this->hasMany(VisitorToken::class, 'resident_id');
+    }
+
+    /**
+     * Get the registration codes issued by this user.
+     */
+    public function issuedRegistrationCodes()
+    {
+        return $this->hasMany(RegistrationCode::class, 'issued_by');
+    }
+
+    /**
+     * Get the registration codes used by this user.
+     */
+    public function usedRegistrationCodes()
+    {
+        return $this->hasMany(RegistrationCode::class, 'used_by_user_id');
+    }
+
+    /**
+     * Get the visitor entries recorded by this guard.
+     */
+    public function guardedEntries()
+    {
+        return $this->hasMany(VisitorEntry::class, 'guard_id');
+    }
+
+    /**
+     * Get the logs where this user was the actor.
+     */
+    public function actorLogs()
+    {
+        return $this->hasMany(Log::class, 'actor_id');
+    }
+
+    /**
+     * Check if user is active
+     */
+    public function isActive()
+    {
+        return $this->status_active;
+    }
+
+    /**
+     * Check if user has specific role
+     */
+    public function hasRole($role)
+    {
+        return $this->role === $role;
     }
 
     /**
@@ -88,7 +157,15 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if user is security guard
+     * Check if user is landlord
+     */
+    public function isLandlord()
+    {
+        return $this->role === self::ROLE_LANDLORD;
+    }
+
+    /**
+     * Check if user is security
      */
     public function isSecurity()
     {
@@ -96,82 +173,64 @@ class User extends Authenticatable
     }
 
     /**
-     * Relationship: User belongs to a house
+     * Check if user is super admin
      */
-    public function house()
+    public function isSuper()
     {
-        return $this->belongsTo(House::class);
+        return $this->role === self::ROLE_SUPER;
     }
 
     /**
-     * Relationship: Landlord has many houses
+     * Get the email verifications for this user
      */
-    public function ownedHouses()
+    public function emailVerifications()
     {
-        return $this->hasMany(House::class, 'landlord_id');
+        return $this->hasMany(EmailVerification::class);
     }
 
     /**
-     * Relationship: User has many payments
+     * Check if user's email is verified
      */
-    public function payments()
+    public function hasVerifiedEmail()
     {
-        return $this->hasMany(Payment::class);
+        return $this->email_verified_at !== null;
     }
 
     /**
-     * Relationship: Resident has many visitor tokens
+     * Mark the user's email as verified
      */
-    public function visitorTokens()
+    public function markEmailAsVerified()
     {
-        return $this->hasMany(VisitorToken::class, 'resident_id');
+        return $this->forceFill([
+            'email_verified_at' => $this->freshTimestamp(),
+        ])->save();
     }
 
     /**
-     * Relationship: User has many logs (as actor)
+     * Send email verification OTP
      */
-    public function logs()
+    public function sendEmailVerificationOtp()
     {
-        return $this->hasMany(Log::class, 'actor_id');
-    }
-
-    /**
-     * Relationship: User has many registration codes (created by)
-     */
-    public function createdRegistrationCodes()
-    {
-        return $this->hasMany(RegistrationCode::class, 'created_by');
-    }
-
-    /**
-     * Relationship: User used registration code
-     */
-    public function usedRegistrationCode()
-    {
-        return $this->hasOne(RegistrationCode::class, 'used_by');
-    }
-
-    /**
-     * Relationship: Security guard has many visitor entries
-     */
-    public function visitorEntries()
-    {
-        return $this->hasMany(VisitorEntry::class, 'guard_id');
-    }
-
-    /**
-     * Scope: Active users only
-     */
-    public function scopeActive($query)
-    {
-        return $query->where('status_active', true);
-    }
-
-    /**
-     * Scope: Filter by role
-     */
-    public function scopeRole($query, $role)
-    {
-        return $query->where('role', $role);
+        $verification = EmailVerification::generateOtp($this->id, $this->email);
+        
+        // Send email with OTP
+        try {
+            Mail::to($this->email)->send(new EmailVerificationMail(
+                $verification->otp_code,
+                $this->full_name,
+                $verification->expires_at
+            ));
+            return [
+                'success' => true,
+                'message' => 'Verification OTP sent to your email',
+                'otp_code' => $verification->otp_code // Remove this in production
+            ];
+        } catch (\Exception $e) {
+            Log::error('Failed to send verification email: ' . $e->getMessage());
+            return [
+                'success' => false,
+                'message' => 'Failed to send verification email'
+            ];
+        }
     }
 }

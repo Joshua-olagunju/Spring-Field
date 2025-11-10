@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spring Field Estate - OTP System Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin: 15px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #e2e3e5;
+            color: #383d41;
+            border: 1px solid #d6d8db;
+        }
+    </style>
+</head>
+<body>
+    <h1>🏠 Spring Field Estate - OTP System Test</h1>
+    <p>This page allows you to test the complete OTP registration system with email functionality.</p>
+
+    <!-- Step 1: Register Super Admin -->
+    <div class="card">
+        <h3>1. Register Super Admin (First User)</h3>
+        <form id="superAdminForm">
+            <div class="form-group">
+                <label>Name:</label>
+                <input type="text" name="name" value="John Doe" required>
+            </div>
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="email" name="email" value="john@springfield.com" required>
+            </div>
+            <div class="form-group">
+                <label>Phone:</label>
+                <input type="text" name="phone" value="1234567890" required>
+            </div>
+            <div class="form-group">
+                <label>Password:</label>
+                <input type="password" name="password" value="password123" required>
+            </div>
+            <div class="form-group">
+                <label>Confirm Password:</label>
+                <input type="password" name="password_confirmation" value="password123" required>
+            </div>
+            <button type="submit">Register Super Admin</button>
+        </form>
+        <div id="superAdminResult" class="result"></div>
+    </div>
+
+    <!-- Step 2: Generate Landlord OTP -->
+    <div class="card">
+        <h3>2. Generate Landlord OTP (Super Admin Only)</h3>
+        <form id="landlordOtpForm">
+            <div class="form-group">
+                <label>Recipient Email:</label>
+                <input type="email" name="recipient_email" value="landlord@test.com" required>
+            </div>
+            <div class="form-group">
+                <label>Recipient Name:</label>
+                <input type="text" name="recipient_name" value="Test Landlord" required>
+            </div>
+            <div class="form-group">
+                <label>Expires In Hours (optional):</label>
+                <input type="number" name="expires_in_hours" value="48" min="1" max="168">
+            </div>
+            <div class="form-group">
+                <label>Description (optional):</label>
+                <textarea name="description">OTP for new landlord registration</textarea>
+            </div>
+            <button type="submit">Generate Landlord OTP</button>
+        </form>
+        <div id="landlordOtpResult" class="result"></div>
+    </div>
+
+    <!-- Step 3: Register Landlord -->
+    <div class="card">
+        <h3>3. Register Landlord Using OTP</h3>
+        <form id="landlordRegForm">
+            <div class="form-group">
+                <label>Name:</label>
+                <input type="text" name="name" value="Test Landlord" required>
+            </div>
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="email" name="email" value="landlord@test.com" required>
+            </div>
+            <div class="form-group">
+                <label>Phone:</label>
+                <input type="text" name="phone" value="9876543210" required>
+            </div>
+            <div class="form-group">
+                <label>Password:</label>
+                <input type="password" name="password" value="landlord123" required>
+            </div>
+            <div class="form-group">
+                <label>Confirm Password:</label>
+                <input type="password" name="password_confirmation" value="landlord123" required>
+            </div>
+            <div class="form-group">
+                <label>OTP Code:</label>
+                <input type="text" name="otp_code" placeholder="Enter OTP from step 2" required>
+            </div>
+            <button type="submit">Register Landlord</button>
+        </form>
+        <div id="landlordRegResult" class="result"></div>
+    </div>
+
+    <!-- Step 4: Generate Resident OTP -->
+    <div class="card">
+        <h3>4. Generate Resident OTP (Landlord Only)</h3>
+        <p><em>Note: This requires that the landlord has houses assigned to them in the database.</em></p>
+        <form id="residentOtpForm">
+            <div class="form-group">
+                <label>House ID:</label>
+                <input type="number" name="house_id" value="1" required>
+            </div>
+            <div class="form-group">
+                <label>Recipient Email:</label>
+                <input type="email" name="recipient_email" value="resident@test.com" required>
+            </div>
+            <div class="form-group">
+                <label>Recipient Name:</label>
+                <input type="text" name="recipient_name" value="Test Resident" required>
+            </div>
+            <div class="form-group">
+                <label>Expires In Hours (optional):</label>
+                <input type="number" name="expires_in_hours" value="72" min="1" max="168">
+            </div>
+            <div class="form-group">
+                <label>Description (optional):</label>
+                <textarea name="description">OTP for new resident registration - House A101</textarea>
+            </div>
+            <button type="submit">Generate Resident OTP</button>
+        </form>
+        <div id="residentOtpResult" class="result"></div>
+    </div>
+
+    <!-- Step 5: Register Resident -->
+    <div class="card">
+        <h3>5. Register Resident Using OTP</h3>
+        <form id="residentRegForm">
+            <div class="form-group">
+                <label>Name:</label>
+                <input type="text" name="name" value="Test Resident" required>
+            </div>
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="email" name="email" value="resident@test.com" required>
+            </div>
+            <div class="form-group">
+                <label>Phone:</label>
+                <input type="text" name="phone" value="5555555555" required>
+            </div>
+            <div class="form-group">
+                <label>Password:</label>
+                <input type="password" name="password" value="resident123" required>
+            </div>
+            <div class="form-group">
+                <label>Confirm Password:</label>
+                <input type="password" name="password_confirmation" value="resident123" required>
+            </div>
+            <div class="form-group">
+                <label>OTP Code:</label>
+                <input type="text" name="otp_code" placeholder="Enter OTP from step 4" required>
+            </div>
+            <button type="submit">Register Resident</button>
+        </form>
+        <div id="residentRegResult" class="result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:8000/api';
+        let superAdminToken = '';
+        let landlordToken = '';
+
+        // Helper function to make API requests
+        async function apiRequest(endpoint, method = 'GET', data = null, token = '') {
+            try {
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                };
+                
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+
+                const config = {
+                    method,
+                    headers
+                };
+
+                if (data) {
+                    config.body = JSON.stringify(data);
+                }
+
+                const response = await fetch(`${API_BASE}${endpoint}`, config);
+                const result = await response.json();
+                
+                return {
+                    status: response.status,
+                    data: result,
+                    ok: response.ok
+                };
+            } catch (error) {
+                return {
+                    status: 0,
+                    data: { error: error.message },
+                    ok: false
+                };
+            }
+        }
+
+        // Display results
+        function displayResult(elementId, response, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.className = `result ${type}`;
+            element.textContent = JSON.stringify(response, null, 2);
+        }
+
+        // Step 1: Register Super Admin
+        document.getElementById('superAdminForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            const response = await apiRequest('/auth/register', 'POST', data);
+            
+            if (response.ok) {
+                superAdminToken = response.data.data.token;
+                displayResult('superAdminResult', response.data, 'success');
+            } else {
+                displayResult('superAdminResult', response.data, 'error');
+            }
+        });
+
+        // Step 2: Generate Landlord OTP
+        document.getElementById('landlordOtpForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!superAdminToken) {
+                displayResult('landlordOtpResult', { error: 'Please register super admin first' }, 'error');
+                return;
+            }
+
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            // Remove empty fields
+            Object.keys(data).forEach(key => {
+                if (!data[key]) delete data[key];
+            });
+            
+            const response = await apiRequest('/otp/generate-landlord', 'POST', data, superAdminToken);
+            
+            if (response.ok) {
+                // Auto-fill the OTP in the landlord registration form
+                document.querySelector('#landlordRegForm input[name="otp_code"]').value = response.data.data.otp_code;
+                displayResult('landlordOtpResult', response.data, 'success');
+            } else {
+                displayResult('landlordOtpResult', response.data, 'error');
+            }
+        });
+
+        // Step 3: Register Landlord
+        document.getElementById('landlordRegForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            const response = await apiRequest('/auth/register', 'POST', data);
+            
+            if (response.ok) {
+                landlordToken = response.data.data.token;
+                displayResult('landlordRegResult', response.data, 'success');
+            } else {
+                displayResult('landlordRegResult', response.data, 'error');
+            }
+        });
+
+        // Step 4: Generate Resident OTP
+        document.getElementById('residentOtpForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!landlordToken) {
+                displayResult('residentOtpResult', { error: 'Please register landlord first' }, 'error');
+                return;
+            }
+
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            // Remove empty fields
+            Object.keys(data).forEach(key => {
+                if (!data[key]) delete data[key];
+            });
+            
+            const response = await apiRequest('/otp/generate-resident', 'POST', data, landlordToken);
+            
+            if (response.ok) {
+                // Auto-fill the OTP in the resident registration form
+                document.querySelector('#residentRegForm input[name="otp_code"]').value = response.data.data.otp_code;
+                displayResult('residentOtpResult', response.data, 'success');
+            } else {
+                displayResult('residentOtpResult', response.data, 'error');
+            }
+        });
+
+        // Step 5: Register Resident
+        document.getElementById('residentRegForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            const response = await apiRequest('/auth/register', 'POST', data);
+            
+            if (response.ok) {
+                displayResult('residentRegResult', response.data, 'success');
+            } else {
+                displayResult('residentRegResult', response.data, 'error');
+            }
+        });
+    </script>
+</body>
+</html>

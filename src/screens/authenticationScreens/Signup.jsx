@@ -156,14 +156,14 @@ const SignUp = () => {
     setIsFormValid(isValid);
   }, [formData, passwordRequirements, errors]);
 
-  const displayModal = (type, message, details = "", userEmail = "") => {
+  const displayModal = (type, message, details = "", userEmail = "", userId = null, userRole = "resident") => {
     setModalContent({ type, message, details });
     setShowModal(true);
 
     setTimeout(() => {
       setShowModal(false);
       if (type === "success") {
-        navigate("/email-verification", { state: { email: userEmail } });
+        navigate("/email-verification", { state: { email: userEmail, user_id: userId, role: userRole } });
       }
     }, 3000);
   };
@@ -201,7 +201,9 @@ const SignUp = () => {
           "success",
           "Registration Successful!",
           "Please verify your email to continue...",
-          formData.email
+          formData.email,
+          result.data?.user?.id,
+          result.data?.user?.role
         );
         setFormData({
           firstName: "",
