@@ -63,7 +63,7 @@ const VisitorsScreen = () => {
 
       {/* Content */}
       <div className="w-full px-0">
-        <div className="max-w-full mx-auto  sm:px-6">
+        <div className="max-w-full mx-auto px-0 md:px-4">
           {/* Header */}
           <div className="mb-6">
             <h1
