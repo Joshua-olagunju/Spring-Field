@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useTheme } from "../context/useTheme";
 import { Icon } from "@iconify/react";
 
 const TopNavBar = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { theme } = useTheme();
   const [showDropdown, setShowDropdown] = useState(false);
   const userName = "User"; // Default value for development
@@ -55,9 +56,23 @@ const TopNavBar = () => {
     navigate("/profile");
   };
 
+  // Hide top nav on auth pages (same behavior as bottom nav)
+  const authPages = [
+    "/login",
+    "/signup-otp",
+    "/signup",
+    "/email-verification",
+    "/forgot-password",
+    "/reset-password-otp",
+    "/reset-password",
+  ];
+  if (authPages.includes(location.pathname)) {
+    return null;
+  }
+
   return (
     <nav
-      className={`fixed top-6 left-0 right-0 z-40 ${theme.topNav.background} ${theme.topNav.border} border-b`}
+      className={`fixed top-0 left-0 right-0 z-40 ${theme.topNav.background} ${theme.topNav.border} border-b`}
     >
       <div className="flex items-center justify-between px-4 sm:px-6 py-3">
         {/* Logo Section */}

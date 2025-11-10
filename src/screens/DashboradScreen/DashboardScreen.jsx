@@ -3,7 +3,7 @@ import { useTheme } from "../../../context/useTheme";
 import { Icon } from "@iconify/react";
 
 const DashboardScreen = () => {
-  const { theme } = useTheme();
+  const { theme, isDarkMode } = useTheme();
   const [recentVisitors, setRecentVisitors] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -43,10 +43,17 @@ const DashboardScreen = () => {
   };
 
   return (
-    <div
-      className={`min-h-screen ${theme.background.primary} pt-20 pb-24 px-4 sm:px-6`}
-    >
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen pt-16 pb-20 w-full relative">
+      <div
+        className="fixed inset-0 -z-10"
+        style={{
+          background: isDarkMode
+            ? "linear-gradient(to bottom right, rgb(17, 24, 39), rgb(31, 41, 55), rgb(17, 24, 39))"
+            : "linear-gradient(to bottom right, rgb(249, 250, 251), rgb(243, 244, 246), rgb(249, 250, 251))",
+        }}
+      />
+      <div className="w-full px-0">
+        <div className="max-w-full mx-auto px-4 sm:px-6">
         {/* Welcome Section */}
         <div className="mb-8">
           <h1
@@ -245,6 +252,7 @@ const DashboardScreen = () => {
               Pending Tokens
             </p>
           </div>
+        </div>
         </div>
       </div>
     </div>

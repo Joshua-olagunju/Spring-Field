@@ -16,6 +16,7 @@ import ForgotPassword from "./screens/authenticationScreens/ForgotPassword";
 import ResetPasswordOtp from "./screens/authenticationScreens/ResetPasswordOtp";
 import ResetPassword from "./screens/authenticationScreens/ResetPassword";
 import DashboardScreen from "./screens/DashboradScreen/DashboardScreen";
+import VisitorsScreen from "./screens/VisitHistoryScreen/VisitorsScreen";
 import StatusBar from "../components/StatusBar";
 import TopNavBar from "../components/TopNavBar";
 import BottomNavBar from "../components/BottomNavBar";
@@ -58,8 +59,8 @@ function AppContent() {
       {/* TEMPORARILY ALWAYS SHOWING TOP NAV FOR DEVELOPMENT */}
       <TopNavBar />
 
-      {/* Main Content with padding for status and bottom bars */}
-      <div className="pt-6 pb-20">
+      {/* Main Content - No padding, screens handle their own spacing */}
+      <div className="pt-6">
         <Routes>
           <Route path="/" element={<AutoRedirect />} />
           <Route path="/login" element={<Login />} />
@@ -84,9 +85,7 @@ function AppContent() {
             path="/visitors"
             element={
               <ProtectedRoute>
-                <div className="min-h-screen flex items-center justify-center">
-                  <h2 className="text-2xl">Visitors - Coming Soon</h2>
-                </div>
+                <VisitorsScreen />
               </ProtectedRoute>
             }
           />
