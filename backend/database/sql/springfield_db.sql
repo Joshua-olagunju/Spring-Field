@@ -309,6 +309,29 @@ CREATE TABLE `registration_otps` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `email_verifications`
+--
+
+CREATE TABLE `email_verifications` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` bigint unsigned NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `otp_code` varchar(6) NOT NULL,
+  `expires_at` timestamp NOT NULL,
+  `verified_at` timestamp NULL DEFAULT NULL,
+  `attempts` int NOT NULL DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `email_verifications_user_id_foreign` (`user_id`),
+  KEY `email_verifications_email_index` (`email`),
+  KEY `email_verifications_otp_code_index` (`otp_code`),
+  CONSTRAINT `email_verifications_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Structure for view `active_residents_with_houses`
 --
 DROP TABLE IF EXISTS `active_residents_with_houses`;
@@ -431,6 +454,15 @@ ALTER TABLE `visitor_tokens`
 -- Indexes are already defined in the table structure
 
 --
+-- Indexes for table `email_verifications`
+--
+ALTER TABLE `email_verifications`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `email_verifications_user_id_foreign` (`user_id`),
+  ADD KEY `email_verifications_email_index` (`email`),
+  ADD KEY `email_verifications_otp_code_index` (`otp_code`);
+
+--
 -- AUTO_INCREMENT for dumped tables
 --
 
@@ -489,6 +521,12 @@ ALTER TABLE `registration_otps`
   MODIFY `id` bigint unsigned NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `email_verifications`
+--
+ALTER TABLE `email_verifications`
+  MODIFY `id` bigint unsigned NOT NULL AUTO_INCREMENT;
+
+--
 -- Constraints for dumped tables
 --
 
@@ -544,6 +582,13 @@ ALTER TABLE `registration_otps`
   ADD CONSTRAINT `registration_otps_generated_by_foreign` FOREIGN KEY (`generated_by`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `registration_otps_used_by_foreign` FOREIGN KEY (`used_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `registration_otps_house_id_foreign` FOREIGN KEY (`house_id`) REFERENCES `houses` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `email_verifications`
+--
+ALTER TABLE `email_verifications`
+  ADD CONSTRAINT `email_verifications_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
