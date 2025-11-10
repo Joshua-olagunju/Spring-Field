@@ -5,10 +5,21 @@ body {
   margin: 0;
   padding: 0;
   overflow-x: hidden;
+  font-family: 'Poppins', sans-serif;
 }
 
 #root {
   min-height: 100vh;
   margin: 0;
   padding: 0;
+}
+
+input{
+    font-size: 0.8rem;
+    padding: 1rem;
+  
+}
+label{
+    font-size: 0.8rem;
+    font-weight: 500;
 }

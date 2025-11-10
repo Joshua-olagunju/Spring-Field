@@ -31,30 +31,9 @@ const Login = () => {
     password: "",
   });
 
-  const [passwordRequirements, setPasswordRequirements] = useState({
-    minLength: false,
-    hasUpperCase: false,
-    hasLowerCase: false,
-    hasNumber: false,
-    hasSpecialChar: false,
-  });
-
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
-  };
-
-  const validatePassword = (password) => {
-    const requirements = {
-      minLength: password.length >= 8,
-      hasUpperCase: /[A-Z]/.test(password),
-      hasLowerCase: /[a-z]/.test(password),
-      hasNumber: /[0-9]/.test(password),
-      hasSpecialChar: /[!@#$%^&*(),.?":{}|<>]/.test(password),
-    };
-
-    setPasswordRequirements(requirements);
-    return Object.values(requirements).every((req) => req);
   };
 
   const handleInputChange = (e) => {
@@ -79,17 +58,8 @@ const Login = () => {
     }
 
     if (id === "password") {
-      validatePassword(value);
-      if (value.trim() === "") {
-        setErrors((prev) => ({ ...prev, password: "" }));
-      } else if (!validatePassword(value)) {
-        setErrors((prev) => ({
-          ...prev,
-          password: "Password does not meet requirements",
-        }));
-      } else {
-        setErrors((prev) => ({ ...prev, password: "" }));
-      }
+      // No validation for password on login screen
+      setErrors((prev) => ({ ...prev, password: "" }));
     }
   };
 
@@ -103,14 +73,10 @@ const Login = () => {
   useEffect(() => {
     const isValid =
       formData.email.trim() !== "" &&
-      formData.password.trim() !== "" &&
-      validateEmail(formData.email) &&
-      validatePassword(formData.password) &&
-      !errors.email &&
-      !errors.password;
+      formData.password.trim() !== "";
 
     setIsFormValid(isValid);
-  }, [formData, errors]);
+  }, [formData]);
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -200,73 +166,31 @@ const Login = () => {
             style={{ opacity: isDarkMode ? 0.02 : 0.015 }}
             xmlns="http://www.w3.org/2000/svg"
           >
-            <defs>
-              <pattern
-                id="security-grid"
-                width="40"
-                height="40"
-                patternUnits="userSpaceOnUse"
-              >
-                <path
-                  d="M 40 0 L 0 0 0 40"
-                  fill="none"
-                  stroke={isDarkMode ? "#10b981" : "#6b7280"}
-                  strokeWidth="0.5"
-                />
-              </pattern>
-            </defs>
+       
             <rect width="100%" height="100%" fill="url(#security-grid)" />
           </svg>
         </div>
 
+        <div>
+          {/* Top Left Decorative Element */}
+          <div className="absolute top-0 left-0 w-48 h-48 md:w-72 md:h-72 bg-blue-600 rounded-br-full opacity-20 pointer-events-none"></div>
+        </div>
+
         {/* Form Container */}
-        <div className="relative z-10 flex items-center justify-center min-h-screen py-12 px-4">
+        <div className="relative z-10 flex items-center justify-center min-h-screen">
           <div className={`w-full max-w-2xl mx-auto`}>
             {/* Header Section */}
-            <div
-              className={`${theme.brand.primary} pt-12 pb-32 px-6 relative overflow-hidden rounded-[2rem]`}
-            >
-              {/* Background Pattern */}
-              <div className="absolute inset-0 opacity-10">
-                <div className="absolute top-0 left-0 w-64 h-64 bg-white rounded-full -translate-x-32 -translate-y-32"></div>
-                <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full translate-x-32 translate-y-32"></div>
-              </div>
-
-              {/* Logo and Title */}
-              <div className="relative z-10 text-center">
-                <div className="flex justify-center mb-6">
-                  <div
-                    className={`w-20 h-20 ${theme.background.card} rounded-3xl flex items-center justify-center ${theme.shadow.xl}`}
-                  >
-                    <span
-                      className={`${theme.brand.primaryText} font-bold text-3xl`}
-                    >
-                      SF
-                    </span>
-                  </div>
-                </div>
-                <h1 className={`${theme.text.inverse} text-3xl font-bold mb-2`}>
-                  SpringField Estate
-                </h1>
-                <p
-                  className={`${theme.text.inverse} opacity-90 text-sm font-medium`}
-                >
-                  Secure Estate Management System
-                </p>
-              </div>
-            </div>
-
             {/* Form Section - Centered on larger screens */}
-            <div className="flex-1 -mt-20 relative z-10 flex justify-center px-3 pb-5">
+            <div className="flex-1 my-auto relative z-10 flex justify-center px-3  ">
               <div
-                className={`${theme.background.card} rounded-[2rem] ${theme.shadow.xl} w-full max-w-2xl px-6 pt-8 pb-6`}
+                className={`${theme.background.card} rounded-[0.5rem] ${theme.shadow.sm} w-full max-w-2xl px-6 pt-8 pb-6`}
               >
                 {/* Welcome Text */}
-                <div className="mb-8">
+                <div className="mb-8 flex flex-col items-center gap-2">
                   <h2
-                    className={`text-2xl font-bold ${theme.text.primary} mb-1`}
+                    className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 bg-clip-text text-transparent"
                   >
-                    Welcome Back
+                    Welcome Back !
                   </h2>
                   <p className={`${theme.text.secondary} text-sm`}>
                     Sign in to your account to continue
@@ -278,31 +202,25 @@ const Login = () => {
                   <div>
                     <label
                       htmlFor="email"
-                      className={`block text-sm text-start font-semibold ${theme.text.primary} mb-3`}
+                      className={`block text-sm text-start font-semibold ${theme.text.primary} mb-3 flex items-center gap-2`}
                     >
+                      <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-1 rounded">
+                        <Icon icon="mdi:email-outline" className="text-white text-sm" />
+                      </div>
                       Email Address *
                     </label>
                     <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <Icon
-                          icon="mdi:email-outline"
-                          className={`text-xl ${theme.text.tertiary}`}
-                        />
-                      </div>
+                      
                       <input
                         type="email"
                         id="email"
                         value={formData.email}
                         onChange={handleInputChange}
-                        className={`w-full pl-12 pr-4 py-4 ${
+                        className={`w-full pl-12 pr-4 py-3 placeholder:text-[0.8rem] ${
                           theme.background.input
                         } ${
                           theme.text.primary
-                        } border-0 rounded-2xl focus:outline-none focus:ring-2 transition-all text-base ${
-                          errors.email
-                            ? "focus:ring-red-500 bg-red-50"
-                            : `focus:${theme.brand.primaryRing}`
-                        }`}
+                        } border rounded-[0.3rem] focus:outline-none transition-all focus:${theme.brand.primaryRing}`}
                         placeholder="Enter your email"
                         autoComplete="email"
                       />
@@ -321,27 +239,25 @@ const Login = () => {
                   <div>
                     <label
                       htmlFor="password"
-                      className={`block text-sm text-start font-semibold ${theme.text.primary} mb-3`}
+                      className={`block text-sm text-start font-semibold ${theme.text.primary} mb-3 flex items-center gap-2`}
                     >
+                      <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-1 rounded">
+                        <Icon icon="mdi:lock-outline" className="text-white text-sm" />
+                      </div>
                       Password *
                     </label>
                     <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <Icon
-                          icon="mdi:lock-outline"
-                          className={`text-xl ${theme.text.tertiary}`}
-                        />
-                      </div>
+                      
                       <input
                         type={showPassword ? "text" : "password"}
                         id="password"
                         value={formData.password}
                         onChange={handleInputChange}
-                        className={`w-full pl-12 pr-14 py-4 ${
+                        className={`w-full   placeholder:text-[0.8rem] ${
                           theme.background.input
                         } ${
                           theme.text.primary
-                        } border-0 rounded-2xl focus:outline-none focus:ring-2 transition-all text-base ${
+                        } border rounded-[0.3rem] focus:outline-none transition-all ${
                           errors.password
                             ? "focus:ring-red-500 bg-red-50"
                             : `focus:${theme.brand.primaryRing}`
@@ -359,7 +275,7 @@ const Login = () => {
                       >
                         <Icon
                           icon={showPassword ? "mdi:eye" : "mdi:eye-off"}
-                          className={`text-xl ${theme.text.tertiary}`}
+                          className={`text-[1rem] ${theme.text.tertiary}`}
                         />
                       </button>
                     </div>
@@ -371,122 +287,13 @@ const Login = () => {
                         {errors.password}
                       </p>
                     )}
-
-                    {formData.password && (
-                      <div
-                        className={`mt-3 p-4 ${theme.brand.light} rounded-2xl`}
-                      >
-                        <p
-                          className={`text-xs font-semibold ${theme.text.primary} mb-3`}
-                        >
-                          Password must contain:
-                        </p>
-                        <div className="space-y-2">
-                          <div
-                            className={`flex items-center text-xs ${
-                              passwordRequirements.minLength
-                                ? `${theme.text.success} font-medium`
-                                : theme.text.tertiary
-                            }`}
-                          >
-                            <div
-                              className={`w-4 h-4 rounded-full mr-2 flex items-center justify-center ${
-                                passwordRequirements.minLength
-                                  ? theme.brand.primarySolid
-                                  : "bg-gray-300 dark:bg-gray-600"
-                              }`}
-                            >
-                              {passwordRequirements.minLength && (
-                                <Icon
-                                  icon="mdi:check"
-                                  className="text-sm text-white"
-                                />
-                              )}
-                            </div>
-                            At least 8 characters
-                          </div>
-                          <div
-                            className={`flex items-center text-xs ${
-                              passwordRequirements.hasUpperCase &&
-                              passwordRequirements.hasLowerCase
-                                ? `${theme.text.success} font-medium`
-                                : theme.text.tertiary
-                            }`}
-                          >
-                            <div
-                              className={`w-4 h-4 rounded-full mr-2 flex items-center justify-center ${
-                                passwordRequirements.hasUpperCase &&
-                                passwordRequirements.hasLowerCase
-                                  ? theme.brand.primarySolid
-                                  : "bg-gray-300 dark:bg-gray-600"
-                              }`}
-                            >
-                              {passwordRequirements.hasUpperCase &&
-                                passwordRequirements.hasLowerCase && (
-                                  <Icon
-                                    icon="mdi:check"
-                                    className="text-sm text-white"
-                                  />
-                                )}
-                            </div>
-                            Upper & lowercase letters
-                          </div>
-                          <div
-                            className={`flex items-center text-xs ${
-                              passwordRequirements.hasNumber
-                                ? `${theme.text.success} font-medium`
-                                : theme.text.tertiary
-                            }`}
-                          >
-                            <div
-                              className={`w-4 h-4 rounded-full mr-2 flex items-center justify-center ${
-                                passwordRequirements.hasNumber
-                                  ? theme.brand.primarySolid
-                                  : "bg-gray-300 dark:bg-gray-600"
-                              }`}
-                            >
-                              {passwordRequirements.hasNumber && (
-                                <Icon
-                                  icon="mdi:check"
-                                  className="text-sm text-white"
-                                />
-                              )}
-                            </div>
-                            At least one number
-                          </div>
-                          <div
-                            className={`flex items-center text-xs ${
-                              passwordRequirements.hasSpecialChar
-                                ? `${theme.text.success} font-medium`
-                                : theme.text.tertiary
-                            }`}
-                          >
-                            <div
-                              className={`w-4 h-4 rounded-full mr-2 flex items-center justify-center ${
-                                passwordRequirements.hasSpecialChar
-                                  ? theme.brand.primarySolid
-                                  : "bg-gray-300 dark:bg-gray-600"
-                              }`}
-                            >
-                              {passwordRequirements.hasSpecialChar && (
-                                <Icon
-                                  icon="mdi:check"
-                                  className="text-sm text-white"
-                                />
-                              )}
-                            </div>
-                            Special character (!@#$%...)
-                          </div>
-                        </div>
-                      </div>
-                    )}
                   </div>
 
                   {/* Forgot Password */}
                   <div className="flex justify-end -mt-2">
                     <a
                       href="/forgot-password"
-                      className={`text-sm ${theme.text.link} hover:${theme.text.linkHover} font-semibold`}
+                      className={`text-sm ${theme.text.link} text-[0.8rem] underline hover:${theme.text.linkHover}  `}
                     >
                       Forgot Password?
                     </a>
@@ -496,11 +303,9 @@ const Login = () => {
                   <button
                     type="submit"
                     disabled={!isFormValid || isLoading}
-                    className={`w-full py-4 px-4 rounded-2xl font-bold text-base ${
-                      theme.shadow.large
-                    } transition-all active:scale-95 ${
+                    className={`w-full font-semibold text-[0.9rem] py-3 px-2 rounded-[0.3rem] text-white transition-all active:scale-95 ${
                       isFormValid && !isLoading
-                        ? theme.button.primary
+                        ? "bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 hover:from-blue-700 hover:via-purple-700 hover:to-blue-700 shadow-lg hover:shadow-xl"
                         : theme.button.disabled
                     }`}
                   >
@@ -508,7 +313,7 @@ const Login = () => {
                       <span className="flex items-center justify-center gap-2">
                         <Icon
                           icon="mdi:loading"
-                          className="animate-spin text-xl text-white"
+                          className="animate-spin text-white"
                         />
                         Signing In...
                       </span>
@@ -525,7 +330,7 @@ const Login = () => {
                       Don't have an account?{" "}
                       <a
                         href="/signup"
-                        className={`${theme.text.link} hover:${theme.text.linkHover} font-bold`}
+                        className={`${theme.text.link} text-[0.8rem] hover:${theme.text.linkHover} underline  `}
                       >
                         Create Account
                       </a>

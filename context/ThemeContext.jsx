@@ -22,41 +22,41 @@ const themes = {
       inverse: "text-white",
       error: "text-red-600",
       success: "text-green-700",
-      link: "text-green-600",
-      linkHover: "text-green-700",
+      link: "text-blue-600",
+      linkHover: "text-blue-700",
     },
-    // Brand colors (Green theme)
+    // Brand colors (Blue theme)
     brand: {
-      primary: "bg-gradient-to-r from-green-600 to-green-700",
-      primarySolid: "bg-green-600",
-      primaryHover: "bg-gradient-to-r from-green-700 to-green-800",
-      primaryText: "text-green-600",
-      primaryBorder: "border-green-600",
-      primaryRing: "ring-green-500",
-      light: "bg-green-50",
-      lighter: "bg-green-100",
+      primary: "bg-gradient-to-r from-blue-600 to-blue-700",
+      primarySolid: "bg-blue-600",
+      primaryHover: "bg-gradient-to-r from-blue-700 to-blue-800",
+      primaryText: "text-blue-600",
+      primaryBorder: "border-blue-600",
+      primaryRing: "ring-blue-500",
+      light: "bg-blue-50",
+      lighter: "bg-blue-100",
     },
     // Button colors
     button: {
       primary:
-        "bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white",
+        "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white",
       secondary: "bg-gray-100 hover:bg-gray-200 text-gray-700",
       outline:
         "border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-700",
       disabled: "bg-gray-300 text-gray-500 cursor-not-allowed opacity-60",
-      success: "bg-green-600 hover:bg-green-700 text-white",
+      success: "bg-blue-600 hover:bg-blue-700 text-white",
       danger: "bg-red-600 hover:bg-red-700 text-white",
     },
     // Border colors
     border: {
       primary: "border-gray-300",
       secondary: "border-gray-200",
-      focus: "border-green-500",
+      focus: "border-blue-500",
       error: "border-red-500",
     },
     // Status colors
     status: {
-      success: "bg-green-100 text-green-700",
+      success: "bg-blue-100 text-blue-700",
       error: "bg-red-100 text-red-600",
       warning: "bg-yellow-100 text-yellow-700",
       info: "bg-blue-100 text-blue-700",
@@ -79,9 +79,9 @@ const themes = {
     bottomBar: {
       background: "bg-white",
       border: "border-gray-200",
-      active: "text-green-600 bg-green-50",
+      active: "text-blue-600 bg-blue-50",
       inactive: "text-gray-500",
-      iconActive: "text-green-600",
+      iconActive: "text-blue-600",
       iconInactive: "text-gray-400",
     },
   },
@@ -102,42 +102,42 @@ const themes = {
       tertiary: "text-gray-400",
       inverse: "text-gray-900",
       error: "text-red-400",
-      success: "text-green-400",
-      link: "text-green-400",
-      linkHover: "text-green-300",
+      success: "text-blue-400",
+      link: "text-blue-400",
+      linkHover: "text-blue-300",
     },
-    // Brand colors (Green theme for dark mode)
+    // Brand colors (Blue theme for dark mode)
     brand: {
-      primary: "bg-gradient-to-r from-green-500 to-green-600",
-      primarySolid: "bg-green-500",
-      primaryHover: "bg-gradient-to-r from-green-600 to-green-700",
-      primaryText: "text-green-400",
-      primaryBorder: "border-green-500",
-      primaryRing: "ring-green-400",
-      light: "bg-green-900",
-      lighter: "bg-green-800",
+      primary: "bg-gradient-to-r from-blue-500 to-blue-600",
+      primarySolid: "bg-blue-500",
+      primaryHover: "bg-gradient-to-r from-blue-600 to-blue-700",
+      primaryText: "text-blue-400",
+      primaryBorder: "border-blue-500",
+      primaryRing: "ring-blue-400",
+      light: "bg-blue-900",
+      lighter: "bg-blue-800",
     },
     // Button colors
     button: {
       primary:
-        "bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white",
+        "bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white",
       secondary: "bg-gray-700 hover:bg-gray-600 text-gray-200",
       outline:
         "border-2 border-gray-600 hover:border-gray-500 hover:bg-gray-700 text-gray-200",
       disabled: "bg-gray-700 text-gray-500 cursor-not-allowed opacity-60",
-      success: "bg-green-500 hover:bg-green-600 text-white",
+      success: "bg-blue-500 hover:bg-blue-600 text-white",
       danger: "bg-red-500 hover:bg-red-600 text-white",
     },
     // Border colors
     border: {
       primary: "border-gray-600",
       secondary: "border-gray-700",
-      focus: "border-green-400",
+      focus: "border-blue-400",
       error: "border-red-500",
     },
     // Status colors
     status: {
-      success: "bg-green-900 text-green-300",
+      success: "bg-blue-900 text-blue-300",
       error: "bg-red-900 text-red-300",
       warning: "bg-yellow-900 text-yellow-300",
       info: "bg-blue-900 text-blue-300",
@@ -160,9 +160,9 @@ const themes = {
     bottomBar: {
       background: "bg-gray-900",
       border: "border-gray-700",
-      active: "text-green-400 bg-green-900/30",
+      active: "text-blue-400 bg-blue-900/30",
       inactive: "text-gray-400",
-      iconActive: "text-green-400",
+      iconActive: "text-blue-400",
       iconInactive: "text-gray-500",
     },
   },
