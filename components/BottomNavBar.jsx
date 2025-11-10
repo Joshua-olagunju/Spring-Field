@@ -46,14 +46,18 @@ const BottomNavBar = () => {
     <nav
       className={`fixed bottom-0 left-0 right-0 z-50 ${theme.bottomBar.background} ${theme.bottomBar.border} border-t`}
     >
-      <div className="flex items-center justify-around py-3 px-2">
+      {/* 
+        - On small screens: buttons have equal width for perfect balance.
+        - On large screens: more relaxed spacing with justify-evenly.
+      */}
+      <div className="flex items-center justify-between sm:justify-evenly py-3 px-2 max-w-2xl mx-auto w-full">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
             <button
               key={item.path}
               onClick={() => navigate(item.path)}
-              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all ${
+              className={`flex flex-col items-center justify-center gap-1 flex-1 sm:flex-none py-2 rounded-xl transition-all ${
                 isActive ? theme.bottomBar.active : theme.bottomBar.inactive
               }`}
             >
@@ -65,7 +69,9 @@ const BottomNavBar = () => {
                     : theme.bottomBar.iconInactive
                 }`}
               />
-              <span className="text-xs font-medium">{item.name}</span>
+              <span className="text-xs font-medium text-center truncate w-full">
+                {item.name}
+              </span>
             </button>
           );
         })}

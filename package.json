@@ -12,6 +12,7 @@
   "dependencies": {
     "@iconify/react": "^6.0.2",
     "axios": "^1.13.2",
+    "date-fns": "^4.1.0",
     "framer-motion": "^12.23.24",
     "html5-qrcode": "^2.3.8",
     "qrcode.react": "^4.2.0",
