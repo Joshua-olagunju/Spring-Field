@@ -2,6 +2,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTheme } from "../../../context/useTheme";
 import { useUser } from "../../../context/useUser";
+import logo from "../../assets/philip-oroni-bCkrMt4ETLo-unsplash.jpg";
 import ThemeToggle from "../../../components/ThemeToggle";
 import { Icon } from "@iconify/react";
 
@@ -171,20 +172,25 @@ const Login = () => {
           </svg>
         </div>
 
-        <div>
-          {/* Top Left Decorative Element */}
-          <div className="absolute top-0 left-0 w-48 h-48 md:w-72 md:h-72 bg-blue-600 rounded-br-full opacity-20 pointer-events-none"></div>
-        </div>
-
         {/* Form Container */}
-        <div className="relative z-10 flex items-center justify-center min-h-screen">
-          <div className={`w-full max-w-2xl mx-auto`}>
-            {/* Header Section */}
-            {/* Form Section - Centered on larger screens */}
-            <div className="flex-1 my-auto relative z-10 flex justify-center px-3  ">
-              <div
-                className={`${theme.background.card} rounded-[0.5rem] ${theme.shadow.sm} w-full max-w-2xl px-6 pt-8 pb-6`}
-              >
+        <div className="relative z-10 min-h-screen">
+          <div className="w-full h-screen">
+            <div className="grid grid-cols-1 lg:grid-cols-2 w-full h-full">
+              
+              {/* Image Section - Left Side */}
+              <div className="hidden lg:block w-full h-full">
+                <img 
+                  src={logo} 
+                  alt="Login Illustration" 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+
+              {/* Form Section - Right Side */}
+              <div className="flex justify-center items-center py-10 px-4 overflow-y-auto">
+                <div
+                  className={`${theme.background.card} rounded-[0.5rem] ${theme.shadow.sm} w-full px-12 pt-8 pb-6`}
+                >
                 {/* Welcome Text */}
                 <div className="mb-8 flex flex-col items-center gap-2">
                   <h2
@@ -340,8 +346,12 @@ const Login = () => {
               </div>
             </div>
 
-            {/* Modal */}
-            {showModal && (
+            </div>
+          </div>
+        </div>
+
+        {/* Modal */}
+        {showModal && (
               <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-6">
                 <div
                   className={`${theme.background.modal} rounded-3xl p-8 max-w-sm w-full ${theme.shadow.xl} transform transition-all animate-fadeIn`}
@@ -390,8 +400,6 @@ const Login = () => {
                 </div>
               </div>
             )}
-          </div>
-        </div>
       </div>
     </>
   );
