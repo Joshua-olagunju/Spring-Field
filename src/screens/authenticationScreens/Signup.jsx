@@ -217,10 +217,13 @@ const SignUp = () => {
           confirmPassword: "",
         });
       } else {
+        console.error("Registration error response:", result);
+        const errorMessage = result.message || "Please try again.";
+        const errorDetails = result.errors ? Object.values(result.errors).flat().join(", ") : "";
         displayModal(
           "error",
           "Registration Failed",
-          result.message || "Please try again."
+          errorDetails || errorMessage
         );
       }
     } catch (error) {

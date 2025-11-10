@@ -111,11 +111,25 @@ const Login = () => {
 
         setFormData({ email: "", password: "" });
 
-        // Get the redirect path from location state or default to dashboard
-        const from = location.state?.from?.pathname || "/dashboard";
+        // Determine redirect based on user role and email verification status
+        const userData = result.user;
+        let redirectPath = "/dashboard";
+
+        // If email is not verified, redirect to email verification
+        if (!userData.email_verified_at) {
+          redirectPath = "/email-verification";
+        } else if (userData.role === "super") {
+          redirectPath = "/super-admin-dashboard";
+        } else if (userData.role === "landlord") {
+          redirectPath = "/landlord-dashboard";
+        } else if (userData.role === "resident") {
+          redirectPath = "/resident-dashboard";
+        } else if (userData.role === "security") {
+          redirectPath = "/security-dashboard";
+        }
 
         setTimeout(() => {
-          navigate(from, { replace: true });
+          navigate(redirectPath, { replace: true });
         }, 1500);
       } else {
         displayModal(

@@ -17,16 +17,50 @@ const SignUpOtpScreen = () => {
     message: "",
     details: "",
   });
+  const [superAdminCount, setSuperAdminCount] = useState(null);
+  const [isCheckingCount, setIsCheckingCount] = useState(true);
 
   // Refs for each OTP input
   const inputRefs = useRef([]);
 
+  // Check super admin count on mount
   useEffect(() => {
-    // Focus on first input when component mounts
-    if (inputRefs.current[0]) {
+    const checkSuperAdminCount = async () => {
+      try {
+        const response = await fetch(
+          "http://localhost:8000/api/super-admin-count",
+          {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+
+        const result = await response.json();
+        if (response.ok && result.success) {
+          setSuperAdminCount(result.data.super_admin_count);
+
+          // If less than 3 super admins, redirect directly to signup
+          if (result.data.super_admin_count < 3) {
+            displayModal("info", "Welcome!", "Redirecting to registration...");
+            setTimeout(() => navigate("/signup"), 1500);
+          }
+        }
+      } catch (error) {
+        console.error("Error checking super admin count:", error);
+        setError("Connection error. Please try again.");
+      } finally {
+        setIsCheckingCount(false);
+      }
+    };
+
+    checkSuperAdminCount();
+  }, [navigate]);
+
+  useEffect(() => {
+    if (!isCheckingCount && superAdminCount >= 3 && inputRefs.current[0]) {
       inputRefs.current[0].focus();
     }
-  }, []);
+  }, [isCheckingCount, superAdminCount]);
 
   const handleChange = (index, value) => {
     // Only allow numbers
@@ -77,12 +111,14 @@ const SignUpOtpScreen = () => {
     setModalContent({ type, message, details });
     setShowModal(true);
 
-    setTimeout(() => {
-      setShowModal(false);
-      if (type === "success") {
-        navigate("/signup");
-      }
-    }, 2000);
+    if (type === "info") {
+      setTimeout(() => setShowModal(false), 1500);
+    } else if (type === "success") {
+      setTimeout(() => {
+        setShowModal(false);
+        navigate("/signup", { state: { otp_code: otp.join("") } });
+      }, 2000);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -146,10 +182,21 @@ const SignUpOtpScreen = () => {
 
         {/* Form Container */}
         <div className="relative z-10 flex items-center justify-center min-h-screen py-10 px-4">
-          <div className="w-full max-w-md">
-            <div
-              className={`${theme.background.card} rounded-[0.5rem] ${theme.shadow.sm} w-full px-12 pt-8 pb-6`}
-            >
+          {isCheckingCount ? (
+            // Loading spinner while checking super admin count
+            <div className="flex flex-col items-center gap-4">
+              <Icon
+                icon="mdi:loading"
+                className="text-6xl animate-spin text-blue-600"
+              />
+              <p className={theme.text.primary}>Checking registration status...</p>
+            </div>
+          ) : superAdminCount >= 3 ? (
+            // Show OTP form only if >= 3 super admins
+            <div className="w-full max-w-md">
+              <div
+                className={`${theme.background.card} rounded-[0.5rem] ${theme.shadow.sm} w-full px-12 pt-8 pb-6`}
+              >
               {/* Header */}
               <div className="mb-8 flex flex-col items-center gap-2">
                 <div className="mb-4">
@@ -262,7 +309,8 @@ const SignUpOtpScreen = () => {
                 </div>
               </form>
             </div>
-          </div>
+            </div>
+          ) : null}
         </div>
 
         {/* Modal */}
