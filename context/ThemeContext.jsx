@@ -75,14 +75,28 @@ const themes = {
       icon: "text-gray-600",
       border: "border-gray-200",
     },
+    // Top navigation bar
+    topNav: {
+      background: "bg-white/95 backdrop-blur-md",
+      text: "text-gray-900",
+      icon: "text-gray-600",
+      border: "border-gray-200",
+      hover: "hover:bg-gray-50",
+    },
     // Bottom navigation bar
     bottomBar: {
-      background: "bg-white",
-      border: "border-gray-200",
+      background: "bg-gray-50/95 backdrop-blur-md",
+      border: "border-gray-300",
       active: "text-blue-600 bg-blue-50",
       inactive: "text-gray-500",
       iconActive: "text-blue-600",
       iconInactive: "text-gray-400",
+    },
+    // Animated background icons
+    animatedIcons: {
+      primary: "rgba(59, 130, 246, 0.25)", // Blue
+      secondary: "rgba(147, 51, 234, 0.2)", // Purple
+      tertiary: "rgba(59, 130, 246, 0.18)", // Light Blue
     },
   },
   dark: {
@@ -156,14 +170,28 @@ const themes = {
       icon: "text-gray-300",
       border: "border-gray-700",
     },
+    // Top navigation bar
+    topNav: {
+      background: "bg-gray-900/95 backdrop-blur-md",
+      text: "text-gray-100",
+      icon: "text-gray-300",
+      border: "border-gray-700",
+      hover: "hover:bg-gray-800",
+    },
     // Bottom navigation bar
     bottomBar: {
-      background: "bg-gray-900",
-      border: "border-gray-700",
+      background: "bg-gray-800/95 backdrop-blur-md",
+      border: "border-gray-600",
       active: "text-blue-400 bg-blue-900/30",
       inactive: "text-gray-400",
       iconActive: "text-blue-400",
       iconInactive: "text-gray-500",
+    },
+    // Animated background icons
+    animatedIcons: {
+      primary: "rgba(59, 130, 246, 0.15)", // Blue
+      secondary: "rgba(147, 51, 234, 0.12)", // Purple
+      tertiary: "rgba(59, 130, 246, 0.1)", // Light Blue
     },
   },
 };

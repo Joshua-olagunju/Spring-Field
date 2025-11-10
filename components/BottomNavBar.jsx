@@ -10,8 +10,11 @@ const BottomNavBar = () => {
   // Hide bottom nav on auth pages
   const authPages = [
     "/login",
+    "/signup-otp",
     "/signup",
+    "/email-verification",
     "/forgot-password",
+    "/reset-password-otp",
     "/reset-password",
   ];
   if (authPages.includes(location.pathname)) {
@@ -22,26 +25,20 @@ const BottomNavBar = () => {
     {
       name: "Home",
       path: "/dashboard",
-      icon: "mdi:home",
+      icon: "mdi:home-outline",
       iconFilled: "mdi:home",
     },
     {
       name: "Visitors",
       path: "/visitors",
-      icon: "mdi:account-group",
+      icon: "mdi:account-group-outline",
       iconFilled: "mdi:account-group",
     },
     {
-      name: "Payments",
-      path: "/payments",
-      icon: "mdi:credit-card",
+      name: "Subscription",
+      path: "/subscription",
+      icon: "mdi:credit-card-outline",
       iconFilled: "mdi:credit-card",
-    },
-    {
-      name: "Profile",
-      path: "/profile",
-      icon: "mdi:account-circle",
-      iconFilled: "mdi:account-circle",
     },
   ];
 

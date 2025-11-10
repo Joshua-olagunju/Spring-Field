@@ -5,35 +5,35 @@ import ThemeToggle from "../../../components/ThemeToggle";
 import AnimatedSecurityBackground from "../../../components/AnimatedSecurityBackground";
 import { Icon } from "@iconify/react";
 
-const EmailVerificationOtp = () => {
+const ResetPasswordOtp = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { theme, isDarkMode } = useTheme();
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [showModal, setShowModal] = useState(false);
-  const [modalContent, setModalContent] = useState({
-    type: "",
-    message: "",
-    details: "",
-  });
   const [resendLoading, setResendLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
   const [successMessage, setSuccessMessage] = useState("");
 
   // Get email from navigation state
-  const userEmail = location.state?.email || "your email";
+  const userEmail = location.state?.email || "";
 
   // Refs for each OTP input
   const inputRefs = useRef([]);
 
   useEffect(() => {
+    // Redirect if no email provided (commented out for development)
+    // if (!userEmail) {
+    //   navigate("/forgot-password");
+    //   return;
+    // }
+
     // Focus on first input when component mounts
     if (inputRefs.current[0]) {
       inputRefs.current[0].focus();
     }
-  }, []);
+  }, [navigate]);
 
   // Resend timer countdown
   useEffect(() => {
@@ -88,18 +88,6 @@ const EmailVerificationOtp = () => {
     }
   };
 
-  const displayModal = (type, message, details = "") => {
-    setModalContent({ type, message, details });
-    setShowModal(true);
-
-    setTimeout(() => {
-      setShowModal(false);
-      if (type === "success") {
-        navigate("/dashboard");
-      }
-    }, 3000);
-  };
-
   const handleResendOtp = async () => {
     if (resendTimer > 0) return;
 
@@ -109,26 +97,26 @@ const EmailVerificationOtp = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:8000/api/resend-email-otp",
+        "http://localhost:8000/api/resend-reset-password-otp",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ email: location.state?.email }),
+          body: JSON.stringify({ email: userEmail }),
         }
       );
 
       const result = await response.json();
 
       if (response.ok && result.success) {
-        setSuccessMessage("New verification code sent successfully!");
+        setSuccessMessage("New OTP sent successfully!");
         setResendTimer(60); // 60 second cooldown
         setOtp(["", "", "", "", "", ""]);
         inputRefs.current[0]?.focus();
         setTimeout(() => setSuccessMessage(""), 3000);
       } else {
-        setError(result.message || "Failed to resend code. Please try again.");
+        setError(result.message || "Failed to resend OTP. Please try again.");
       }
     } catch (error) {
       console.error("Resend OTP error:", error);
@@ -152,16 +140,16 @@ const EmailVerificationOtp = () => {
     setSuccessMessage("");
 
     try {
-      // API call to verify email OTP
+      // API call to verify reset password OTP
       const response = await fetch(
-        "http://localhost:8000/api/verify-email-otp",
+        "http://localhost:8000/api/verify-reset-password-otp",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            email: location.state?.email,
+            email: userEmail,
             otp: otpCode,
           }),
         }
@@ -170,16 +158,15 @@ const EmailVerificationOtp = () => {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        displayModal(
-          "success",
-          "Email Verified Successfully!",
-          "Welcome! Redirecting to dashboard..."
-        );
+        // Navigate to reset password screen with email and verified OTP token
+        navigate("/reset-password", {
+          state: { email: userEmail, token: result.token },
+        });
       } else {
         setError(result.message || "Invalid OTP. Please try again.");
       }
     } catch (error) {
-      console.error("Email verification error:", error);
+      console.error("OTP verification error:", error);
       setError("Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
@@ -211,17 +198,17 @@ const EmailVerificationOtp = () => {
               <div className="mb-8 flex flex-col items-center gap-2">
                 <div className="mb-4">
                   <Icon
-                    icon="mdi:email-check"
+                    icon="mdi:shield-key"
                     className="text-6xl bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 bg-clip-text text-transparent"
                   />
                 </div>
                 <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 bg-clip-text text-transparent">
-                  Verify Your Email
+                  Verify Code
                 </h2>
                 <p
                   className={`${theme.text.secondary} text-sm text-center px-4`}
                 >
-                  We've sent a 6-digit verification code to
+                  We've sent a 6-digit code to
                 </p>
                 <p className={`${theme.text.primary} text-sm font-semibold`}>
                   {userEmail}
@@ -301,7 +288,7 @@ const EmailVerificationOtp = () => {
                     ) : resendTimer > 0 ? (
                       <>
                         <Icon icon="mdi:timer-sand" className="text-sm" />
-                        Resend code in {resendTimer}s
+                        Resend OTP in {resendTimer}s
                       </>
                     ) : (
                       <>
@@ -331,68 +318,30 @@ const EmailVerificationOtp = () => {
                       Verifying...
                     </span>
                   ) : (
-                    "Verify Email"
+                    "Verify Code"
                   )}
                 </button>
 
-                {/* Back to Login */}
+                {/* Back to Forgot Password */}
                 <div
                   className={`text-center mt-8 pt-6 border-t ${theme.border.secondary}`}
                 >
                   <button
                     type="button"
-                    onClick={() => navigate("/login")}
-                    className={`text-sm ${theme.text.link} hover:${theme.text.linkHover} underline`}
+                    onClick={() => navigate("/forgot-password")}
+                    className={`text-sm ${theme.text.link} hover:${theme.text.linkHover} underline flex items-center justify-center gap-1 mx-auto`}
                   >
-                    Back to Login
+                    <Icon icon="mdi:arrow-left" className="text-base" />
+                    Back
                   </button>
                 </div>
               </form>
             </div>
           </div>
         </div>
-
-        {/* Modal */}
-        {showModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-6">
-            <div
-              className={`${theme.background.modal} rounded-3xl p-8 max-w-sm w-full ${theme.shadow.xl} transform transition-all animate-fadeIn`}
-            >
-              <div className="flex flex-col items-center justify-center text-center">
-                {modalContent.type === "success" ? (
-                  <div
-                    className={`w-20 h-20 ${theme.status.success} rounded-full flex items-center justify-center mb-5`}
-                  >
-                    <Icon
-                      icon="mdi:check-circle"
-                      className={`text-5xl ${theme.text.success}`}
-                    />
-                  </div>
-                ) : (
-                  <div
-                    className={`w-20 h-20 ${theme.status.error} rounded-full flex items-center justify-center mb-5`}
-                  >
-                    <Icon
-                      icon="mdi:alert-circle"
-                      className={`text-5xl ${theme.text.error}`}
-                    />
-                  </div>
-                )}
-                <h3 className={`text-2xl font-bold ${theme.text.primary} mb-2`}>
-                  {modalContent.message}
-                </h3>
-                {modalContent.details && (
-                  <p className={`text-sm ${theme.text.secondary} mb-8`}>
-                    {modalContent.details}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </>
   );
 };
 
-export default EmailVerificationOtp;
+export default ResetPasswordOtp;
