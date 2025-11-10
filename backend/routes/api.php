@@ -1,11 +1,10 @@
 <?php
 
-use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\HouseController;
-use App\Http\Controllers\Api\RegistrationCodeController;
-use App\Http\Controllers\Api\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\RegistrationOtpController;
+use App\Http\Controllers\Api\EmailVerificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,101 +17,55 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-// Health check endpoint
-Route::get('/health', function () {
-    return response()->json([
-        'status' => 'OK',
-        'message' => 'Springfield Estate API is running',
-        'timestamp' => now()->toISOString(),
-        'version' => '1.0.0-MVP'
-    ]);
-});
-
-/*
-|--------------------------------------------------------------------------
-| Authentication Routes (Public)
-|--------------------------------------------------------------------------
-*/
+// Public authentication routes
 Route::prefix('auth')->group(function () {
-    // Registration routes
-    Route::post('/verify-code', [AuthController::class, 'verifyRegistrationCode']);
-    Route::post('/register', [AuthController::class, 'completeRegistration']);
-    
-    // Login route
+    Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
 });
 
-/*
-|--------------------------------------------------------------------------
-| Protected Routes (Require Authentication)
-|--------------------------------------------------------------------------
-*/
+// For backward compatibility with your frontend
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/login', [AuthController::class, 'login']);
+
+// Public email verification routes (before user is logged in)
+Route::prefix('email-verification')->group(function () {
+    Route::post('/send-otp', [EmailVerificationController::class, 'sendVerificationOtp']);
+    Route::post('/verify', [EmailVerificationController::class, 'verifyEmail']);
+    Route::post('/resend-otp', [EmailVerificationController::class, 'resendVerificationOtp']);
+    Route::post('/check-status', [EmailVerificationController::class, 'checkVerificationStatus']);
+});
+
+// Public OTP validation (for frontend to check before registration)
+Route::post('/validate-otp', [RegistrationOtpController::class, 'validateOtp']);
+
+// Protected routes
 Route::middleware('auth:sanctum')->group(function () {
-    
-    // User profile routes
-    Route::get('/user', [AuthController::class, 'user']);
-    Route::put('/user/profile', [AuthController::class, 'updateProfile']);
-    
-    // Authentication management
-    Route::post('/auth/logout', [AuthController::class, 'logout']);
-    Route::post('/auth/logout-all', [AuthController::class, 'logoutAll']);
-    
-    /*
-    |--------------------------------------------------------------------------
-    | User Management Routes
-    |--------------------------------------------------------------------------
-    */
-    Route::middleware('role:super,landlord')->group(function () {
-        Route::apiResource('users', UserController::class);
-        Route::put('/users/{id}/status', [UserController::class, 'toggleStatus']);
+    // Authentication routes
+    Route::prefix('auth')->group(function () {
+        Route::post('/logout', [AuthController::class, 'logout']);
+        Route::get('/me', [AuthController::class, 'me']);
     });
     
-    // User can view their own profile (additional to the above)
-    Route::get('/users/{id}', [UserController::class, 'show'])
-         ->middleware('role:super,landlord,resident,security');
+    // User routes
+    Route::get('/user', [AuthController::class, 'me']);
     
-    /*
-    |--------------------------------------------------------------------------
-    | House Management Routes
-    |--------------------------------------------------------------------------
-    */
-    Route::middleware('role:super,landlord,resident')->group(function () {
-        Route::get('/houses', [HouseController::class, 'index']);
-        Route::get('/houses/{id}', [HouseController::class, 'show']);
-        Route::get('/houses/available/list', [HouseController::class, 'available']);
+    // OTP Management routes
+    Route::prefix('otp')->group(function () {
+        // Super Admin: Generate OTP for landlords
+        Route::post('/generate-landlord', [RegistrationOtpController::class, 'generateLandlordOtp']);
+        
+        // Landlord: Generate OTP for residents
+        Route::post('/generate-resident', [RegistrationOtpController::class, 'generateResidentOtp']);
+        
+        // Get user's generated OTPs
+        Route::get('/my-otps', [RegistrationOtpController::class, 'getUserOtps']);
+        
+        // Deactivate an OTP
+        Route::post('/{otpId}/deactivate', [RegistrationOtpController::class, 'deactivateOtp']);
     });
     
-    Route::middleware('role:super')->group(function () {
-        Route::post('/houses', [HouseController::class, 'store']);
-        Route::delete('/houses/{id}', [HouseController::class, 'destroy']);
-    });
-    
-    Route::middleware('role:super,landlord')->group(function () {
-        Route::put('/houses/{id}', [HouseController::class, 'update']);
-        Route::put('/houses/{id}/status', [HouseController::class, 'updateStatus']);
-    });
-    
-    /*
-    |--------------------------------------------------------------------------
-    | Registration Code Management Routes
-    |--------------------------------------------------------------------------
-    */
-    Route::middleware('role:super,landlord')->group(function () {
-        Route::get('/registration-codes', [RegistrationCodeController::class, 'index']);
-        Route::get('/registration-codes/statistics', [RegistrationCodeController::class, 'statistics']);
-        Route::post('/registration-codes/generate', [RegistrationCodeController::class, 'generate']);
-        Route::get('/registration-codes/{id}', [RegistrationCodeController::class, 'show']);
-        Route::put('/registration-codes/{id}/deactivate', [RegistrationCodeController::class, 'deactivate']);
-        Route::put('/registration-codes/bulk-deactivate', [RegistrationCodeController::class, 'bulkDeactivate']);
-    });
-    
-    Route::middleware('role:super')->group(function () {
-        Route::post('/registration-codes/cleanup-expired', [RegistrationCodeController::class, 'cleanupExpired']);
-    });
-    
-    // Role-based route groups will be added here
-    // Visitor Token routes
-    // Visitor Entry routes  
-    // Payment routes
-    // Audit Log routes
+    // TODO: Add other protected routes here
+    // Route::apiResource('houses', HouseController::class);
+    // Route::apiResource('payments', PaymentController::class);
+    // Route::apiResource('visitor-tokens', VisitorTokenController::class);
 });

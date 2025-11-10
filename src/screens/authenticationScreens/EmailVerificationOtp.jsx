@@ -22,8 +22,10 @@ const EmailVerificationOtp = () => {
   const [resendTimer, setResendTimer] = useState(0);
   const [successMessage, setSuccessMessage] = useState("");
 
-  // Get email from navigation state
+  // Get email and user role from navigation state
   const userEmail = location.state?.email || "your email";
+  const userRole = location.state?.role || "resident";
+  const userId = location.state?.user_id;
 
   // Refs for each OTP input
   const inputRefs = useRef([]);
@@ -95,7 +97,15 @@ const EmailVerificationOtp = () => {
     setTimeout(() => {
       setShowModal(false);
       if (type === "success") {
-        navigate("/dashboard");
+        // Redirect to appropriate dashboard based on user role
+        const dashboardRoutes = {
+          super: "/admin-dashboard",
+          landlord: "/landlord-dashboard",
+          resident: "/resident-dashboard",
+          security: "/security-dashboard",
+        };
+        const route = dashboardRoutes[userRole] || "/dashboard";
+        navigate(route, { state: { userId, userRole } });
       }
     }, 3000);
   };
@@ -109,13 +119,16 @@ const EmailVerificationOtp = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:8000/api/resend-email-otp",
+        "http://localhost:8000/api/email-verification/resend-otp",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ email: location.state?.email }),
+          body: JSON.stringify({
+            user_id: location.state?.user_id,
+            email: location.state?.email,
+          }),
         }
       );
 
@@ -154,15 +167,16 @@ const EmailVerificationOtp = () => {
     try {
       // API call to verify email OTP
       const response = await fetch(
-        "http://localhost:8000/api/verify-email-otp",
+        "http://localhost:8000/api/email-verification/verify",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
+            user_id: location.state?.user_id,
             email: location.state?.email,
-            otp: otpCode,
+            otp_code: otpCode,
           }),
         }
       );

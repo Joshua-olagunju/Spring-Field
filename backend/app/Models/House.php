@@ -30,12 +30,12 @@ class House extends Model
     ];
 
     /**
-     * Disable updated_at timestamp (not in schema)
+     * Disable updated_at timestamp as the table doesn't have it
      */
     const UPDATED_AT = null;
 
     /**
-     * Relationship: House belongs to landlord
+     * Get the landlord that owns the house.
      */
     public function landlord()
     {
@@ -43,15 +43,15 @@ class House extends Model
     }
 
     /**
-     * Relationship: House has many residents
+     * Get the residents living in this house.
      */
     public function residents()
     {
-        return $this->hasMany(User::class)->where('role', 'resident');
+        return $this->hasMany(User::class, 'house_id');
     }
 
     /**
-     * Relationship: House has many registration codes
+     * Get the registration codes for this house.
      */
     public function registrationCodes()
     {
@@ -59,26 +59,18 @@ class House extends Model
     }
 
     /**
-     * Get visitor tokens through residents
+     * Get active residents living in this house.
      */
-    public function visitorTokens()
+    public function activeResidents()
     {
-        return $this->hasManyThrough(VisitorToken::class, User::class, 'house_id', 'resident_id');
+        return $this->residents()->where('status_active', true);
     }
 
     /**
-     * Scope: Search by house number
+     * Get the full address display
      */
-    public function scopeByHouseNumber($query, $houseNumber)
+    public function getFullAddressAttribute()
     {
-        return $query->where('house_number', $houseNumber);
-    }
-
-    /**
-     * Scope: Filter by landlord
-     */
-    public function scopeByLandlord($query, $landlordId)
-    {
-        return $query->where('landlord_id', $landlordId);
+        return "House {$this->house_number}, {$this->address}";
     }
 }
