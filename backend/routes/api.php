@@ -38,6 +38,9 @@ Route::prefix('email-verification')->group(function () {
 // Public OTP validation (for frontend to check before registration)
 Route::post('/validate-otp', [RegistrationOtpController::class, 'validateOtp']);
 
+// Public endpoint to check super admin count (for signup flow)
+Route::get('/super-admin-count', [AuthController::class, 'getSuperAdminCount']);
+
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
     // Authentication routes

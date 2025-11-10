@@ -35,7 +35,7 @@ class AuthController extends Controller
                     'required',
                     'string',
                     'min:8',
-                    'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/',
+                    'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&\-_])[A-Za-z\d@$!%*?&\-_]*$/',
                     'confirmed'
                 ],
                 'password_confirmation' => 'required|string'
@@ -313,22 +313,21 @@ class AuthController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Login successful',
-                'data' => [
-                    'user' => [
-                        'id' => $user->id,
-                        'full_name' => $user->full_name,
-                        'email' => $user->email,
-                        'phone' => $user->phone,
-                        'role' => $user->role,
-                        'status_active' => $user->status_active,
-                        'house' => $user->house ? [
-                            'id' => $user->house->id,
-                            'house_number' => $user->house->house_number,
-                            'address' => $user->house->address,
-                        ] : null
-                    ],
-                    'token' => $token
-                ]
+                'user' => [
+                    'id' => $user->id,
+                    'full_name' => $user->full_name,
+                    'email' => $user->email,
+                    'phone' => $user->phone,
+                    'role' => $user->role,
+                    'status_active' => $user->status_active,
+                    'email_verified_at' => $user->email_verified_at,
+                    'house' => $user->house ? [
+                        'id' => $user->house->id,
+                        'house_number' => $user->house->house_number,
+                        'address' => $user->house->address,
+                    ] : null
+                ],
+                'token' => $token
             ]);
 
         } catch (\Exception $e) {
@@ -406,6 +405,32 @@ class AuthController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to get user details',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get the count of super admins in the system
+     * Used by frontend to determine if registration OTP is required
+     */
+    public function getSuperAdminCount(Request $request)
+    {
+        try {
+            $superAdminCount = User::where('role', User::ROLE_SUPER)->count();
+            
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'super_admin_count' => $superAdminCount,
+                    'requires_otp' => $superAdminCount >= 3,
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to check super admin count',
                 'error' => $e->getMessage()
             ], 500);
         }
