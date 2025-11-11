@@ -251,7 +251,7 @@ const SuperAdminDashboard = () => {
           </div>
 
           {/* Quick Stats Section */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-8">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-8">
             <div
               className={`${theme.background.card} rounded-xl ${theme.shadow.small} p-4 sm:p-6 text-center`}
             >

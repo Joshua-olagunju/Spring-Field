@@ -11,7 +11,6 @@ const SuperAdminBottomNav = () => {
   const authPages = [
     "/login",
     "/signup-otp",
-
     "/signup",
     "/email-verification",
     "/forgot-password",
@@ -25,27 +24,21 @@ const SuperAdminBottomNav = () => {
   const navItems = [
     {
       name: "Home",
-      path: "/super-admin/dashboard",
+      path: "/admin/dashboard",
       icon: "mdi:home-outline",
       iconFilled: "mdi:home",
     },
     {
       name: "Visitors",
-      path: "/super-admin/visitors",
+      path: "/admin/visitors",
       icon: "mdi:account-group-outline",
       iconFilled: "mdi:account-group",
     },
     {
-      name: "Admins",
-      path: "/super-admin/admins",
-      icon: "mdi:shield-account-outline",
-      iconFilled: "mdi:shield-account",
-    },
-    {
-      name: "Reports",
-      path: "/super-admin/reports",
-      icon: "mdi:file-chart-outline",
-      iconFilled: "mdi:file-chart",
+      name: "Users",
+      path: "/admin/users",
+      icon: "mdi:account-multiple-outline",
+      iconFilled: "mdi:account-multiple",
     },
   ];
 

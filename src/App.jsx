@@ -22,9 +22,12 @@ import SuperAdminDashboard from "./screens/SuperAdminDashboardScreens/DashboardS
 import AdminUsers from "./screens/SuperAdminDashboardScreens/AdminUsersScreen/AdminUsers";
 import ReportScreen from "./screens/SuperAdminDashboardScreens/ReportScreen/ReportScreen";
 import StatusBar from "../components/GeneralComponents/StatusBar";
+import LandlordDashboard from "./screens/AdminDashboardScreens/DashboardScreen/LandlordDashboard";
+import LandlordUsers from "./screens/AdminDashboardScreens/DashboardScreen/LandlordUsers";
 import TopNavBar from "../components/GeneralComponents/TopNavBar";
 import BottomNavBar from "../components/UserComponents/BottomNavBar";
 import SuperAdminBottomNav from "../components/SuperAdminComponents/SuperAdminBottomNav";
+import AdminBottomNav from "../components/AdminComponents/AdminBottomNav";
 import ProtectedRoute from "../components/GeneralComponents/ProtectedRoute";
 
 // Auto-redirect component for root path
@@ -115,6 +118,31 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
+          {/* Admin Routes */}
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute>
+                <LandlordDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/visitors"
+            element={
+              <ProtectedRoute>
+                <VisitorsScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute>
+                <LandlordUsers />
+              </ProtectedRoute>
+            }
+          />
           {/* Super Admin Routes */}
           <Route
             path="/super-admin/dashboard"
@@ -148,12 +176,15 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
+          {/* Removed Admins and Reports routes - navigation now only has Home, Visitors, and Users */}
         </Routes>
       </div>
 
       {/* Bottom Navigation Bar - Shows appropriate nav based on route */}
       {location.pathname.startsWith("/super-admin/") ? (
         <SuperAdminBottomNav />
+      ) : location.pathname.startsWith("/admin/") ? (
+        <AdminBottomNav />
       ) : (
         <BottomNavBar />
       )}
