@@ -21,6 +21,7 @@ import VisitorsScreen from "./screens/GeneralScreens/VisitHistoryScreen/Visitors
 import SuperAdminDashboard from "./screens/SuperAdminDashboardScreens/DashboardScreen/SuperAdminDashboard";
 import AdminUsers from "./screens/SuperAdminDashboardScreens/AdminUsersScreen/AdminUsers";
 import StatusBar from "../components/GeneralComponents/StatusBar";
+import AdminDashboard from "./screens/AdminDashboardScreens/DashboardScreen/LandlordDashboard";
 import TopNavBar from "../components/GeneralComponents/TopNavBar";
 import BottomNavBar from "../components/UserComponents/BottomNavBar";
 import SuperAdminBottomNav from "../components/SuperAdminComponents/SuperAdminBottomNav";
@@ -128,6 +129,14 @@ function AppContent() {
             element={
               <ProtectedRoute>
                 <VisitorsScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/admin"
+            element={
+              <ProtectedRoute>
+                < AdminDashboard/>
               </ProtectedRoute>
             }
           />
