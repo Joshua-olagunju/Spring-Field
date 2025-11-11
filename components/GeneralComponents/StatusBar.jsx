@@ -1,4 +1,4 @@
-import { useTheme } from "../context/useTheme";
+import { useTheme } from "../../context/useTheme";
 
 const StatusBar = () => {
   const { theme } = useTheme();

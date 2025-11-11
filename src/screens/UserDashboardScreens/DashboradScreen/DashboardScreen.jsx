@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useTheme } from "../../../context/useTheme";
+import { useTheme } from "../../../../context/useTheme";
 import { Icon } from "@iconify/react";
 
 const DashboardScreen = () => {

@@ -1,8 +1,8 @@
-import { useTheme } from "../context/useTheme";
+import { useTheme } from "../../context/useTheme";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 
-const BottomNavBar = () => {
+const SuperAdminBottomNav = () => {
   const { theme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
@@ -24,21 +24,27 @@ const BottomNavBar = () => {
   const navItems = [
     {
       name: "Home",
-      path: "/dashboard",
+      path: "/admin/dashboard",
       icon: "mdi:home-outline",
       iconFilled: "mdi:home",
     },
     {
       name: "Visitors",
-      path: "/visitors",
+      path: "/admin/visitors",
       icon: "mdi:account-group-outline",
       iconFilled: "mdi:account-group",
     },
     {
-      name: "Subscription",
-      path: "/subscription",
-      icon: "mdi:credit-card-outline",
-      iconFilled: "mdi:credit-card",
+      name: "Admins",
+      path: "/admin/admins",
+      icon: "mdi:shield-account-outline",
+      iconFilled: "mdi:shield-account",
+    },
+    {
+      name: "Reports",
+      path: "/admin/reports",
+      icon: "mdi:file-chart-outline",
+      iconFilled: "mdi:file-chart",
     },
   ];
 
@@ -46,10 +52,6 @@ const BottomNavBar = () => {
     <nav
       className={`fixed bottom-0 left-0 right-0 z-50 ${theme.bottomBar.background} ${theme.bottomBar.border} border-t`}
     >
-      {/* 
-        - On small screens: buttons have equal width for perfect balance.
-        - On large screens: more relaxed spacing with justify-evenly.
-      */}
       <div className="flex items-center justify-between sm:justify-evenly py-3 px-2 max-w-2xl mx-auto w-full">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
@@ -80,4 +82,4 @@ const BottomNavBar = () => {
   );
 };
 
-export default BottomNavBar;
+export default SuperAdminBottomNav;
