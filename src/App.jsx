@@ -19,11 +19,15 @@ import ResetPassword from "./screens/authenticationScreens/ResetPassword";
 import DashboardScreen from "./screens/UserDashboardScreens/DashboradScreen/DashboardScreen";
 import VisitorsScreen from "./screens/GeneralScreens/VisitHistoryScreen/VisitorsScreen";
 import SuperAdminDashboard from "./screens/SuperAdminDashboardScreens/DashboardScreen/SuperAdminDashboard";
+import AdminUsers from "./screens/SuperAdminDashboardScreens/AdminUsersScreen/AdminUsers";
+import ReportScreen from "./screens/SuperAdminDashboardScreens/ReportScreen/ReportScreen";
 import StatusBar from "../components/GeneralComponents/StatusBar";
-import AdminDashboard from "./screens/AdminDashboardScreens/DashboardScreen/LandlordDashboard";
+import LandlordDashboard from "./screens/AdminDashboardScreens/DashboardScreen/LandlordDashboard";
+import LandlordUsers from "./screens/AdminDashboardScreens/DashboardScreen/LandlordUsers";
 import TopNavBar from "../components/GeneralComponents/TopNavBar";
 import BottomNavBar from "../components/UserComponents/BottomNavBar";
 import SuperAdminBottomNav from "../components/SuperAdminComponents/SuperAdminBottomNav";
+import AdminBottomNav from "../components/AdminComponents/AdminBottomNav";
 import ProtectedRoute from "../components/GeneralComponents/ProtectedRoute";
 
 // Auto-redirect component for root path
@@ -114,12 +118,12 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
-          {/* Super Admin Routes */}
+          {/* Admin Routes */}
           <Route
             path="/admin/dashboard"
             element={
               <ProtectedRoute>
-                <SuperAdminDashboard />
+                <LandlordDashboard />
               </ProtectedRoute>
             }
           />
@@ -132,10 +136,43 @@ function AppContent() {
             }
           />
           <Route
-            path="/admin/admin"
+            path="/admin/users"
             element={
               <ProtectedRoute>
-                < AdminDashboard/>
+                <LandlordUsers />
+              </ProtectedRoute>
+            }
+          />
+          {/* Super Admin Routes */}
+          <Route
+            path="/super-admin/dashboard"
+            element={
+              <ProtectedRoute>
+                <SuperAdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/super-admin/visitors"
+            element={
+              <ProtectedRoute>
+                <VisitorsScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/super-admin/admins"
+            element={
+              <ProtectedRoute>
+                <AdminUsers />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/super-admin/reports"
+            element={
+              <ProtectedRoute>
+                <ReportScreen />
               </ProtectedRoute>
             }
           />
@@ -144,8 +181,10 @@ function AppContent() {
       </div>
 
       {/* Bottom Navigation Bar - Shows appropriate nav based on route */}
-      {location.pathname.startsWith("/admin/") ? (
+      {location.pathname.startsWith("/super-admin/") ? (
         <SuperAdminBottomNav />
+      ) : location.pathname.startsWith("/admin/") ? (
+        <AdminBottomNav />
       ) : (
         <BottomNavBar />
       )}

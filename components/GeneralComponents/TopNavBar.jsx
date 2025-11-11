@@ -72,7 +72,7 @@ const TopNavBar = () => {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-40 ${theme.topNav.background} ${theme.topNav.border} border-b`}
+      className={`fixed top-0 z-[1000] left-0 right-0 z-40 ${theme.topNav.background} ${theme.topNav.border} border-b`}
     >
       <div className="flex items-center justify-between px-4 sm:px-6 py-3">
         {/* Logo Section */}
