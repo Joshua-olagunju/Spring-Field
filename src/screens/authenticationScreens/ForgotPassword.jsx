@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../../context/useTheme";
-import ThemeToggle from "../../../components/ThemeToggle";
-import AnimatedSecurityBackground from "../../../components/AnimatedSecurityBackground";
+import ThemeToggle from "../../../components/GeneralComponents/ThemeToggle";
+import AnimatedSecurityBackground from "../../../components/GeneralComponents/AnimatedSecurityBackground";
 import { Icon } from "@iconify/react";
 
 const ForgotPassword = () => {

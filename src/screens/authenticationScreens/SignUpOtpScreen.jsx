@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../../context/useTheme";
-import ThemeToggle from "../../../components/ThemeToggle";
-import AnimatedSecurityBackground from "../../../components/AnimatedSecurityBackground";
+import ThemeToggle from "../../../components/GeneralComponents/ThemeToggle";
+import AnimatedSecurityBackground from "../../../components/GeneralComponents/AnimatedSecurityBackground";
 import { Icon } from "@iconify/react";
 
 const SignUpOtpScreen = () => {
@@ -189,7 +189,9 @@ const SignUpOtpScreen = () => {
                 icon="mdi:loading"
                 className="text-6xl animate-spin text-blue-600"
               />
-              <p className={theme.text.primary}>Checking registration status...</p>
+              <p className={theme.text.primary}>
+                Checking registration status...
+              </p>
             </div>
           ) : superAdminCount >= 3 ? (
             // Show OTP form only if >= 3 super admins
@@ -197,118 +199,118 @@ const SignUpOtpScreen = () => {
               <div
                 className={`${theme.background.card} rounded-[0.5rem] ${theme.shadow.sm} w-full px-12 pt-8 pb-6`}
               >
-              {/* Header */}
-              <div className="mb-8 flex flex-col items-center gap-2">
-                <div className="mb-4">
-                  <Icon
-                    icon="mdi:email-lock"
-                    className="text-6xl bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 bg-clip-text text-transparent"
-                  />
-                </div>
-                <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 bg-clip-text text-transparent">
-                  Verify OTP
-                </h2>
-                <p className={`${theme.text.secondary} text-sm text-center`}>
-                  Enter the 6-digit code sent to your email to access
-                  registration
-                </p>
-              </div>
-
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* OTP Input Fields */}
-                <div>
-                  <label
-                    className={`block text-sm text-center font-semibold ${theme.text.primary} mb-4`}
-                  >
-                    Enter OTP Code
-                  </label>
-                  <div className="flex justify-center gap-2 sm:gap-3">
-                    {otp.map((digit, index) => (
-                      <input
-                        key={index}
-                        ref={(el) => (inputRefs.current[index] = el)}
-                        type="text"
-                        inputMode="numeric"
-                        maxLength={1}
-                        value={digit}
-                        onChange={(e) => handleChange(index, e.target.value)}
-                        onKeyDown={(e) => handleKeyDown(index, e)}
-                        onPaste={handlePaste}
-                        className={`w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl font-bold ${
-                          theme.background.input
-                        } ${
-                          theme.text.primary
-                        } border-2 rounded-lg focus:outline-none transition-all ${
-                          error
-                            ? "border-red-500 focus:ring-2 focus:ring-red-500"
-                            : "border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                  {error && (
-                    <p
-                      className={`${theme.text.error} text-xs mt-3 text-center flex items-center justify-center gap-1`}
-                    >
-                      <Icon icon="mdi:alert-circle" className="text-sm" />
-                      {error}
-                    </p>
-                  )}
-                </div>
-
-                {/* Verify Button */}
-                <button
-                  type="submit"
-                  disabled={otp.join("").length !== 6 || isLoading}
-                  className={`w-full font-semibold text-[0.9rem] py-3 px-2 rounded-[0.3rem] text-white transition-all active:scale-95 ${
-                    otp.join("").length === 6 && !isLoading
-                      ? "bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 hover:from-blue-700 hover:via-purple-700 hover:to-blue-700 shadow-lg hover:shadow-xl"
-                      : theme.button.disabled
-                  }`}
-                >
-                  {isLoading ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <Icon
-                        icon="mdi:loading"
-                        className="animate-spin text-white"
-                      />
-                      Verifying...
-                    </span>
-                  ) : (
-                    "Verify OTP"
-                  )}
-                </button>
-
-                {/* Contact Admin Message */}
-                <div className="text-center">
-                  <div
-                    className={`${theme.background.input} border ${theme.border.secondary} rounded-lg p-4`}
-                  >
+                {/* Header */}
+                <div className="mb-8 flex flex-col items-center gap-2">
+                  <div className="mb-4">
                     <Icon
-                      icon="mdi:information"
-                      className={`text-3xl ${theme.text.primary} mx-auto mb-2`}
+                      icon="mdi:email-lock"
+                      className="text-6xl bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 bg-clip-text text-transparent"
                     />
-                    <p className={`text-sm ${theme.text.secondary}`}>
-                      Need help? Please contact your administrator for OTP
-                      assistance.
-                    </p>
                   </div>
+                  <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 bg-clip-text text-transparent">
+                    Verify OTP
+                  </h2>
+                  <p className={`${theme.text.secondary} text-sm text-center`}>
+                    Enter the 6-digit code sent to your email to access
+                    registration
+                  </p>
                 </div>
 
-                {/* Back to Login */}
-                <div
-                  className={`text-center mt-8 pt-6 border-t ${theme.border.secondary}`}
-                >
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* OTP Input Fields */}
+                  <div>
+                    <label
+                      className={`block text-sm text-center font-semibold ${theme.text.primary} mb-4`}
+                    >
+                      Enter OTP Code
+                    </label>
+                    <div className="flex justify-center gap-2 sm:gap-3">
+                      {otp.map((digit, index) => (
+                        <input
+                          key={index}
+                          ref={(el) => (inputRefs.current[index] = el)}
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={1}
+                          value={digit}
+                          onChange={(e) => handleChange(index, e.target.value)}
+                          onKeyDown={(e) => handleKeyDown(index, e)}
+                          onPaste={handlePaste}
+                          className={`w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl font-bold ${
+                            theme.background.input
+                          } ${
+                            theme.text.primary
+                          } border-2 rounded-lg focus:outline-none transition-all ${
+                            error
+                              ? "border-red-500 focus:ring-2 focus:ring-red-500"
+                              : "border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    {error && (
+                      <p
+                        className={`${theme.text.error} text-xs mt-3 text-center flex items-center justify-center gap-1`}
+                      >
+                        <Icon icon="mdi:alert-circle" className="text-sm" />
+                        {error}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Verify Button */}
                   <button
-                    type="button"
-                    onClick={() => navigate("/login")}
-                    className={`text-sm ${theme.text.link} hover:${theme.text.linkHover} underline`}
+                    type="submit"
+                    disabled={otp.join("").length !== 6 || isLoading}
+                    className={`w-full font-semibold text-[0.9rem] py-3 px-2 rounded-[0.3rem] text-white transition-all active:scale-95 ${
+                      otp.join("").length === 6 && !isLoading
+                        ? "bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 hover:from-blue-700 hover:via-purple-700 hover:to-blue-700 shadow-lg hover:shadow-xl"
+                        : theme.button.disabled
+                    }`}
                   >
-                    Back to Login
+                    {isLoading ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <Icon
+                          icon="mdi:loading"
+                          className="animate-spin text-white"
+                        />
+                        Verifying...
+                      </span>
+                    ) : (
+                      "Verify OTP"
+                    )}
                   </button>
-                </div>
-              </form>
-            </div>
+
+                  {/* Contact Admin Message */}
+                  <div className="text-center">
+                    <div
+                      className={`${theme.background.input} border ${theme.border.secondary} rounded-lg p-4`}
+                    >
+                      <Icon
+                        icon="mdi:information"
+                        className={`text-3xl ${theme.text.primary} mx-auto mb-2`}
+                      />
+                      <p className={`text-sm ${theme.text.secondary}`}>
+                        Need help? Please contact your administrator for OTP
+                        assistance.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Back to Login */}
+                  <div
+                    className={`text-center mt-8 pt-6 border-t ${theme.border.secondary}`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => navigate("/login")}
+                      className={`text-sm ${theme.text.link} hover:${theme.text.linkHover} underline`}
+                    >
+                      Back to Login
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           ) : null}
         </div>
