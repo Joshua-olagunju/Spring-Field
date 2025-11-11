@@ -30,7 +30,9 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
 
   // Check email verification
   if (user && !user.email_verified_at) {
-    return <Navigate to="/email-verification" state={{ from: location }} replace />;
+    return (
+      <Navigate to="/email-verification" state={{ from: location }} replace />
+    );
   }
 
   // Check role-based access if required

@@ -5,7 +5,7 @@ body {
   margin: 0;
   padding: 0;
   overflow-x: hidden;
-  font-family: 'Poppins', sans-serif;
+  font-family: "Poppins", sans-serif;
 }
 
 #root {
@@ -14,12 +14,70 @@ body {
   padding: 0;
 }
 
-input{
-    font-size: 0.8rem;
-    padding: 1rem;
-  
+input {
+  font-size: 0.8rem;
+  padding: 1rem;
 }
-label{
-    font-size: 0.8rem;
-    font-weight: 500;
+label {
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+/* make it visible: larger scrollbar so gradient shows */
+::-webkit-scrollbar {
+  width: 0.6rem; /* visible width */
+  height: 0.6rem; /* visible height for horizontal scroll */
+}
+
+/* track */
+::-webkit-scrollbar-track {
+  background: #f5f7fa;
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.02);
+}
+
+/* thumb — gradient + fallback color */
+::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  border: 2px solid transparent; /* gives breathing space so gradient is clearer */
+  background-image: linear-gradient(
+    180deg,
+    #2563eb 0%,
+    #1e40af 50%,
+    #0f172a 100%
+  );
+  background-color: #2563eb; /* fallback */
+  background-clip: padding-box; /* make sure border stays visible */
+  min-height: 24px; /* keeps thumb from becoming too tiny */
+}
+
+/* thumb hover */
+::-webkit-scrollbar-thumb:hover {
+  background-image: linear-gradient(
+    180deg,
+    #1d4ed8 0%,
+    #1e3a8a 50%,
+    #0b1220 100%
+  );
+  cursor: pointer;
+}
+
+/* optional: smaller track for horizontal scrollbar */
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* dark mode friendly */
+@media (prefers-color-scheme: dark) {
+  ::-webkit-scrollbar-track {
+    background: #0f1724;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-image: linear-gradient(
+      180deg,
+      #3b82f6 0%,
+      #1d4ed8 50%,
+      #0b1220 100%
+    );
+    background-color: #1d4ed8;
+  }
 }
