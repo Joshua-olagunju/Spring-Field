@@ -24,25 +24,25 @@ const SuperAdminBottomNav = () => {
   const navItems = [
     {
       name: "Home",
-      path: "/admin/dashboard",
+      path: "/super-admin/dashboard",
       icon: "mdi:home-outline",
       iconFilled: "mdi:home",
     },
     {
       name: "Visitors",
-      path: "/admin/visitors",
+      path: "/super-admin/visitors",
       icon: "mdi:account-group-outline",
       iconFilled: "mdi:account-group",
     },
     {
       name: "Admins",
-      path: "/admin/admins",
+      path: "/super-admin/admins",
       icon: "mdi:shield-account-outline",
       iconFilled: "mdi:shield-account",
     },
     {
       name: "Reports",
-      path: "/admin/reports",
+      path: "/super-admin/reports",
       icon: "mdi:file-chart-outline",
       iconFilled: "mdi:file-chart",
     },

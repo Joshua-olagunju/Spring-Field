@@ -34,7 +34,72 @@ const AdminUsers = () => {
       lastActive: "2025-11-10T16:45:00",
     },
     {
-      id: 3,
+      id: 4,
+      name: "Chisom Adeyemi",
+      phone: "+234 905 234 5678",
+      email: "chisom.adeyemi@springfield.com",
+      houseNumber: "Block C, Unit 12",
+      address: "789 Estate Road, Lagos",
+      role: "Payments Admin",
+      totalUsers: 31,
+      status: "active",
+      joinDate: "2024-02-10",
+      lastActive: "2025-11-10T13:20:00",
+    },
+    {
+      id: 5,
+      name: "Chisom Adeyemi",
+      phone: "+234 905 234 5678",
+      email: "chisom.adeyemi@springfield.com",
+      houseNumber: "Block C, Unit 12",
+      address: "789 Estate Road, Lagos",
+      role: "Payments Admin",
+      totalUsers: 31,
+      status: "active",
+      joinDate: "2024-02-10",
+      lastActive: "2025-11-10T13:20:00",
+    },
+    {
+      id: 6,
+      name: "Chisom Adeyemi",
+      phone: "+234 905 234 5678",
+      email: "chisom.adeyemi@springfield.com",
+      houseNumber: "Block C, Unit 12",
+      address: "789 Estate Road, Lagos",
+      role: "Payments Admin",
+      totalUsers: 31,
+      status: "active",
+      joinDate: "2024-02-10",
+      lastActive: "2025-11-10T13:20:00",
+    },
+    {
+      id: 7,
+      name: "Chisom Adeyemi",
+      phone: "+234 905 234 5678",
+      email: "chisom.adeyemi@springfield.com",
+      houseNumber: "Block C, Unit 12",
+      address: "789 Estate Road, Lagos",
+      role: "Payments Admin",
+      totalUsers: 31,
+      status: "active",
+      joinDate: "2024-02-10",
+      lastActive: "2025-11-10T13:20:00",
+    },
+    {
+      id: 8,
+      name: "Chisom Adeyemi",
+      phone: "+234 905 234 5678",
+      email: "chisom.adeyemi@springfield.com",
+      houseNumber: "Block C, Unit 12",
+      address: "789 Estate Road, Lagos",
+      role: "Payments Admin",
+      totalUsers: 31,
+      status: "active",
+      joinDate: "2024-02-10",
+      lastActive: "2025-11-10T13:20:00",
+    },
+    {
+      id: 9,
       name: "Chisom Adeyemi",
       phone: "+234 905 234 5678",
       email: "chisom.adeyemi@springfield.com",
@@ -62,7 +127,7 @@ const AdminUsers = () => {
 
       {/* Content */}
       <div className="w-full px-0">
-        <div className="max-w-full mx-auto  sm:px-6">
+        <div className="max-w-full mx-auto">
           {/* Header */}
           <div className="mb-6">
             <h1
@@ -119,16 +184,23 @@ const AdminUsers = () => {
                 </p>
               </div>
             ) : (
-              admins.map((admin) => (
+              admins.map((admin, index) => (
                 <div
                   key={admin.id}
                   className={`w-full ${theme.background.card} rounded-xl ${theme.shadow.small} p-4 sm:p-5 border ${theme.border.secondary} hover:border-orange-500 transition-all`}
                 >
-                  <div className="flex items-center justify-between">
-                    {/* Admin Info */}
-                    <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-4">
+                    {/* Number Badge */}
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-md">
+                      <span className="text-white font-bold text-sm">
+                        {index + 1}
+                      </span>
+                    </div>
+
+                    {/* Admin Info - Start at top */}
+                    <div className="flex-1 min-w-0 pt-0.5">
                       <h3
-                        className={`font-semibold ${theme.text.primary} mb-1 text-base sm:text-lg truncate`}
+                        className={`font-semibold ${theme.text.primary} text-base sm:text-lg truncate`}
                       >
                         {admin.name}
                       </h3>
@@ -152,8 +224,12 @@ const AdminUsers = () => {
                     </div>
 
                     {/* 3-Dot Menu */}
-                    <div className="ml-4 flex-shrink-0">
-                      <AdminUsersActions theme={theme} admin={admin} />
+                    <div className="flex-shrink-0">
+                      <AdminUsersActions
+                        theme={theme}
+                        admin={admin}
+                        adminIndex={index + 1}
+                      />
                     </div>
                   </div>
                 </div>

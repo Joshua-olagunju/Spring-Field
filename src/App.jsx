@@ -20,6 +20,7 @@ import DashboardScreen from "./screens/UserDashboardScreens/DashboradScreen/Dash
 import VisitorsScreen from "./screens/GeneralScreens/VisitHistoryScreen/VisitorsScreen";
 import SuperAdminDashboard from "./screens/SuperAdminDashboardScreens/DashboardScreen/SuperAdminDashboard";
 import AdminUsers from "./screens/SuperAdminDashboardScreens/AdminUsersScreen/AdminUsers";
+import ReportScreen from "./screens/SuperAdminDashboardScreens/ReportScreen/ReportScreen";
 import StatusBar from "../components/GeneralComponents/StatusBar";
 import TopNavBar from "../components/GeneralComponents/TopNavBar";
 import BottomNavBar from "../components/UserComponents/BottomNavBar";
@@ -116,7 +117,7 @@ function AppContent() {
           />
           {/* Super Admin Routes */}
           <Route
-            path="/admin/dashboard"
+            path="/super-admin/dashboard"
             element={
               <ProtectedRoute>
                 <SuperAdminDashboard />
@@ -124,7 +125,7 @@ function AppContent() {
             }
           />
           <Route
-            path="/admin/visitors"
+            path="/super-admin/visitors"
             element={
               <ProtectedRoute>
                 <VisitorsScreen />
@@ -132,7 +133,7 @@ function AppContent() {
             }
           />
           <Route
-            path="/admin/admins"
+            path="/super-admin/admins"
             element={
               <ProtectedRoute>
                 <AdminUsers />
@@ -140,12 +141,10 @@ function AppContent() {
             }
           />
           <Route
-            path="/admin/reports"
+            path="/super-admin/reports"
             element={
               <ProtectedRoute>
-                <div className="min-h-screen flex items-center justify-center">
-                  <h2 className="text-2xl">Reports - Coming Soon</h2>
-                </div>
+                <ReportScreen />
               </ProtectedRoute>
             }
           />
@@ -153,7 +152,7 @@ function AppContent() {
       </div>
 
       {/* Bottom Navigation Bar - Shows appropriate nav based on route */}
-      {location.pathname.startsWith("/admin/") ? (
+      {location.pathname.startsWith("/super-admin/") ? (
         <SuperAdminBottomNav />
       ) : (
         <BottomNavBar />

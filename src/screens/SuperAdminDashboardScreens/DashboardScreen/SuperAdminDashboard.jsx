@@ -1,11 +1,17 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "../../../../context/useTheme";
 import { Icon } from "@iconify/react";
+import {
+  GenerateAccountTokenModal,
+  GenerateVisitorTokenModal,
+} from "./TokenGenerationModals";
 
 const SuperAdminDashboard = () => {
   const { theme, isDarkMode } = useTheme();
   const [recentVisitors, setRecentVisitors] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showAccountTokenModal, setShowAccountTokenModal] = useState(false);
+  const [showVisitorTokenModal, setShowVisitorTokenModal] = useState(false);
 
   useEffect(() => {
     // Fetch recent visitors from API
@@ -42,13 +48,11 @@ const SuperAdminDashboard = () => {
   };
 
   const handleGenerateAccountToken = () => {
-    console.log("Generate Account Token clicked");
-    // Navigate to account token generation screen
+    setShowAccountTokenModal(true);
   };
 
   const handleGenerateVisitorToken = () => {
-    console.log("Generate Visitor Token clicked");
-    // Navigate to visitor token generation screen
+    setShowVisitorTokenModal(true);
   };
 
   return (
@@ -65,7 +69,7 @@ const SuperAdminDashboard = () => {
 
       {/* Content */}
       <div className="w-full px-0">
-        <div className="max-w-full mx-auto px-4 sm:px-6">
+        <div className="max-w-full mx-auto sm:px-6">
           {/* Welcome Section */}
           <div className="mb-8">
             <h1
@@ -269,16 +273,16 @@ const SuperAdminDashboard = () => {
               className={`${theme.background.card} rounded-xl ${theme.shadow.small} p-4 sm:p-6 text-center`}
             >
               <Icon
-                icon="mdi:account-multiple-plus"
+                icon="mdi:clock-check-outline"
                 className={`text-3xl sm:text-4xl text-green-600 mb-2 mx-auto`}
               />
               <p
                 className={`text-2xl sm:text-3xl font-bold ${theme.text.primary} mb-1`}
               >
-                12
+                {recentVisitors.filter((v) => v.status === "active").length}
               </p>
               <p className={`text-xs sm:text-sm ${theme.text.secondary}`}>
-                Total Residents
+                Active Now
               </p>
             </div>
 
@@ -286,7 +290,24 @@ const SuperAdminDashboard = () => {
               className={`${theme.background.card} rounded-xl ${theme.shadow.small} p-4 sm:p-6 text-center`}
             >
               <Icon
-                icon="mdi:shield-account-multiple"
+                icon="mdi:qrcode"
+                className={`text-3xl sm:text-4xl text-purple-600 mb-2 mx-auto`}
+              />
+              <p
+                className={`text-2xl sm:text-3xl font-bold ${theme.text.primary} mb-1`}
+              >
+                {recentVisitors.filter((v) => v.status === "pending").length}
+              </p>
+              <p className={`text-xs sm:text-sm ${theme.text.secondary}`}>
+                Pending Tokens
+              </p>
+            </div>
+
+            <div
+              className={`${theme.background.card} rounded-xl ${theme.shadow.small} p-4 sm:p-6 text-center`}
+            >
+              <Icon
+                icon="mdi:file-chart"
                 className={`text-3xl sm:text-4xl text-orange-600 mb-2 mx-auto`}
               />
               <p
@@ -298,26 +319,21 @@ const SuperAdminDashboard = () => {
                 Total Admins
               </p>
             </div>
-
-            <div
-              className={`${theme.background.card} rounded-xl ${theme.shadow.small} p-4 sm:p-6 text-center`}
-            >
-              <Icon
-                icon="mdi:file-chart"
-                className={`text-3xl sm:text-4xl text-purple-600 mb-2 mx-auto`}
-              />
-              <p
-                className={`text-2xl sm:text-3xl font-bold ${theme.text.primary} mb-1`}
-              >
-                8
-              </p>
-              <p className={`text-xs sm:text-sm ${theme.text.secondary}`}>
-                Reports
-              </p>
-            </div>
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      <GenerateAccountTokenModal
+        theme={theme}
+        isOpen={showAccountTokenModal}
+        onClose={() => setShowAccountTokenModal(false)}
+      />
+      <GenerateVisitorTokenModal
+        theme={theme}
+        isOpen={showVisitorTokenModal}
+        onClose={() => setShowVisitorTokenModal(false)}
+      />
     </div>
   );
 };
