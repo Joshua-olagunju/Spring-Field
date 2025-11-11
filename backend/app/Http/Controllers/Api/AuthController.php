@@ -51,11 +51,16 @@ class AuthController extends Controller
 
             // If OTP is provided, we need to validate against it
             if ($request->has('otp_code')) {
-                // Don't require house_number and address as they might be pre-filled from OTP
+                // For landlord OTP registration, require house_number and house_type
+                // Address is optional (nullable)
+                $validationRules['house_number'] = 'required|string|max:50';
+                $validationRules['house_type'] = 'required|string|in:room_self,room_and_parlor,2_bedroom,3_bedroom,duplex';
+                $validationRules['address'] = 'nullable|string|max:255'; // Optional for OTP
             } else if (!$isFirstThreeUsers) {
                 // Non-first-3 users without OTP need house info
                 $validationRules['house_number'] = 'required|string|max:50';
                 $validationRules['address'] = 'required|string|max:255';
+                $validationRules['house_type'] = 'nullable|string|in:room_self,room_and_parlor,2_bedroom,3_bedroom,duplex';
             }
 
             $validator = Validator::make($request->all(), $validationRules, [
@@ -82,6 +87,7 @@ class AuthController extends Controller
                 $userRole = User::ROLE_RESIDENT;
                 $houseNumber = $request->house_number;
                 $address = $request->address;
+                $houseType = $request->house_type ?? 'room_self';
                 $houseId = null;
 
                 // Handle OTP-based registration for non-first-3 users
@@ -117,41 +123,35 @@ class AuthController extends Controller
                 $house = null;
 
                 // Create or find house for non-super-admin users
-                if ($userRole !== User::ROLE_SUPER) {
+                // For landlords registering via OTP, we'll create the house AFTER user creation
+                if ($userRole !== User::ROLE_SUPER && $userRole !== User::ROLE_LANDLORD) {
                     if ($houseId) {
                         // Use existing house from OTP
                         $house = House::find($houseId);
                     } else {
-                        // Find or create house
+                        // Find or create house for resident
                         $house = House::where('house_number', $houseNumber)
                                     ->where('address', $address)
                                     ->first();
 
-                        if (!$house) {
-                            if ($userRole === User::ROLE_LANDLORD) {
-                                // Landlord will own this house - create placeholder, will be updated after user creation
-                                $house = House::create([
-                                    'landlord_id' => 1, // Temporary, will be updated
-                                    'house_number' => $houseNumber,
-                                    'address' => $address,
-                                ]);
-                            } else {
-                                // Resident needs a house with a landlord - create temp landlord
-                                $tempLandlord = User::create([
-                                    'full_name' => 'Temp Landlord for ' . $houseNumber,
-                                    'phone' => 'temp_' . time(),
-                                    'email' => 'temp_landlord_' . time() . '@temp.com',
-                                    'password_hash' => Hash::make('temporary_password'),
-                                    'role' => User::ROLE_LANDLORD,
-                                    'status_active' => false,
-                                ]);
+                        if (!$house && $houseNumber && $address) {
+                            // Only create house if we have house information
+                            // Resident needs a house with a landlord - create temp landlord
+                            $tempLandlord = User::create([
+                                'full_name' => 'Temp Landlord for ' . $houseNumber,
+                                'phone' => 'temp_' . time(),
+                                'email' => 'temp_landlord_' . time() . '@temp.com',
+                                'password_hash' => Hash::make('temporary_password'),
+                                'role' => User::ROLE_LANDLORD,
+                                'status_active' => false,
+                            ]);
 
-                                $house = House::create([
-                                    'landlord_id' => $tempLandlord->id,
-                                    'house_number' => $houseNumber,
-                                    'address' => $address,
-                                ]);
-                            }
+                            $house = House::create([
+                                'landlord_id' => $tempLandlord->id,
+                                'house_number' => $houseNumber,
+                                'address' => $address,
+                                'house_type' => $houseType,
+                            ]);
                         }
                     }
                 }
@@ -173,9 +173,19 @@ class AuthController extends Controller
 
                 $user = User::create($userData);
 
-                // If this user is a landlord and we created a placeholder house, update the landlord_id
-                if ($userRole === User::ROLE_LANDLORD && $house && $house->landlord_id === 1) {
-                    $house->update(['landlord_id' => $user->id]);
+                // NOW create house for landlords registering via OTP (AFTER user is created)
+                if ($userRole === User::ROLE_LANDLORD && $houseNumber && !$house) {
+                    $houseAddress = $address ?: 'To be updated'; // Use provided address or placeholder
+                    
+                    $house = House::create([
+                        'landlord_id' => $user->id, // Use the newly created user ID
+                        'house_number' => $houseNumber,
+                        'address' => $houseAddress,
+                        'house_type' => $houseType,
+                    ]);
+                    
+                    // Update user with house_id
+                    $user->update(['house_id' => $house->id]);
                 }
 
                 // Mark OTP as used if applicable
@@ -195,6 +205,7 @@ class AuthController extends Controller
                         'used_otp' => $otp ? $otp->otp_code : null,
                         'otp_generated_by' => $otp ? $otp->generated_by : null,
                         'house_number' => $house ? $house->house_number : null,
+                        'house_type' => $house ? $house->house_type : null,
                         'address' => $house ? $house->address : null,
                         'description' => $request->description
                     ]
@@ -227,6 +238,7 @@ class AuthController extends Controller
                         'house' => $house ? [
                             'id' => $house->id,
                             'house_number' => $house->house_number,
+                            'house_type' => $house->house_type,
                             'address' => $house->address,
                         ] : null
                     ],
@@ -324,6 +336,7 @@ class AuthController extends Controller
                     'house' => $user->house ? [
                         'id' => $user->house->id,
                         'house_number' => $user->house->house_number,
+                        'house_type' => $user->house->house_type,
                         'address' => $user->house->address,
                     ] : null
                 ],
@@ -390,6 +403,7 @@ class AuthController extends Controller
                         'house' => $user->house ? [
                             'id' => $user->house->id,
                             'house_number' => $user->house->house_number,
+                            'house_type' => $user->house->house_type,
                             'address' => $user->house->address,
                             'landlord' => $user->house->landlord ? [
                                 'id' => $user->house->landlord->id,
