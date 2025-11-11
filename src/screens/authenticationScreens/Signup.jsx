@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../../context/useTheme";
-import ThemeToggle from "../../../components/ThemeToggle";
-import AnimatedSecurityBackground from "../../../components/AnimatedSecurityBackground";
+import ThemeToggle from "../../../components/GeneralComponents/ThemeToggle";
+import AnimatedSecurityBackground from "../../../components/GeneralComponents/AnimatedSecurityBackground";
 import { Icon } from "@iconify/react";
 
 const SignUp = () => {
@@ -156,14 +156,23 @@ const SignUp = () => {
     setIsFormValid(isValid);
   }, [formData, passwordRequirements, errors]);
 
-  const displayModal = (type, message, details = "", userEmail = "", userId = null, userRole = "resident") => {
+  const displayModal = (
+    type,
+    message,
+    details = "",
+    userEmail = "",
+    userId = null,
+    userRole = "resident"
+  ) => {
     setModalContent({ type, message, details });
     setShowModal(true);
 
     setTimeout(() => {
       setShowModal(false);
       if (type === "success") {
-        navigate("/email-verification", { state: { email: userEmail, user_id: userId, role: userRole } });
+        navigate("/email-verification", {
+          state: { email: userEmail, user_id: userId, role: userRole },
+        });
       }
     }, 3000);
   };
@@ -219,7 +228,9 @@ const SignUp = () => {
       } else {
         console.error("Registration error response:", result);
         const errorMessage = result.message || "Please try again.";
-        const errorDetails = result.errors ? Object.values(result.errors).flat().join(", ") : "";
+        const errorDetails = result.errors
+          ? Object.values(result.errors).flat().join(", ")
+          : "";
         displayModal(
           "error",
           "Registration Failed",

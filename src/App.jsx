@@ -3,6 +3,7 @@ import {
   Routes,
   Route,
   Navigate,
+  useLocation,
 } from "react-router-dom";
 import "./App.css";
 import { ThemeProvider } from "../context/ThemeContext";
@@ -15,12 +16,15 @@ import EmailVerificationOtp from "./screens/authenticationScreens/EmailVerificat
 import ForgotPassword from "./screens/authenticationScreens/ForgotPassword";
 import ResetPasswordOtp from "./screens/authenticationScreens/ResetPasswordOtp";
 import ResetPassword from "./screens/authenticationScreens/ResetPassword";
-import DashboardScreen from "./screens/DashboradScreen/DashboardScreen";
-import VisitorsScreen from "./screens/VisitHistoryScreen/VisitorsScreen";
-import StatusBar from "../components/StatusBar";
-import TopNavBar from "../components/TopNavBar";
-import BottomNavBar from "../components/BottomNavBar";
-import ProtectedRoute from "../components/ProtectedRoute";
+import DashboardScreen from "./screens/UserDashboardScreens/DashboradScreen/DashboardScreen";
+import VisitorsScreen from "./screens/GeneralScreens/VisitHistoryScreen/VisitorsScreen";
+import SuperAdminDashboard from "./screens/SuperAdminDashboardScreens/DashboardScreen/SuperAdminDashboard";
+import AdminUsers from "./screens/SuperAdminDashboardScreens/AdminUsersScreen/AdminUsers";
+import StatusBar from "../components/GeneralComponents/StatusBar";
+import TopNavBar from "../components/GeneralComponents/TopNavBar";
+import BottomNavBar from "../components/UserComponents/BottomNavBar";
+import SuperAdminBottomNav from "../components/SuperAdminComponents/SuperAdminBottomNav";
+import ProtectedRoute from "../components/GeneralComponents/ProtectedRoute";
 
 // Auto-redirect component for root path
 const AutoRedirect = () => {
@@ -49,6 +53,7 @@ const AutoRedirect = () => {
 
 function AppContent() {
   // const { isAuthenticated } = useUser();
+  const location = useLocation();
 
   return (
     <>
@@ -109,11 +114,50 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
+          {/* Super Admin Routes */}
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute>
+                <SuperAdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/visitors"
+            element={
+              <ProtectedRoute>
+                <VisitorsScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/admins"
+            element={
+              <ProtectedRoute>
+                <AdminUsers />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/reports"
+            element={
+              <ProtectedRoute>
+                <div className="min-h-screen flex items-center justify-center">
+                  <h2 className="text-2xl">Reports - Coming Soon</h2>
+                </div>
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </div>
 
-      {/* Bottom Navigation Bar - Hides on auth pages automatically */}
-      <BottomNavBar />
+      {/* Bottom Navigation Bar - Shows appropriate nav based on route */}
+      {location.pathname.startsWith("/admin/") ? (
+        <SuperAdminBottomNav />
+      ) : (
+        <BottomNavBar />
+      )}
     </>
   );
 }

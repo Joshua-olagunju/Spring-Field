@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useTheme } from "../../../context/useTheme";
+import { useTheme } from "../../../../context/useTheme";
 import { Icon } from "@iconify/react";
 import { format } from "date-fns";
 
@@ -63,7 +63,7 @@ const VisitorsScreen = () => {
 
       {/* Content */}
       <div className="w-full px-0">
-        <div className="max-w-full mx-auto  sm:px-6">
+        <div className="max-w-full mx-auto px-0 md:px-4">
           {/* Header */}
           <div className="mb-6">
             <h1
