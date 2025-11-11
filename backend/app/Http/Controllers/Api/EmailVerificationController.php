@@ -129,6 +129,11 @@ class EmailVerificationController extends Controller
                 // Mark user email as verified
                 $user->markEmailAsVerified();
                 
+                // Activate status for landlords when they verify email
+                if ($user->role === User::ROLE_LANDLORD && !$user->status_active) {
+                    $user->update(['status_active' => true]);
+                }
+                
                 // Generate authentication token for the user
                 $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -141,7 +146,8 @@ class EmailVerificationController extends Controller
                         'full_name' => $user->full_name,
                         'email' => $user->email,
                         'email_verified_at' => $user->email_verified_at,
-                        'role' => $user->role
+                        'role' => $user->role,
+                        'status_active' => $user->status_active
                     ]
                 ], 200);
             } else {

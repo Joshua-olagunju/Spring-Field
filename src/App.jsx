@@ -8,7 +8,7 @@ import {
 import "./App.css";
 import { ThemeProvider } from "../context/ThemeContext";
 import { UserProvider } from "../context/UserContext";
-// import { useUser } from "../context/useUser";
+import { useUser } from "../context/useUser";
 import Login from "./screens/authenticationScreens/Login";
 import SignUp from "./screens/authenticationScreens/Signup";
 import SignUpOtpScreen from "./screens/authenticationScreens/SignUpOtpScreen";
@@ -32,32 +32,59 @@ import ProtectedRoute from "../components/GeneralComponents/ProtectedRoute";
 
 // Auto-redirect component for root path
 const AutoRedirect = () => {
-  // const { isAuthenticated, isLoading } = useUser();
+  const { isAuthenticated, isLoading, user } = useUser();
 
-  // if (isLoading) {
-  //   return (
-  //     <div className="min-h-screen flex items-center justify-center">
-  //       <div className="text-center">
-  //         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-  //         <p className="text-gray-600">Loading...</p>
-  //       </div>
-  //     </div>
-  //   );
-  // }
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
-  // return isAuthenticated ? (
-  //   <Navigate to="/dashboard" replace />
-  // ) : (
-  //   <Navigate to="/login" replace />
-  // );
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
 
-  // AUTHENTICATION TEMPORARILY DISABLED FOR DEVELOPMENT
-  return <Navigate to="/dashboard" replace />;
+  // Check if email is verified
+  if (!user?.email_verified_at) {
+    return <Navigate to="/email-verification" replace />;
+  }
+
+  // Route to appropriate dashboard based on role
+  switch (user?.role) {
+    case "super":
+      return <Navigate to="/super-admin/dashboard" replace />;
+    case "landlord":
+      return <Navigate to="/admin/dashboard" replace />;
+    case "resident":
+      return <Navigate to="/dashboard" replace />;
+    case "security":
+      return <Navigate to="/dashboard" replace />;
+    default:
+      return <Navigate to="/login" replace />;
+  }
 };
 
 function AppContent() {
-  // const { isAuthenticated } = useUser();
+  const { isAuthenticated } = useUser();
   const location = useLocation();
+
+  // Routes that don't require authentication
+  const publicRoutes = [
+    "/login",
+    "/signup-otp",
+    "/signup",
+    "/forgot-password",
+    "/reset-password-otp",
+    "/reset-password",
+  ];
+
+  const showNavigation =
+    isAuthenticated && !publicRoutes.includes(location.pathname);
 
   return (
     <>
@@ -65,12 +92,12 @@ function AppContent() {
       <StatusBar />
 
       {/* Top Navigation Bar - Shows only on protected routes */}
-      {/* TEMPORARILY ALWAYS SHOWING TOP NAV FOR DEVELOPMENT */}
-      <TopNavBar />
+      {showNavigation && <TopNavBar />}
 
       {/* Main Content - No padding, screens handle their own spacing */}
-      <div className="pt-6">
+      <div className={showNavigation ? "pt-6" : ""}>
         <Routes>
+          {/* Public Routes */}
           <Route path="/" element={<AutoRedirect />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup-otp" element={<SignUpOtpScreen />} />
@@ -82,10 +109,12 @@ function AppContent() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password-otp" element={<ResetPasswordOtp />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+
+          {/* Resident/User Routes */}
           <Route
             path="/dashboard"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="resident">
                 <DashboardScreen />
               </ProtectedRoute>
             }
@@ -118,11 +147,12 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
-          {/* Admin Routes */}
+
+          {/* Landlord/Admin Routes */}
           <Route
             path="/admin/dashboard"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="landlord">
                 <LandlordDashboard />
               </ProtectedRoute>
             }
@@ -130,7 +160,7 @@ function AppContent() {
           <Route
             path="/admin/visitors"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="landlord">
                 <VisitorsScreen />
               </ProtectedRoute>
             }
@@ -138,16 +168,17 @@ function AppContent() {
           <Route
             path="/admin/users"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="landlord">
                 <LandlordUsers />
               </ProtectedRoute>
             }
           />
+
           {/* Super Admin Routes */}
           <Route
             path="/super-admin/dashboard"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="super">
                 <SuperAdminDashboard />
               </ProtectedRoute>
             }
@@ -155,7 +186,7 @@ function AppContent() {
           <Route
             path="/super-admin/visitors"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="super">
                 <VisitorsScreen />
               </ProtectedRoute>
             }
@@ -163,7 +194,7 @@ function AppContent() {
           <Route
             path="/super-admin/admins"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="super">
                 <AdminUsers />
               </ProtectedRoute>
             }
@@ -171,23 +202,26 @@ function AppContent() {
           <Route
             path="/super-admin/reports"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="super">
                 <ReportScreen />
               </ProtectedRoute>
             }
           />
-          {/* Removed Admins and Reports routes - navigation now only has Home, Visitors, and Users */}
+
+          {/* Catch-all - redirect to home */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
 
-      {/* Bottom Navigation Bar - Shows appropriate nav based on route */}
-      {location.pathname.startsWith("/super-admin/") ? (
-        <SuperAdminBottomNav />
-      ) : location.pathname.startsWith("/admin/") ? (
-        <AdminBottomNav />
-      ) : (
-        <BottomNavBar />
-      )}
+      {/* Bottom Navigation Bar - Shows appropriate nav based on route and auth */}
+      {showNavigation &&
+        (location.pathname.startsWith("/super-admin/") ? (
+          <SuperAdminBottomNav />
+        ) : location.pathname.startsWith("/admin/") ? (
+          <AdminBottomNav />
+        ) : (
+          <BottomNavBar />
+        ))}
     </>
   );
 }

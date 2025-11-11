@@ -107,7 +107,7 @@ const SignUpOtpScreen = () => {
     }
   };
 
-  const displayModal = (type, message, details = "") => {
+  const displayModal = (type, message, details = "", otpCode = null, targetRole = null) => {
     setModalContent({ type, message, details });
     setShowModal(true);
 
@@ -116,7 +116,13 @@ const SignUpOtpScreen = () => {
     } else if (type === "success") {
       setTimeout(() => {
         setShowModal(false);
-        navigate("/signup", { state: { otp_code: otp.join("") } });
+        // Navigate to signup with OTP code and target role
+        navigate("/signup", { 
+          state: { 
+            otp_code: otpCode,
+            target_role: targetRole || "resident"
+          } 
+        });
       }, 2000);
     }
   };
@@ -134,33 +140,40 @@ const SignUpOtpScreen = () => {
     setError("");
 
     try {
-      // API call to verify OTP
-      const response = await fetch(
-        "http://localhost:8000/api/verify-signup-otp",
+      // Validate and get OTP details from API
+      const validateResponse = await fetch(
+        "http://localhost:8000/api/validate-otp",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ otp: otpCode }),
+          body: JSON.stringify({ otp_code: otpCode }),
         }
       );
 
-      const result = await response.json();
+      const validateResult = await validateResponse.json();
 
-      if (response.ok && result.success) {
-        displayModal(
-          "success",
-          "OTP Verified!",
-          "Redirecting to registration..."
-        );
-      } else {
-        setError(result.message || "Invalid OTP. Please try again.");
+      if (!validateResponse.ok || !validateResult.success) {
+        setError(validateResult.message || "Invalid OTP. Please try again.");
+        setIsLoading(false);
+        return;
       }
+
+      // OTP is valid, now we can proceed with the signup flow
+      // Store the target role from the validation response
+      const targetRole = validateResult.data?.target_role || "resident";
+      
+      displayModal(
+        "success",
+        "OTP Verified!",
+        "Redirecting to registration...",
+        otpCode,
+        targetRole
+      );
     } catch (error) {
       console.error("OTP verification error:", error);
       setError("Something went wrong. Please try again.");
-    } finally {
       setIsLoading(false);
     }
   };

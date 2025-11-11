@@ -36,12 +36,13 @@ class RegistrationOtp extends Model
     const TARGET_RESIDENT = 'resident';
 
     /**
-     * Generate a new OTP code
+     * Generate a new OTP code (6-digit numeric)
      */
     public static function generateOtpCode()
     {
         do {
-            $otp = strtoupper(Str::random(6));
+            // Generate 6-digit numeric OTP
+            $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
         } while (self::where('otp_code', $otp)->exists());
 
         return $otp;

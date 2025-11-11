@@ -106,7 +106,7 @@ const Login = () => {
         displayModal(
           "success",
           "Login Successful",
-          "Redirecting to dashboard..."
+          "Redirecting to your dashboard..."
         );
 
         setFormData({ email: "", password: "" });
@@ -118,14 +118,24 @@ const Login = () => {
         // If email is not verified, redirect to email verification
         if (!userData.email_verified_at) {
           redirectPath = "/email-verification";
-        } else if (userData.role === "super") {
-          redirectPath = "/super-admin-dashboard";
-        } else if (userData.role === "landlord") {
-          redirectPath = "/landlord-dashboard";
-        } else if (userData.role === "resident") {
-          redirectPath = "/resident-dashboard";
-        } else if (userData.role === "security") {
-          redirectPath = "/security-dashboard";
+        } else {
+          // Route based on user role
+          switch (userData.role) {
+            case "super":
+              redirectPath = "/super-admin/dashboard";
+              break;
+            case "landlord":
+              redirectPath = "/admin/dashboard";
+              break;
+            case "resident":
+              redirectPath = "/dashboard";
+              break;
+            case "security":
+              redirectPath = "/dashboard";
+              break;
+            default:
+              redirectPath = "/dashboard";
+          }
         }
 
         setTimeout(() => {

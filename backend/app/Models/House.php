@@ -18,6 +18,7 @@ class House extends Model
         'landlord_id',
         'house_number',
         'address',
+        'house_type',
     ];
 
     /**
