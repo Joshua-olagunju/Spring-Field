@@ -247,7 +247,7 @@ const SuperAdminDashboard = () => {
           </div>
 
           {/* Quick Stats Section */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-8">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-8">
             <div
               className={`${theme.background.card} rounded-xl ${theme.shadow.small} p-4 sm:p-6 text-center`}
             >
@@ -278,7 +278,7 @@ const SuperAdminDashboard = () => {
                 12
               </p>
               <p className={`text-xs sm:text-sm ${theme.text.secondary}`}>
-                Total Residents
+                Total Users
               </p>
             </div>
 
@@ -286,33 +286,16 @@ const SuperAdminDashboard = () => {
               className={`${theme.background.card} rounded-xl ${theme.shadow.small} p-4 sm:p-6 text-center`}
             >
               <Icon
-                icon="mdi:shield-account-multiple"
-                className={`text-3xl sm:text-4xl text-orange-600 mb-2 mx-auto`}
-              />
-              <p
-                className={`text-2xl sm:text-3xl font-bold ${theme.text.primary} mb-1`}
-              >
-                3
-              </p>
-              <p className={`text-xs sm:text-sm ${theme.text.secondary}`}>
-                Total Admins
-              </p>
-            </div>
-
-            <div
-              className={`${theme.background.card} rounded-xl ${theme.shadow.small} p-4 sm:p-6 text-center`}
-            >
-              <Icon
-                icon="mdi:file-chart"
+                icon="mdi:qrcode"
                 className={`text-3xl sm:text-4xl text-purple-600 mb-2 mx-auto`}
               />
               <p
                 className={`text-2xl sm:text-3xl font-bold ${theme.text.primary} mb-1`}
               >
-                8
+                {recentVisitors.filter((v) => v.status === "pending").length}
               </p>
               <p className={`text-xs sm:text-sm ${theme.text.secondary}`}>
-                Reports
+                Pending Tokens
               </p>
             </div>
           </div>
