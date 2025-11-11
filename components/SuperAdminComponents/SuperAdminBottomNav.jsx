@@ -35,16 +35,10 @@ const SuperAdminBottomNav = () => {
       iconFilled: "mdi:account-group",
     },
     {
-      name: "Admins",
-      path: "/admin/admins",
-      icon: "mdi:shield-account-outline",
-      iconFilled: "mdi:shield-account",
-    },
-    {
-      name: "Reports",
-      path: "/admin/reports",
-      icon: "mdi:file-chart-outline",
-      iconFilled: "mdi:file-chart",
+      name: "Users",
+      path: "/admin/admin",
+      icon: "mdi:account-multiple-outline",
+      iconFilled: "mdi:account-multiple",
     },
   ];
 

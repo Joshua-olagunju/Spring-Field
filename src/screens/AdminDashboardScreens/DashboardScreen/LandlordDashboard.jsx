@@ -41,16 +41,6 @@ const SuperAdminDashboard = () => {
     console.log("Visitor clicked:", visitor);
   };
 
-  const handleGenerateAccountToken = () => {
-    console.log("Generate Account Token clicked");
-    // Navigate to account token generation screen
-  };
-
-  const handleGenerateVisitorToken = () => {
-    console.log("Generate Visitor Token clicked");
-    // Navigate to visitor token generation screen
-  };
-
   return (
     <div className="min-h-screen pt-16 pb-20 w-full relative">
       {/* Background */}
@@ -78,77 +68,15 @@ const SuperAdminDashboard = () => {
             </p>
           </div>
 
-          {/* Primary Action: Generate Account Token Card */}
-          <div className="flex flex-col sm:flex-row gap-6 mb-8 justify-center items-center">
-            <div
-              className={`${theme.background.card} rounded-2xl ${theme.shadow.medium} w-full p-6 sm:p-8 mb-6`}
-            >
-              <div className="flex flex-col items-center text-center w-full">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mb-4 shadow-lg">
-                  <Icon
-                    icon="mdi:account-group"
-                    className="text-white text-3xl sm:text-4xl"
-                  />
-                </div>
-                <h2
-                  className={`text-xl sm:text-2xl font-bold ${theme.text.primary} mb-2`}
-                >
-                  Create Users
-                </h2>
-                <p
-                  className={`text-sm sm:text-base ${theme.text.secondary} mb-6 max-w-md`}
-                >
-                  Create a new resident account with access credentials
-                </p>
-                <button
-                  onClick={handleGenerateAccountToken}
-                  className="bg-gradient-to-r from-green-600 via-emerald-600 to-green-600 hover:from-green-700 hover:via-emerald-700 hover:to-green-700 text-white font-semibold px-8 py-3 sm:px-10 sm:py-4 rounded-xl transition-all active:scale-95 shadow-lg hover:shadow-xl flex items-center gap-2"
-                >
-                  <Icon icon="mdi:plus-circle" className="text-xl" />
-                  Generate Account Token
-                </button>
-              </div>
-            </div>
+          {/* Users page - no action cards here (show only recent users) */}
 
-            {/* Secondary Action: Generate Visitor Token Card */}
-            <div
-              className={`${theme.background.card} rounded-2xl ${theme.shadow.medium}  w-full  p-6 sm:p-8 mb-8`}
-            >
-              <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mb-4 shadow-lg">
-                  <Icon
-                    icon="mdi:qrcode-scan"
-                    className="text-white text-3xl sm:text-4xl"
-                  />
-                </div>
-                <h2
-                  className={`text-xl sm:text-2xl font-bold ${theme.text.primary} mb-2`}
-                >
-                  Generate Visitor Token
-                </h2>
-                <p
-                  className={`text-sm sm:text-base ${theme.text.secondary} mb-6 max-w-md`}
-                >
-                  Create a secure access token for expected visitors
-                </p>
-                <button
-                  onClick={handleGenerateVisitorToken}
-                  className="bg-gradient-to-r  from-blue-600 via-purple-600 to-blue-600 hover:from-blue-700 hover:via-purple-700 hover:to-blue-700 text-white font-semibold px-8 py-3 sm:px-10 sm:py-4 rounded-xl transition-all active:scale-95 shadow-lg hover:shadow-xl flex items-center gap-2"
-                >
-                  <Icon icon="mdi:plus-circle" className="text-xl" />
-                  Generate Visitor Token
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Recent Visitors Section */}
+          {/* Recent Users Section */}
           <div className="mb-6">
             <div className="flex items-center justify-between mb-4">
               <h2
                 className={`text-xl sm:text-2xl font-bold ${theme.text.primary}`}
               >
-                Recent Visitors
+                Recent Users
               </h2>
               <button
                 className={`text-sm font-semibold ${theme.text.link} hover:${theme.text.linkHover} flex items-center gap-1`}
@@ -174,10 +102,10 @@ const SuperAdminDashboard = () => {
                   className={`text-6xl ${theme.text.tertiary} mb-4 mx-auto`}
                 />
                 <p className={`text-base ${theme.text.secondary} mb-1`}>
-                  No recent visitors yet
+                  No recent users yet
                 </p>
                 <p className={`text-sm ${theme.text.tertiary}`}>
-                  Visitor records will appear here
+                  Users record will appear here
                 </p>
               </div>
             ) : (
@@ -248,42 +176,7 @@ const SuperAdminDashboard = () => {
             )}
           </div>
 
-          {/* Quick Stats Section */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-8">
-            <div
-              className={`${theme.background.card} rounded-xl ${theme.shadow.small} p-4 sm:p-6 text-center`}
-            >
-              <Icon
-                icon="mdi:account-group"
-                className={`text-3xl sm:text-4xl ${theme.brand.primaryText} mb-2 mx-auto`}
-              />
-              <p
-                className={`text-2xl sm:text-3xl font-bold ${theme.text.primary} mb-1`}
-              >
-                {recentVisitors.length}
-              </p>
-              <p className={`text-xs sm:text-sm ${theme.text.secondary}`}>
-                Total Visitors
-              </p>
-            </div>
-
-            <div
-              className={`${theme.background.card} rounded-xl ${theme.shadow.small} p-4 sm:p-6 text-center`}
-            >
-              <Icon
-                icon="mdi:account-multiple-plus"
-                className={`text-3xl sm:text-4xl text-green-600 mb-2 mx-auto`}
-              />
-              <p
-                className={`text-2xl sm:text-3xl font-bold ${theme.text.primary} mb-1`}
-              >
-                12
-              </p>
-              <p className={`text-xs sm:text-sm ${theme.text.secondary}`}>
-                Total Residents
-              </p>
-            </div>
-          </div>
+          {/* Quick stats removed for Users page */}
         </div>
       </div>
     </div>

@@ -19,7 +19,6 @@ import ResetPassword from "./screens/authenticationScreens/ResetPassword";
 import DashboardScreen from "./screens/UserDashboardScreens/DashboradScreen/DashboardScreen";
 import VisitorsScreen from "./screens/GeneralScreens/VisitHistoryScreen/VisitorsScreen";
 import SuperAdminDashboard from "./screens/SuperAdminDashboardScreens/DashboardScreen/SuperAdminDashboard";
-import AdminUsers from "./screens/SuperAdminDashboardScreens/AdminUsersScreen/AdminUsers";
 import StatusBar from "../components/GeneralComponents/StatusBar";
 import AdminDashboard from "./screens/AdminDashboardScreens/DashboardScreen/LandlordDashboard";
 import TopNavBar from "../components/GeneralComponents/TopNavBar";
@@ -140,24 +139,7 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/admin/admins"
-            element={
-              <ProtectedRoute>
-                <AdminUsers />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/reports"
-            element={
-              <ProtectedRoute>
-                <div className="min-h-screen flex items-center justify-center">
-                  <h2 className="text-2xl">Reports - Coming Soon</h2>
-                </div>
-              </ProtectedRoute>
-            }
-          />
+          {/* Removed Admins and Reports routes - navigation now only has Home, Visitors, and Users */}
         </Routes>
       </div>
 
