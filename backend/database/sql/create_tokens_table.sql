@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 10, 2025 at 11:51 PM
+-- Generation Time: Nov 11, 2025 at 11:24 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
@@ -79,9 +79,7 @@ CREATE TABLE `email_verifications` (
 --
 
 INSERT INTO `email_verifications` (`id`, `user_id`, `email`, `otp_code`, `expires_at`, `verified_at`, `attempts`, `created_at`, `updated_at`) VALUES
-(6, 11, 'yungtee5333@gmail.com', '745218', '2025-11-10 21:30:34', '2025-11-10 20:30:34', 1, '2025-11-10 20:30:07', '2025-11-10 20:30:34'),
-(7, 12, 'yungtee5233@gmail.com', '440327', '2025-11-10 22:01:25', '2025-11-10 21:01:25', 1, '2025-11-10 21:01:04', '2025-11-10 21:01:25'),
-(8, 13, 'yungtee5883@gmail.com', '779632', '2025-11-10 22:05:15', '2025-11-10 21:05:15', 1, '2025-11-10 21:04:48', '2025-11-10 21:05:15');
+(11, 16, 'yungtee533@gmail.com', '317444', '2025-11-11 19:37:52', '2025-11-11 18:37:52', 1, '2025-11-11 18:36:31', '2025-11-11 18:37:52');
 
 -- --------------------------------------------------------
 
@@ -94,8 +92,16 @@ CREATE TABLE `houses` (
   `landlord_id` int(11) NOT NULL,
   `house_number` varchar(50) NOT NULL,
   `address` varchar(255) NOT NULL,
+  `house_type` varchar(50) DEFAULT 'room_self',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
+
+--
+-- Dumping data for table `houses`
+--
+
+INSERT INTO `houses` (`id`, `landlord_id`, `house_number`, `address`, `house_type`, `created_at`) VALUES
+(4, 16, '10', 'NEW', 'room_self', '2025-11-11 18:36:30');
 
 -- --------------------------------------------------------
 
@@ -128,8 +134,32 @@ INSERT INTO `logs` (`id`, `type`, `reference_id`, `actor_id`, `action`, `metadat
 (10, 'access', 11, 11, 'USER_LOGIN', '{\"ip_address\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/142.0.0.0 Safari\\/537.36\"}', '2025-11-10 20:34:51'),
 (11, 'access', 11, 11, 'USER_LOGIN', '{\"ip_address\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit\\/605.1.15 (KHTML, like Gecko) Version\\/18.5 Mobile\\/15E148 Safari\\/604.1\"}', '2025-11-10 21:00:01'),
 (12, 'admin', 12, 12, 'USER_REGISTERED', '{\"user_role\":\"super\",\"is_first_three\":true,\"used_otp\":null,\"otp_generated_by\":null,\"house_number\":null,\"address\":null,\"description\":\"new\"}', '2025-11-10 21:01:04'),
-(13, 'admin', 13, 13, 'USER_REGISTERED', '{\"user_role\":\"super\",\"is_first_three\":true,\"used_otp\":null,\"otp_generated_by\":null,\"house_number\":null,\"address\":null,\"description\":\"new\"}', '2025-11-10 21:04:48'),
-(14, 'access', 11, 11, 'USER_LOGIN', '{\"ip_address\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/142.0.0.0 Safari\\/537.36\"}', '2025-11-10 21:40:13');
+(13, 'admin', 13, NULL, 'USER_REGISTERED', '{\"user_role\":\"super\",\"is_first_three\":true,\"used_otp\":null,\"otp_generated_by\":null,\"house_number\":null,\"address\":null,\"description\":\"new\"}', '2025-11-10 21:04:48'),
+(14, 'access', 11, 11, 'USER_LOGIN', '{\"ip_address\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/142.0.0.0 Safari\\/537.36\"}', '2025-11-10 21:40:13'),
+(15, 'access', 11, 11, 'USER_LOGIN', '{\"ip_address\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/142.0.0.0 Safari\\/537.36\"}', '2025-11-11 16:52:11'),
+(16, 'access', 11, 11, 'USER_LOGIN', '{\"ip_address\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/142.0.0.0 Safari\\/537.36\"}', '2025-11-11 16:56:45'),
+(17, 'admin', 14, 14, 'USER_REGISTERED', '{\"user_role\":\"super\",\"is_first_three\":true,\"used_otp\":null,\"otp_generated_by\":null,\"house_number\":null,\"address\":null,\"description\":\"new\"}', '2025-11-11 16:58:34'),
+(18, 'access', 11, 11, 'USER_LOGIN', '{\"ip_address\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/142.0.0.0 Safari\\/537.36\"}', '2025-11-11 17:03:18'),
+(19, 'access', 11, 11, 'USER_LOGIN', '{\"ip_address\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/142.0.0.0 Safari\\/537.36\"}', '2025-11-11 17:04:43'),
+(20, 'admin', 1, 11, 'LANDLORD_OTP_GENERATED', '{\"otp_code\":\"JBPOHF\",\"expires_at\":\"2025-11-12T18:05:07.000000Z\",\"generated_for\":\"landlord\",\"recipient_email\":\"yungtee533@gmail.com\",\"recipient_name\":\"tayo rotimi\",\"description\":null}', '2025-11-11 17:05:14'),
+(21, 'admin', 2, 11, 'LANDLORD_OTP_GENERATED', '{\"otp_code\":\"544465\",\"expires_at\":\"2025-11-12T18:09:03.000000Z\",\"generated_for\":\"landlord\",\"recipient_email\":\"yungtee533@gmail.com\",\"recipient_name\":\"TAYO ROTIMI\",\"description\":null}', '2025-11-11 17:09:08'),
+(22, 'admin', 15, NULL, 'USER_REGISTERED', '{\"user_role\":\"landlord\",\"is_first_three\":false,\"used_otp\":\"544465\",\"otp_generated_by\":11,\"house_number\":null,\"address\":null,\"description\":null}', '2025-11-11 17:12:47'),
+(23, 'access', 15, NULL, 'USER_LOGIN', '{\"ip_address\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit\\/605.1.15 (KHTML, like Gecko) Version\\/18.5 Mobile\\/15E148 Safari\\/604.1 Edg\\/142.0.0.0\"}', '2025-11-11 17:15:13'),
+(24, 'access', 11, 11, 'USER_LOGIN', '{\"ip_address\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/142.0.0.0 Safari\\/537.36\"}', '2025-11-11 18:29:38'),
+(25, 'admin', 3, 11, 'LANDLORD_OTP_GENERATED', '{\"otp_code\":\"769269\",\"expires_at\":\"2025-11-12T19:29:50.000000Z\",\"generated_for\":\"landlord\",\"recipient_email\":\"yungtee533@gmail.com\",\"recipient_name\":\"rotimi\",\"description\":null}', '2025-11-11 18:29:55'),
+(26, 'admin', 16, 16, 'USER_REGISTERED', '{\"user_role\":\"landlord\",\"is_first_three\":false,\"used_otp\":\"769269\",\"otp_generated_by\":11,\"house_number\":\"10\",\"house_type\":\"room_self\",\"address\":\"NEW\",\"description\":null}', '2025-11-11 18:36:31'),
+(27, 'access', 16, 16, 'USER_LOGIN', '{\"ip_address\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit\\/605.1.15 (KHTML, like Gecko) Version\\/18.5 Mobile\\/15E148 Safari\\/604.1 Edg\\/142.0.0.0\"}', '2025-11-11 18:38:08'),
+(28, 'access', 11, 11, 'USER_LOGIN', '{\"ip_address\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/142.0.0.0 Safari\\/537.36\"}', '2025-11-11 19:31:21'),
+(29, 'access', 16, 16, 'USER_LOGIN', '{\"ip_address\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit\\/605.1.15 (KHTML, like Gecko) Version\\/18.5 Mobile\\/15E148 Safari\\/604.1 Edg\\/142.0.0.0\"}', '2025-11-11 19:31:46'),
+(30, 'admin', 4, 11, 'LANDLORD_OTP_GENERATED', '{\"otp_code\":\"837538\",\"expires_at\":\"2025-11-12T20:52:44.000000Z\",\"generated_for\":\"landlord\",\"recipient_email\":\"yungtee533@gmail.com\",\"recipient_name\":\"rotimi\",\"description\":null}', '2025-11-11 19:52:48'),
+(31, 'access', 11, 11, 'USER_LOGIN', '{\"ip_address\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/142.0.0.0 Safari\\/537.36\"}', '2025-11-11 19:53:30'),
+(32, 'admin', 5, 11, 'LANDLORD_OTP_GENERATED', '{\"otp_code\":\"743822\",\"expires_at\":\"2025-11-11T21:53:54.000000Z\",\"generated_for\":\"landlord\",\"recipient_email\":\"yungtee533@gmail.com\",\"recipient_name\":\"tayo\",\"description\":null}', '2025-11-11 19:53:58'),
+(33, 'access', 16, 16, 'USER_LOGIN', '{\"ip_address\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit\\/605.1.15 (KHTML, like Gecko) Version\\/18.5 Mobile\\/15E148 Safari\\/604.1 Edg\\/142.0.0.0\"}', '2025-11-11 19:57:45'),
+(34, 'access', 16, 16, 'USER_LOGIN', '{\"ip_address\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit\\/605.1.15 (KHTML, like Gecko) Version\\/18.5 Mobile\\/15E148 Safari\\/604.1 Edg\\/142.0.0.0\"}', '2025-11-11 19:58:30'),
+(35, 'access', 16, 16, 'USER_LOGIN', '{\"ip_address\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit\\/605.1.15 (KHTML, like Gecko) Version\\/18.5 Mobile\\/15E148 Safari\\/604.1 Edg\\/142.0.0.0\"}', '2025-11-11 19:59:00'),
+(36, 'access', 16, 16, 'USER_LOGIN', '{\"ip_address\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit\\/605.1.15 (KHTML, like Gecko) Version\\/18.5 Mobile\\/15E148 Safari\\/604.1 Edg\\/142.0.0.0\"}', '2025-11-11 19:59:35'),
+(37, 'admin', 6, 11, 'LANDLORD_OTP_GENERATED', '{\"otp_code\":\"030214\",\"expires_at\":\"2025-11-11T22:02:18.000000Z\",\"generated_for\":\"landlord\",\"recipient_email\":\"yungtee5333@gmail.com\",\"recipient_name\":\"boy\",\"description\":\"thanks\"}', '2025-11-11 20:02:21'),
+(38, 'admin', 7, 11, 'LANDLORD_OTP_GENERATED', '{\"otp_code\":\"777042\",\"expires_at\":\"2025-11-12T03:04:12.000000Z\",\"generated_for\":\"landlord\",\"recipient_email\":\"joshuaolagunju111@gmail.com\",\"recipient_name\":\"Soji\",\"description\":\"Thanks\"}', '2025-11-11 20:04:15');
 
 -- --------------------------------------------------------
 
@@ -233,7 +263,23 @@ INSERT INTO `personal_access_tokens` (`id`, `tokenable_type`, `tokenable_id`, `n
 (11, 'App\\Models\\User', 11, 'auth_token', '5fd4091aa112e4abce26b38be748473e55d44b6671f891a2e6d5204e3bb24f0e', '[\"*\"]', NULL, NULL, '2025-11-10 21:00:01', '2025-11-10 21:00:01'),
 (12, 'App\\Models\\User', 12, 'auth_token', 'ec633cb0b69aaee13c91a1d4efe908b1dd55ee569067315319e97f40ced7574b', '[\"*\"]', NULL, NULL, '2025-11-10 21:01:25', '2025-11-10 21:01:25'),
 (13, 'App\\Models\\User', 13, 'auth_token', 'd1827b559334d7cd66e47a976f58bb4b2e344c6ed52c12d5c99443765ae6d573', '[\"*\"]', NULL, NULL, '2025-11-10 21:05:15', '2025-11-10 21:05:15'),
-(14, 'App\\Models\\User', 11, 'auth_token', '83db63ce302f7fa51f3147f335ccab76800fbb915a3ae517c1f9c41f38057447', '[\"*\"]', NULL, NULL, '2025-11-10 21:40:13', '2025-11-10 21:40:13');
+(14, 'App\\Models\\User', 11, 'auth_token', '83db63ce302f7fa51f3147f335ccab76800fbb915a3ae517c1f9c41f38057447', '[\"*\"]', NULL, NULL, '2025-11-10 21:40:13', '2025-11-10 21:40:13'),
+(15, 'App\\Models\\User', 11, 'auth_token', 'a8620d1f556c1be94bba8d5dd0094116967d36368f1a131667705e7b1e17b7a7', '[\"*\"]', NULL, NULL, '2025-11-11 16:52:11', '2025-11-11 16:52:11'),
+(16, 'App\\Models\\User', 11, 'auth_token', '75f0c227831ebc3e9fa94c9e3f315b93ff12203050b8d7a7a7f75a92c14dd577', '[\"*\"]', NULL, NULL, '2025-11-11 16:56:45', '2025-11-11 16:56:45'),
+(17, 'App\\Models\\User', 14, 'auth_token', 'c3bbcb82ebcd16aeb47bf2e32334bb0623fc205804e31d4cda960fb21e09eb6c', '[\"*\"]', NULL, NULL, '2025-11-11 16:59:05', '2025-11-11 16:59:05'),
+(18, 'App\\Models\\User', 11, 'auth_token', 'd853dd097e22f8be01dd3f5ec72e5fffdc40a13c9b1eb743d95856ef0727ae58', '[\"*\"]', NULL, NULL, '2025-11-11 17:03:18', '2025-11-11 17:03:18'),
+(19, 'App\\Models\\User', 11, 'auth_token', 'ce479efee6c265d50340de64b3c3d186d1f1781c74a499e8385145520006d40c', '[\"*\"]', '2025-11-11 17:09:03', NULL, '2025-11-11 17:04:43', '2025-11-11 17:09:03'),
+(20, 'App\\Models\\User', 15, 'auth_token', 'a276f3097b2bb2c62c0d4665185bf88aef20654955b44c023a53767a7171413a', '[\"*\"]', NULL, NULL, '2025-11-11 17:13:58', '2025-11-11 17:13:58'),
+(22, 'App\\Models\\User', 11, 'auth_token', 'b6fd27e3d40e66130a29a0ad2e64671bed7cf853590a6df2333018dba8b84691', '[\"*\"]', '2025-11-11 18:29:50', NULL, '2025-11-11 18:29:38', '2025-11-11 18:29:50'),
+(23, 'App\\Models\\User', 16, 'auth_token', '97bc451fcf0171cd93570eac8028b97356f7f29b4708bb663f9893b207faf85d', '[\"*\"]', NULL, NULL, '2025-11-11 18:37:52', '2025-11-11 18:37:52'),
+(24, 'App\\Models\\User', 16, 'auth_token', '37a5f31ff97f23503674a5b9416f00bc56f4639f012d4c020e94b5fe12b2b199', '[\"*\"]', NULL, NULL, '2025-11-11 18:38:08', '2025-11-11 18:38:08'),
+(25, 'App\\Models\\User', 11, 'auth_token', 'af569ec4178c2cb72afea435f666603991bcc6ca8b70d1275f8b065ef7e55bcf', '[\"*\"]', '2025-11-11 19:52:44', NULL, '2025-11-11 19:31:21', '2025-11-11 19:52:44'),
+(26, 'App\\Models\\User', 16, 'auth_token', 'c87e0bf1c1331b76d6bbca9d5dea0a61e1ac8d1c6ec48aa44f525948ca4fe0e3', '[\"*\"]', NULL, NULL, '2025-11-11 19:31:46', '2025-11-11 19:31:46'),
+(27, 'App\\Models\\User', 11, 'auth_token', 'ef7c628974854d32ca0bbe89dd39ce9ed3ac6ff5dedc62d96bcdf6ec6bd0a239', '[\"*\"]', '2025-11-11 20:04:12', NULL, '2025-11-11 19:53:30', '2025-11-11 20:04:12'),
+(28, 'App\\Models\\User', 16, 'auth_token', 'a271fb75acb0cad08b1b1584e5723f651603a77d60b7f152f389d58d73113a30', '[\"*\"]', NULL, NULL, '2025-11-11 19:57:45', '2025-11-11 19:57:45'),
+(29, 'App\\Models\\User', 16, 'auth_token', '5a862ed1d8b387eddfdfe180dad59e238ebb48481c83cc4722a425cad6c993e2', '[\"*\"]', NULL, NULL, '2025-11-11 19:58:30', '2025-11-11 19:58:30'),
+(30, 'App\\Models\\User', 16, 'auth_token', 'd7c09ecd40e13edf81ccfc932e2c3183d3573dab38949e71e5055d75b95bc09a', '[\"*\"]', NULL, NULL, '2025-11-11 19:59:00', '2025-11-11 19:59:00'),
+(31, 'App\\Models\\User', 16, 'auth_token', '6014ec6a80506d9c5da286bea7756227a4d80c416909a4e048bf840eb4ddb1b5', '[\"*\"]', NULL, NULL, '2025-11-11 19:59:35', '2025-11-11 19:59:35');
 
 -- --------------------------------------------------------
 
@@ -276,6 +322,18 @@ CREATE TABLE `registration_otps` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `registration_otps`
+--
+
+INSERT INTO `registration_otps` (`id`, `otp_code`, `generated_by`, `target_role`, `house_number`, `address`, `house_id`, `expires_at`, `used_at`, `used_by`, `is_active`, `metadata`, `created_at`, `updated_at`) VALUES
+(2, '544465', 11, 'landlord', NULL, NULL, NULL, '2025-11-12 18:09:03', '2025-11-11 18:12:47', NULL, 0, '{\"recipient_email\":\"yungtee533@gmail.com\",\"recipient_name\":\"TAYO ROTIMI\"}', '2025-11-11 17:09:03', '2025-11-11 17:12:47'),
+(3, '769269', 11, 'landlord', NULL, NULL, NULL, '2025-11-12 19:29:50', '2025-11-11 19:36:31', 16, 0, '{\"recipient_email\":\"yungtee533@gmail.com\",\"recipient_name\":\"rotimi\"}', '2025-11-11 18:29:50', '2025-11-11 18:36:31'),
+(4, '837538', 11, 'landlord', NULL, NULL, NULL, '2025-11-12 20:52:44', NULL, NULL, 1, '{\"recipient_email\":\"yungtee533@gmail.com\",\"recipient_name\":\"rotimi\"}', '2025-11-11 19:52:44', '2025-11-11 19:52:44'),
+(5, '743822', 11, 'landlord', NULL, NULL, NULL, '2025-11-11 21:53:54', NULL, NULL, 1, '{\"recipient_email\":\"yungtee533@gmail.com\",\"recipient_name\":\"tayo\"}', '2025-11-11 19:53:54', '2025-11-11 19:53:54'),
+(6, '030214', 11, 'landlord', NULL, NULL, NULL, '2025-11-11 22:02:18', NULL, NULL, 1, '{\"recipient_email\":\"yungtee5333@gmail.com\",\"recipient_name\":\"boy\",\"description\":\"thanks\"}', '2025-11-11 20:02:18', '2025-11-11 20:02:18'),
+(7, '777042', 11, 'landlord', NULL, NULL, NULL, '2025-11-12 03:04:12', NULL, NULL, 1, '{\"recipient_email\":\"joshuaolagunju111@gmail.com\",\"recipient_name\":\"Soji\",\"description\":\"Thanks\"}', '2025-11-11 20:04:12', '2025-11-11 20:04:12');
+
 -- --------------------------------------------------------
 
 --
@@ -303,7 +361,8 @@ CREATE TABLE `users` (
 INSERT INTO `users` (`id`, `full_name`, `phone`, `email`, `email_verified_at`, `password_hash`, `role`, `house_id`, `status_active`, `created_at`, `updated_at`) VALUES
 (11, 'Temitayo Rotimi', '09078363161', 'yungtee5333@gmail.com', '2025-11-10 20:30:34', '$2y$10$5etgDl8Ky/ubE4F2r.v1seYgP93a21xxw5dimapM17RFAv3mb3Ovm', 'super', NULL, 1, '2025-11-10 20:30:07', '2025-11-10 20:30:34'),
 (12, 'Benjamin Ndiyo', '08055672920', 'yungtee5233@gmail.com', '2025-11-10 21:01:25', '$2y$10$tbBA2TacZslNlTXZUTRjS.S4GXBhEfYqWbO8mfUhY4D9blQVBtnF2', 'super', NULL, 1, '2025-11-10 21:01:04', '2025-11-10 21:01:25'),
-(13, 'Temitayo Rotimi', '09099887777', 'yungtee5883@gmail.com', '2025-11-10 21:05:15', '$2y$10$AGkybFLoXlGClDI.5pk1.uTxHLD2S4399AtQAVri6i09KU.ZYtezq', 'super', NULL, 1, '2025-11-10 21:04:48', '2025-11-10 21:05:15');
+(14, 'Benjamin Ndiyo', '09078363162', 'yungtee51233@gmail.com', '2025-11-11 16:59:05', '$2y$10$a.hGW62iFrb6bqCaGCw8xeoNx6VPQTjebhN7nLdkVezVtphu2VHNG', 'super', NULL, 1, '2025-11-11 16:58:34', '2025-11-11 16:59:05'),
+(16, 'Support Team', '09078363163', 'yungtee533@gmail.com', '2025-11-11 18:37:52', '$2y$10$oY/sLf/efRb49vcRQXb.QO8jxTZi7gUdIS1nUYc0heOyS.PUy7Lbu', 'landlord', 4, 1, '2025-11-11 18:36:30', '2025-11-11 18:37:52');
 
 -- --------------------------------------------------------
 
@@ -525,19 +584,19 @@ ALTER TABLE `visitor_tokens`
 -- AUTO_INCREMENT for table `email_verifications`
 --
 ALTER TABLE `email_verifications`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `houses`
 --
 ALTER TABLE `houses`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `logs`
 --
 ALTER TABLE `logs`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
 
 --
 -- AUTO_INCREMENT for table `migrations`
@@ -555,7 +614,7 @@ ALTER TABLE `payments`
 -- AUTO_INCREMENT for table `personal_access_tokens`
 --
 ALTER TABLE `personal_access_tokens`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
 
 --
 -- AUTO_INCREMENT for table `registration_codes`
@@ -567,13 +626,13 @@ ALTER TABLE `registration_codes`
 -- AUTO_INCREMENT for table `registration_otps`
 --
 ALTER TABLE `registration_otps`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT for table `visitor_entries`
