@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTheme } from "../../../context/useTheme";
+import { useUser } from "../../../context/useUser";
 import ThemeToggle from "../../../components/GeneralComponents/ThemeToggle";
 import AnimatedSecurityBackground from "../../../components/GeneralComponents/AnimatedSecurityBackground";
 import { Icon } from "@iconify/react";
@@ -9,6 +10,7 @@ const EmailVerificationOtp = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { theme, isDarkMode } = useTheme();
+  const { completeEmailVerification } = useUser();
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -26,15 +28,28 @@ const EmailVerificationOtp = () => {
   const userEmail = location.state?.email || "your email";
   const userRole = location.state?.role || "resident";
   const userId = location.state?.user_id;
+  const shouldAutoResend = location.state?.autoResend || false;
+  const tempToken = location.state?.tempToken;
 
   // Refs for each OTP input
   const inputRefs = useRef([]);
 
   useEffect(() => {
+    // Prevent back navigation to dashboard by replacing history
+    window.history.replaceState(null, "", window.location.pathname);
+
     // Focus on first input when component mounts
     if (inputRefs.current[0]) {
       inputRefs.current[0].focus();
     }
+  }, []);
+
+  // Auto-resend OTP if coming from login screen
+  useEffect(() => {
+    if (shouldAutoResend) {
+      handleResendOtp();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Resend timer countdown
@@ -99,9 +114,9 @@ const EmailVerificationOtp = () => {
       if (type === "success") {
         // Redirect to appropriate dashboard based on user role
         const dashboardRoutes = {
-          super: "/admin-dashboard",
-          landlord: "/landlord-dashboard",
-          resident: "/resident-dashboard",
+          super: "/super-admin/dashboard",
+          landlord: "/admin/dashboard",
+          resident: "/dashboard",
           security: "/security-dashboard",
         };
         const route = dashboardRoutes[userRole] || "/dashboard";
@@ -184,6 +199,18 @@ const EmailVerificationOtp = () => {
       const result = await response.json();
 
       if (response.ok && result.success) {
+        // Get the verified user data
+        const verifiedUser = result.user || {
+          id: userId,
+          email: userEmail,
+          role: userRole,
+          email_verified_at: new Date().toISOString(),
+        };
+
+        // Complete email verification in UserContext
+        // This saves the auth token and marks user as authenticated
+        completeEmailVerification(verifiedUser, tempToken);
+
         displayModal(
           "success",
           "Email Verified Successfully!",
@@ -348,19 +375,6 @@ const EmailVerificationOtp = () => {
                     "Verify Email"
                   )}
                 </button>
-
-                {/* Back to Login */}
-                <div
-                  className={`text-center mt-8 pt-6 border-t ${theme.border.secondary}`}
-                >
-                  <button
-                    type="button"
-                    onClick={() => navigate("/login")}
-                    className={`text-sm ${theme.text.link} hover:${theme.text.linkHover} underline`}
-                  >
-                    Back to Login
-                  </button>
-                </div>
               </form>
             </div>
           </div>
@@ -380,6 +394,13 @@ const EmailVerificationOtp = () => {
                     <Icon
                       icon="mdi:check-circle"
                       className={`text-5xl ${theme.text.success}`}
+                    />
+                  </div>
+                ) : modalContent.type === "warning" ? (
+                  <div className="w-20 h-20 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center mb-5">
+                    <Icon
+                      icon="mdi:alert-circle"
+                      className="text-5xl text-yellow-600 dark:text-yellow-400"
                     />
                   </div>
                 ) : (

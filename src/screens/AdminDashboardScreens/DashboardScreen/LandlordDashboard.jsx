@@ -1,10 +1,8 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "../../../../context/useTheme";
 import { Icon } from "@iconify/react";
-import {
-  GenerateUserTokenModal,
-  GenerateVisitorTokenModal,
-} from "../TokenGenerationModals";
+import { GenerateUserTokenModal } from "../TokenGenerationModals";
+import { GenerateVisitorTokenModal } from "../../GeneralScreens/VisitorsTokenGenerationModal/VisitorsGenerationToken";
 
 const LandlordDashboard = () => {
   const { theme, isDarkMode } = useTheme();

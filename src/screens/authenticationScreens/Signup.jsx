@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTheme } from "../../../context/useTheme";
+import { useUser } from "../../../context/useUser";
 import ThemeToggle from "../../../components/GeneralComponents/ThemeToggle";
 import AnimatedSecurityBackground from "../../../components/GeneralComponents/AnimatedSecurityBackground";
 import { Icon } from "@iconify/react";
@@ -9,6 +10,7 @@ const SignUp = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { theme, isDarkMode } = useTheme();
+  const { updateUser } = useUser();
 
   // Get OTP code and target role from location state (from SignUpOtpScreen)
   const otpCode = location.state?.otp_code || null;
@@ -208,11 +210,15 @@ const SignUp = () => {
         if (targetRole) {
           requestBody.target_role = targetRole;
         }
-        // Landlords registering via OTP need to provide house info
-        if (targetRole === 'landlord') {
+        // Residents registering via OTP need to provide house info
+        if (targetRole === "resident") {
           requestBody.house_number = formData.houseNumber;
           requestBody.house_type = formData.houseType;
-          requestBody.address = formData.address || ''; // Include address (can be empty string)
+          requestBody.address = formData.address || "";
+        } else if (targetRole === "landlord") {
+          requestBody.house_number = formData.houseNumber;
+          requestBody.house_type = formData.houseType;
+          requestBody.address = formData.address || "";
         }
       } else {
         // If no OTP, include house information (for direct registration)
@@ -233,13 +239,26 @@ const SignUp = () => {
       const result = await response.json();
 
       if (response.ok && result.success) {
+        // Save auth token to localStorage and UserContext
+        const authToken = result.token || result.data?.token;
+        const userData = result.data?.user || result.user;
+
+        if (authToken) {
+          localStorage.setItem("authToken", authToken);
+          localStorage.setItem("token", authToken); // For backward compatibility
+          // Update user context with the user data
+          if (userData) {
+            updateUser(userData);
+          }
+        }
+
         displayModal(
           "success",
           "Registration Successful!",
           "Please verify your email to continue...",
           formData.email,
-          result.data?.user?.id,
-          result.data?.user?.role
+          userData?.id,
+          userData?.role
         );
         setFormData({
           firstName: "",
@@ -422,7 +441,7 @@ const SignUp = () => {
                 </div>
 
                 {/* House Number and Address Row - For resident (OTP) registration */}
-                {otpCode && targetRole === 'resident' && (
+                {otpCode && targetRole === "resident" && (
                   <>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {/* House Number */}
@@ -432,9 +451,13 @@ const SignUp = () => {
                           className={`block text-sm text-start font-semibold ${theme.text.primary} mb-3 flex items-center gap-2`}
                         >
                           <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-1 rounded">
-                            <Icon icon="mdi:home" className="text-white text-sm" />
+                            <Icon
+                              icon="mdi:home"
+                              className="text-white text-sm"
+                            />
                           </div>
-                          House Number {prefillHouseNumber ? "(Pre-filled)" : ""} *
+                          House Number{" "}
+                          {prefillHouseNumber ? "(Pre-filled)" : ""} *
                         </label>
                         <input
                           type="text"
@@ -442,13 +465,27 @@ const SignUp = () => {
                           value={formData.houseNumber}
                           onChange={handleInputChange}
                           disabled={prefillHouseNumber ? true : false}
-                          className={`w-full px-4 py-3 placeholder:text-[0.8rem] ${theme.background.input} ${theme.text.primary} border rounded-[0.3rem] focus:outline-none transition-all focus:${theme.brand.primaryRing} ${prefillHouseNumber ? 'opacity-75 cursor-not-allowed' : ''}`}
+                          className={`w-full px-4 py-3 placeholder:text-[0.8rem] ${
+                            theme.background.input
+                          } ${
+                            theme.text.primary
+                          } border rounded-[0.3rem] focus:outline-none transition-all focus:${
+                            theme.brand.primaryRing
+                          } ${
+                            prefillHouseNumber
+                              ? "opacity-75 cursor-not-allowed"
+                              : ""
+                          }`}
                           placeholder="e.g., 123"
                         />
                         {prefillHouseNumber && (
                           <p className={`text-xs ${theme.text.secondary} mt-1`}>
-                            <Icon icon="mdi:information" className="inline text-sm mr-1" />
-                            This field is pre-filled from your registration token
+                            <Icon
+                              icon="mdi:information"
+                              className="inline text-sm mr-1"
+                            />
+                            This field is pre-filled from your registration
+                            token
                           </p>
                         )}
                       </div>
@@ -474,7 +511,9 @@ const SignUp = () => {
                           className={`w-full px-4 py-3 placeholder:text-[0.8rem] ${theme.background.input} ${theme.text.primary} border rounded-[0.3rem] focus:outline-none transition-all focus:${theme.brand.primaryRing}`}
                         >
                           <option value="room_self">Room Self</option>
-                          <option value="room_and_parlor">Room and Parlor</option>
+                          <option value="room_and_parlor">
+                            Room and Parlor
+                          </option>
                           <option value="2_bedroom">2-Bedroom</option>
                           <option value="3_bedroom">3-Bedroom</option>
                           <option value="duplex">Duplex</option>
@@ -494,7 +533,8 @@ const SignUp = () => {
                             className="text-white text-sm"
                           />
                         </div>
-                        Address {prefillAddress ? "(Pre-filled)" : "(Optional)"} *
+                        Address {prefillAddress ? "(Pre-filled)" : "(Optional)"}{" "}
+                        *
                       </label>
                       <input
                         type="text"
@@ -502,12 +542,23 @@ const SignUp = () => {
                         value={formData.address}
                         onChange={handleInputChange}
                         disabled={prefillAddress ? true : false}
-                        className={`w-full px-4 py-3 placeholder:text-[0.8rem] ${theme.background.input} ${theme.text.primary} border rounded-[0.3rem] focus:outline-none transition-all focus:${theme.brand.primaryRing} ${prefillAddress ? 'opacity-75 cursor-not-allowed' : ''}`}
+                        className={`w-full px-4 py-3 placeholder:text-[0.8rem] ${
+                          theme.background.input
+                        } ${
+                          theme.text.primary
+                        } border rounded-[0.3rem] focus:outline-none transition-all focus:${
+                          theme.brand.primaryRing
+                        } ${
+                          prefillAddress ? "opacity-75 cursor-not-allowed" : ""
+                        }`}
                         placeholder="Enter address (will be pre-filled if you used a token)"
                       />
                       {prefillAddress && (
                         <p className={`text-xs ${theme.text.secondary} mt-1`}>
-                          <Icon icon="mdi:information" className="inline text-sm mr-1" />
+                          <Icon
+                            icon="mdi:information"
+                            className="inline text-sm mr-1"
+                          />
                           This field is pre-filled from your registration token
                         </p>
                       )}
@@ -516,7 +567,7 @@ const SignUp = () => {
                 )}
 
                 {/* House Number and Address for Landlord Registration (OTP or direct) */}
-                {otpCode && targetRole === 'landlord' && (
+                {otpCode && targetRole === "landlord" && (
                   <>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {/* House Number */}
@@ -526,7 +577,10 @@ const SignUp = () => {
                           className={`block text-sm text-start font-semibold ${theme.text.primary} mb-3 flex items-center gap-2`}
                         >
                           <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-1 rounded">
-                            <Icon icon="mdi:home" className="text-white text-sm" />
+                            <Icon
+                              icon="mdi:home"
+                              className="text-white text-sm"
+                            />
                           </div>
                           House Number *
                         </label>
@@ -561,7 +615,9 @@ const SignUp = () => {
                           className={`w-full px-4 py-3 placeholder:text-[0.8rem] ${theme.background.input} ${theme.text.primary} border rounded-[0.3rem] focus:outline-none transition-all focus:${theme.brand.primaryRing}`}
                         >
                           <option value="room_self">Room Self</option>
-                          <option value="room_and_parlor">Room and Parlor</option>
+                          <option value="room_and_parlor">
+                            Room and Parlor
+                          </option>
                           <option value="2_bedroom">2-Bedroom</option>
                           <option value="3_bedroom">3-Bedroom</option>
                           <option value="duplex">Duplex</option>
@@ -596,7 +652,7 @@ const SignUp = () => {
                 )}
 
                 {/* House Fields for Direct Registration (non-OTP, first 3 super admins) */}
-                {!otpCode && targetRole !== 'landlord' && (
+                {!otpCode && targetRole !== "landlord" && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {/* House Number */}
                     <div>
@@ -605,7 +661,10 @@ const SignUp = () => {
                         className={`block text-sm text-start font-semibold ${theme.text.primary} mb-3 flex items-center gap-2`}
                       >
                         <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-1 rounded">
-                          <Icon icon="mdi:home" className="text-white text-sm" />
+                          <Icon
+                            icon="mdi:home"
+                            className="text-white text-sm"
+                          />
                         </div>
                         House Number *
                       </label>

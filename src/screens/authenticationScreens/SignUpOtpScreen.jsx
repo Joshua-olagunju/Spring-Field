@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../../context/useTheme";
 import ThemeToggle from "../../../components/GeneralComponents/ThemeToggle";
@@ -22,6 +22,39 @@ const SignUpOtpScreen = () => {
 
   // Refs for each OTP input
   const inputRefs = useRef([]);
+
+  const displayModal = useCallback(
+    (
+      type,
+      message,
+      details = "",
+      otpCode = null,
+      targetRole = null,
+      adminData = null
+    ) => {
+      setModalContent({ type, message, details });
+      setShowModal(true);
+
+      if (type === "info") {
+        setTimeout(() => setShowModal(false), 1500);
+      } else if (type === "success") {
+        setTimeout(() => {
+          setShowModal(false);
+          // Navigate to signup with OTP code, target role, and admin data
+          navigate("/signup", {
+            state: {
+              otp_code: otpCode,
+              target_role: targetRole || "resident",
+              house_number: adminData?.house_number,
+              address: adminData?.address,
+              adminProvidedFields: true,
+            },
+          });
+        }, 2000);
+      }
+    },
+    [navigate]
+  );
 
   // Check super admin count on mount
   useEffect(() => {
@@ -54,7 +87,7 @@ const SignUpOtpScreen = () => {
     };
 
     checkSuperAdminCount();
-  }, [navigate]);
+  }, [navigate, displayModal]);
 
   useEffect(() => {
     if (!isCheckingCount && superAdminCount >= 3 && inputRefs.current[0]) {
@@ -107,26 +140,6 @@ const SignUpOtpScreen = () => {
     }
   };
 
-  const displayModal = (type, message, details = "", otpCode = null, targetRole = null) => {
-    setModalContent({ type, message, details });
-    setShowModal(true);
-
-    if (type === "info") {
-      setTimeout(() => setShowModal(false), 1500);
-    } else if (type === "success") {
-      setTimeout(() => {
-        setShowModal(false);
-        // Navigate to signup with OTP code and target role
-        navigate("/signup", { 
-          state: { 
-            otp_code: otpCode,
-            target_role: targetRole || "resident"
-          } 
-        });
-      }, 2000);
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -163,13 +176,19 @@ const SignUpOtpScreen = () => {
       // OTP is valid, now we can proceed with the signup flow
       // Store the target role from the validation response
       const targetRole = validateResult.data?.target_role || "resident";
-      
+      const adminData = {
+        house_number: validateResult.data?.house_number,
+        address: validateResult.data?.address,
+        house_type: validateResult.data?.house_type,
+      };
+
       displayModal(
         "success",
         "OTP Verified!",
         "Redirecting to registration...",
         otpCode,
-        targetRole
+        targetRole,
+        adminData
       );
     } catch (error) {
       console.error("OTP verification error:", error);

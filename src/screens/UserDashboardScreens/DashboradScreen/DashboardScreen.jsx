@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "../../../../context/useTheme";
 import { Icon } from "@iconify/react";
+import { GenerateVisitorTokenModal } from "../../GeneralScreens/VisitorsTokenGenerationModal/VisitorsGenerationToken";
 
 const DashboardScreen = () => {
   const { theme, isDarkMode } = useTheme();
   const [recentVisitors, setRecentVisitors] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showVisitorTokenModal, setShowVisitorTokenModal] = useState(false);
 
   useEffect(() => {
     // Fetch recent visitors from API
@@ -40,6 +42,10 @@ const DashboardScreen = () => {
   const handleVisitorClick = (visitor) => {
     // Navigation to generate access token screen will be implemented later
     console.log("Visitor clicked:", visitor);
+  };
+
+  const handleGenerateVisitorToken = () => {
+    setShowVisitorTokenModal(true);
   };
 
   return (
@@ -87,7 +93,10 @@ const DashboardScreen = () => {
               >
                 Create a secure access token for your expected visitors
               </p>
-              <button className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 hover:from-blue-700 hover:via-purple-700 hover:to-blue-700 text-white font-semibold px-8 py-3 sm:px-10 sm:py-4 rounded-xl transition-all active:scale-95 shadow-lg hover:shadow-xl flex items-center gap-2">
+              <button
+                onClick={handleGenerateVisitorToken}
+                className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 hover:from-blue-700 hover:via-purple-700 hover:to-blue-700 text-white font-semibold px-8 py-3 sm:px-10 sm:py-4 rounded-xl transition-all active:scale-95 shadow-lg hover:shadow-xl flex items-center gap-2"
+              >
                 <Icon icon="mdi:plus-circle" className="text-xl" />
                 Generate Token
               </button>
@@ -255,6 +264,13 @@ const DashboardScreen = () => {
           </div>
         </div>
       </div>
+
+      {/* Visitor Token Modal */}
+      <GenerateVisitorTokenModal
+        theme={theme}
+        isOpen={showVisitorTokenModal}
+        onClose={() => setShowVisitorTokenModal(false)}
+      />
     </div>
   );
 };

@@ -1,0 +1,505 @@
+import { useState, useRef } from "react";
+import { Icon } from "@iconify/react";
+import { QRCodeSVG as QRCode } from "qrcode.react";
+import { ShareTokenImage } from "./ShareTokenImage";
+// import { useUser } from "../../../../context/useUser"; // Uncomment when API is ready
+
+export const GenerateVisitorTokenModal = ({ theme, isOpen, onClose }) => {
+  // const { authToken } = useUser(); // Uncomment when API is ready
+  const qrRef = useRef();
+  const [visitorName, setVisitorName] = useState("");
+  const [stayType, setStayType] = useState("short");
+  const [duration, setDuration] = useState("1");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [generatedToken, setGeneratedToken] = useState(null);
+  const [copied, setCopied] = useState(false);
+  const [messageCopied, setMessageCopied] = useState(false);
+
+  const handleGenerateToken = async () => {
+    if (!visitorName.trim()) {
+      setError("Please enter visitor's name");
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      // TEMPORARY: Mock data for testing UI without API
+      const mockToken = `VT-${Math.random()
+        .toString(36)
+        .substring(2, 11)
+        .toUpperCase()}`;
+      const expiresDate = new Date();
+      expiresDate.setHours(
+        expiresDate.getHours() +
+          (stayType === "short" ? parseInt(duration) : parseInt(duration) * 24)
+      );
+
+      const mockData = {
+        token: mockToken,
+        visitor_name: visitorName,
+        stay_type: stayType,
+        duration: parseInt(duration),
+        expires_at: expiresDate.toISOString(),
+      };
+
+      // Simulate API delay
+      setTimeout(() => {
+        setGeneratedToken(mockData);
+        setVisitorName("");
+        setIsLoading(false);
+      }, 1000);
+
+      // ORIGINAL API CALL - COMMENTED OUT FOR TESTING
+      /*
+      const token = authToken || localStorage.getItem("authToken");
+      const response = await fetch(
+        "http://localhost:8000/api/admin/generate-visitor-token",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            visitor_name: visitorName,
+            stay_type: stayType,
+            duration: parseInt(duration),
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        setGeneratedToken(result.data);
+        setVisitorName("");
+      } else {
+        setError(result.message || "Failed to generate visitor token");
+      }
+      */
+    } catch (err) {
+      setError("Error generating token. Please try again.");
+      console.error(err);
+      setIsLoading(false);
+    }
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(generatedToken.token);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const copyMessageToClipboard = () => {
+    const expiryDate = new Date(generatedToken.expires_at).toLocaleString();
+    const stayTypeText =
+      generatedToken.stay_type === "short"
+        ? "Short (12 hours)"
+        : "Long (1-7 days)";
+
+    const message = `SPRINGFIELD ESTATE - VISITOR ACCESS TOKEN
+
+Dear ${generatedToken.visitor_name},
+
+Your visitor access token has been generated.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ACCESS TOKEN: ${generatedToken.token}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Visitor: ${generatedToken.visitor_name}
+Stay Type: ${stayTypeText}
+Expires: ${expiryDate}
+
+INSTRUCTIONS:
+1. Present this token at the gate/entrance
+2. Security will scan the QR code
+3. You will be granted access for the specified duration
+4. Token will automatically expire after the stay
+
+Generated: ${new Date().toLocaleString()}
+Springfield Estate Security System`;
+
+    navigator.clipboard.writeText(message);
+    setMessageCopied(true);
+    setTimeout(() => setMessageCopied(false), 2000);
+  };
+
+  const downloadQRCodeWithToken = () => {
+    const shareTokenImage = ShareTokenImage({
+      qrCanvasRef: qrRef,
+      token: generatedToken.token,
+      visitorName: generatedToken.visitor_name,
+    });
+    shareTokenImage.downloadImage();
+  };
+
+  const shareQRCode = () => {
+    const shareTokenImage = ShareTokenImage({
+      qrCanvasRef: qrRef,
+      token: generatedToken.token,
+      visitorName: generatedToken.visitor_name,
+    });
+    shareTokenImage.shareImage();
+  };
+
+  const handleReset = () => {
+    setGeneratedToken(null);
+    setVisitorName("");
+    setStayType("short");
+    setDuration("1");
+    setError("");
+  };
+
+  const handleClose = () => {
+    handleReset();
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={handleClose}
+      />
+      <div
+        className={`${theme.background.card} w-full max-w-md rounded-2xl ${theme.shadow.large} relative max-h-[90vh] overflow-y-auto`}
+      >
+        <div className="p-6">
+          {/* Icon */}
+          <div className="w-16 h-16 mx-auto mb-4 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center">
+            <Icon
+              icon="mdi:qrcode"
+              className="text-3xl text-purple-600 dark:text-purple-400"
+            />
+          </div>
+
+          {/* Title */}
+          <h2
+            className={`text-xl font-bold ${theme.text.primary} mb-2 text-center`}
+          >
+            {generatedToken
+              ? "Visitor Token Generated!"
+              : "Generate Visitor Token"}
+          </h2>
+
+          {/* Description */}
+          <p className={`text-sm ${theme.text.secondary} mb-4 text-center`}>
+            {generatedToken
+              ? "Share this token with your visitor"
+              : "Create a secure access token for an expected visitor"}
+          </p>
+
+          {/* Content */}
+          {generatedToken ? (
+            <div className="space-y-4">
+              {/* QR Code Display */}
+              <div
+                className={`${theme.background.input} p-6 rounded-lg border-2 border-purple-500 flex justify-center`}
+              >
+                <div ref={qrRef} className="bg-white p-4 rounded-lg">
+                  <QRCode
+                    value={generatedToken.token}
+                    size={256}
+                    level="H"
+                    includeMargin={true}
+                  />
+                </div>
+              </div>
+
+              {/* Token Display */}
+              <div
+                className={`${theme.background.input} p-4 rounded-lg border-2 border-purple-500`}
+              >
+                <p
+                  className={`text-xs font-medium ${theme.text.secondary} mb-2 flex items-center gap-1`}
+                >
+                  <Icon icon="mdi:lock" className="text-sm" />
+                  Access Token:
+                </p>
+                <div className="flex items-center justify-between gap-2 bg-white dark:bg-gray-900 p-3 rounded border border-purple-300">
+                  <code className="text-sm font-mono text-purple-600 truncate">
+                    {generatedToken.token}
+                  </code>
+                  <button
+                    onClick={copyToClipboard}
+                    className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium rounded transition-colors flex items-center gap-1 flex-shrink-0"
+                  >
+                    <Icon
+                      icon={copied ? "mdi:check" : "mdi:content-copy"}
+                      className="text-sm"
+                    />
+                    {copied ? "Copied!" : "Copy"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Token Details */}
+              <div
+                className={`${theme.background.input} p-3 rounded-lg border ${theme.border.secondary}`}
+              >
+                <p
+                  className={`text-xs ${theme.text.secondary} mb-2 flex items-center gap-1`}
+                >
+                  <Icon icon="mdi:account" className="text-sm" />
+                  <strong>Visitor:</strong> {generatedToken.visitor_name}
+                </p>
+                <p
+                  className={`text-xs ${theme.text.secondary} mb-2 flex items-center gap-1`}
+                >
+                  <Icon icon="mdi:clock" className="text-sm" />
+                  <strong>Stay Type:</strong>{" "}
+                  {generatedToken.stay_type === "short"
+                    ? "Short (12 hours)"
+                    : "Long (1-7 days)"}
+                </p>
+                <p
+                  className={`text-xs ${theme.text.secondary} flex items-center gap-1`}
+                >
+                  <Icon icon="mdi:timer-end" className="text-sm" />
+                  <strong>Expires:</strong>{" "}
+                  {new Date(generatedToken.expires_at).toLocaleString()}
+                </p>
+              </div>
+
+              {/* Instructions */}
+              <div
+                className={`${theme.background.input} p-3 rounded-lg border ${theme.border.secondary}`}
+              >
+                <p
+                  className={`text-xs font-medium ${theme.text.secondary} mb-2 flex items-center gap-1`}
+                >
+                  <Icon icon="mdi:information" className="text-sm" />
+                  How to use this token:
+                </p>
+                <ol
+                  className={`text-xs ${theme.text.secondary} space-y-1 list-decimal list-inside`}
+                >
+                  <li>Share the QR code image or copy the message</li>
+                  <li>Visitor scans QR code or presents token at gate</li>
+                  <li>Security verifies the token</li>
+                  <li>Visitor gains access for duration specified</li>
+                  <li>Token automatically expires after stay duration</li>
+                </ol>
+              </div>
+
+              {/* Sharing Options */}
+              <div className="space-y-2">
+                <p
+                  className={`text-xs font-medium ${theme.text.secondary} text-center flex items-center justify-center gap-1`}
+                >
+                  <Icon icon="mdi:share-variant" className="text-sm" />
+                  Share Options:
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={downloadQRCodeWithToken}
+                    className="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Icon icon="mdi:download" />
+                    Download QR
+                  </button>
+                  <button
+                    onClick={shareQRCode}
+                    className="px-3 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-medium transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Icon icon="mdi:share-variant" />
+                    Share
+                  </button>
+                </div>
+              </div>
+
+              {/* Copy Message Option */}
+              <div
+                className={`${theme.background.input} p-3 rounded-lg border ${theme.border.secondary}`}
+              >
+                <p
+                  className={`text-xs font-medium ${theme.text.secondary} mb-2 flex items-center gap-1`}
+                >
+                  <Icon icon="mdi:message-text" className="text-sm" />
+                  Copy Message with Details:
+                </p>
+                <button
+                  onClick={copyMessageToClipboard}
+                  className="w-full px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium transition-colors flex items-center justify-center gap-2"
+                >
+                  <Icon
+                    icon={messageCopied ? "mdi:check" : "mdi:content-copy"}
+                    className="text-sm"
+                  />
+                  {messageCopied ? "Message Copied!" : "Copy Full Message"}
+                </button>
+                <p className={`text-xs ${theme.text.secondary} mt-2 italic`}>
+                  Includes complete token details and Springfield Estate
+                  branding.
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4 border-t border-gray-300 dark:border-gray-600">
+                <button
+                  onClick={handleClose}
+                  className={`flex-1 px-4 py-2 rounded-lg ${theme.background.input} ${theme.text.primary} font-medium hover:${theme.background.card} transition-colors`}
+                >
+                  Close
+                </button>
+                <button
+                  onClick={handleReset}
+                  className="flex-1 px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-medium transition-colors flex items-center justify-center gap-2"
+                >
+                  <Icon icon="mdi:plus-circle" />
+                  Generate More
+                </button>
+              </div>
+            </div>
+          ) : (
+            // Form
+            <div className="space-y-4">
+              {/* Visitor Name */}
+              <div>
+                <label
+                  className={`block text-sm font-medium ${theme.text.primary} mb-2`}
+                >
+                  Visitor Name
+                </label>
+                <input
+                  type="text"
+                  value={visitorName}
+                  onChange={(e) => {
+                    setVisitorName(e.target.value);
+                    setError("");
+                  }}
+                  placeholder="Enter visitor's full name"
+                  className={`w-full px-4 py-2 rounded-lg ${theme.background.input} ${theme.text.primary} border ${theme.border.secondary} focus:outline-none focus:border-purple-500 transition-colors`}
+                  disabled={isLoading}
+                />
+              </div>
+
+              {/* Stay Type */}
+              <div>
+                <label
+                  className={`block text-sm font-medium ${theme.text.primary} mb-2`}
+                >
+                  Stay Type
+                </label>
+                <select
+                  value={stayType}
+                  onChange={(e) => {
+                    setStayType(e.target.value);
+                    setDuration("1");
+                    setError("");
+                  }}
+                  className={`w-full px-4 py-2 rounded-lg ${theme.background.input} ${theme.text.primary} border ${theme.border.secondary} focus:outline-none focus:border-purple-500 transition-colors cursor-pointer`}
+                  disabled={isLoading}
+                >
+                  <option value="short">Short (12 hours)</option>
+                  <option value="long">Long (1-7 days)</option>
+                </select>
+              </div>
+
+              {/* Duration */}
+              <div>
+                <label
+                  className={`block text-sm font-medium ${theme.text.primary} mb-2`}
+                >
+                  Duration ({stayType === "short" ? "hours" : "days"})
+                </label>
+                <select
+                  value={duration}
+                  onChange={(e) => {
+                    setDuration(e.target.value);
+                    setError("");
+                  }}
+                  className={`w-full px-4 py-2 rounded-lg ${theme.background.input} ${theme.text.primary} border ${theme.border.secondary} focus:outline-none focus:border-purple-500 transition-colors cursor-pointer`}
+                  disabled={isLoading}
+                >
+                  {stayType === "short" ? (
+                    <>
+                      <option value="1">1 hour</option>
+                      <option value="2">2 hours</option>
+                      <option value="4">4 hours</option>
+                      <option value="6">6 hours</option>
+                      <option value="12">12 hours</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="1">1 day</option>
+                      <option value="2">2 days</option>
+                      <option value="3">3 days</option>
+                      <option value="5">5 days</option>
+                      <option value="7">7 days</option>
+                    </>
+                  )}
+                </select>
+              </div>
+
+              {/* Info Box */}
+              <div
+                className={`${theme.background.input} p-3 rounded-lg border ${theme.border.secondary}`}
+              >
+                <p
+                  className={`text-xs font-medium ${theme.text.secondary} mb-2 flex items-center gap-1`}
+                >
+                  <Icon icon="mdi:information-outline" className="text-sm" />
+                  About Visitor Tokens:
+                </p>
+                <ul
+                  className={`text-xs ${theme.text.secondary} space-y-1 list-disc list-inside`}
+                >
+                  <li>Generates a unique secure access token</li>
+                  <li>Token provides temporary access for visitors</li>
+                  <li>Choose between short (12h) or long (1-7 days)</li>
+                  <li>Token is QR scannable at gate/entrance</li>
+                  <li>Automatically expires after duration ends</li>
+                </ul>
+              </div>
+
+              {/* Error Message */}
+              {error && (
+                <div className="p-3 rounded-lg bg-red-100 border border-red-300">
+                  <p className="text-xs text-red-800 flex items-center gap-2">
+                    <Icon icon="mdi:alert-circle" />
+                    {error}
+                  </p>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={handleClose}
+                  disabled={isLoading}
+                  className={`flex-1 px-4 py-2 rounded-lg ${theme.background.input} ${theme.text.primary} font-medium hover:${theme.background.card} transition-colors disabled:opacity-50`}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleGenerateToken}
+                  disabled={isLoading || !visitorName.trim()}
+                  className="flex-1 px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isLoading ? (
+                    <>
+                      <Icon icon="mdi:loading" className="animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Icon icon="mdi:plus-circle" />
+                      Generate Token
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};

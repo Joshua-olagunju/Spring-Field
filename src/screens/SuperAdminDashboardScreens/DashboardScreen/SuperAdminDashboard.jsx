@@ -1,10 +1,8 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "../../../../context/useTheme";
 import { Icon } from "@iconify/react";
-import {
-  GenerateAccountTokenModal,
-  GenerateVisitorTokenModal,
-} from "./TokenGenerationModals";
+import { GenerateAccountTokenModal } from "./TokenGenerationModals";
+import { GenerateVisitorTokenModal } from "../../GeneralScreens/VisitorsTokenGenerationModal/VisitorsGenerationToken";
 
 const SuperAdminDashboard = () => {
   const { theme, isDarkMode } = useTheme();
