@@ -51,9 +51,15 @@ const TopNavBar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleProfileClick = () => {
+  const handleSettingsClick = () => {
     setShowDropdown(false);
-    navigate("/profile");
+    navigate("/settings");
+  };
+
+  const handleLogoutClick = () => {
+    setShowDropdown(false);
+    // Logout modal will be triggered from App.jsx context
+    window.dispatchEvent(new Event("openLogoutModal"));
   };
 
   // Hide top nav on auth pages (same behavior as bottom nav)
@@ -65,6 +71,7 @@ const TopNavBar = () => {
     "/forgot-password",
     "/reset-password-otp",
     "/reset-password",
+    "/settings",
   ];
   if (authPages.includes(location.pathname)) {
     return null;
@@ -122,11 +129,18 @@ const TopNavBar = () => {
               className={`absolute right-0 mt-2 w-48 ${theme.background.card} rounded-lg ${theme.shadow.medium} border ${theme.border.secondary} overflow-hidden`}
             >
               <button
-                onClick={handleProfileClick}
-                className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:${theme.background.input} transition-colors ${theme.text.primary}`}
+                onClick={handleSettingsClick}
+                className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:${theme.background.input} transition-colors ${theme.text.primary} border-b ${theme.border.secondary}`}
               >
-                <Icon icon="mdi:account-circle" className="text-xl" />
-                <span className="text-sm font-medium">View Profile</span>
+                <Icon icon="mdi:cog" className="text-xl" />
+                <span className="text-sm font-medium">Settings</span>
+              </button>
+              <button
+                onClick={handleLogoutClick}
+                className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:${theme.background.input} transition-colors text-red-600 hover:text-red-700`}
+              >
+                <Icon icon="mdi:logout" className="text-xl" />
+                <span className="text-sm font-medium">Logout</span>
               </button>
             </div>
           )}

@@ -15,7 +15,7 @@ const SuperAdminBottomNav = () => {
     "/email-verification",
     "/forgot-password",
     "/reset-password-otp",
-    "/reset-password",
+    "/settings",
   ];
   if (authPages.includes(location.pathname)) {
     return null;
@@ -39,6 +39,12 @@ const SuperAdminBottomNav = () => {
       path: "/admin/users",
       icon: "mdi:account-multiple-outline",
       iconFilled: "mdi:account-multiple",
+    },
+    {
+      name: "Subscription",
+      path: "/admin/subscription",
+      icon: "mdi:credit-card-outline",
+      iconFilled: "mdi:credit-card",
     },
   ];
 

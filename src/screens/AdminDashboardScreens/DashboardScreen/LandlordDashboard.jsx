@@ -1,11 +1,19 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "../../../../context/useTheme";
 import { Icon } from "@iconify/react";
+import {
+  GenerateUserTokenModal,
+  GenerateVisitorTokenModal,
+} from "../TokenGenerationModals";
 
-const SuperAdminDashboard = () => {
+const LandlordDashboard = () => {
   const { theme, isDarkMode } = useTheme();
   const [recentVisitors, setRecentVisitors] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showGenerateUserTokenModal, setShowGenerateUserTokenModal] =
+    useState(false);
+  const [showGenerateVisitorTokenModal, setShowGenerateVisitorTokenModal] =
+    useState(false);
 
   useEffect(() => {
     // Fetch recent visitors from API
@@ -41,14 +49,12 @@ const SuperAdminDashboard = () => {
     console.log("Visitor clicked:", visitor);
   };
 
-  const handleGenerateAccountToken = () => {
-    console.log("Generate Account Token clicked");
-    // Navigate to account token generation screen
+  const handleGenerateUserToken = () => {
+    setShowGenerateUserTokenModal(true);
   };
 
   const handleGenerateVisitorToken = () => {
-    console.log("Generate Visitor Token clicked");
-    // Navigate to visitor token generation screen
+    setShowGenerateVisitorTokenModal(true);
   };
 
   return (
@@ -100,11 +106,11 @@ const SuperAdminDashboard = () => {
                 Create a new resident account with access credentials
               </p>
               <button
-                onClick={handleGenerateAccountToken}
-                className="bg-gradient-to-r from-green-600 via-emerald-600 to-green-600 hover:from-green-700 hover:via-emerald-700 hover:to-green-700 text-white font-semibold px-8 py-3 sm:px-10 sm:py-4 rounded-xl transition-all active:scale-95 shadow-lg hover:shadow-xl flex items-center gap-2"
+                onClick={handleGenerateUserToken}
+                className="bg-gradient-to-r from-blue-600 via-blue-600 to-blue-600 hover:from-blue-700 hover:via-blue-700 hover:to-blue-700 text-white font-semibold px-8 py-3 sm:px-10 sm:py-4 rounded-xl transition-all active:scale-95 shadow-lg hover:shadow-xl flex items-center gap-2"
               >
                 <Icon icon="mdi:plus-circle" className="text-xl" />
-                Generate Account Token
+                Generate User Token
               </button>
             </div>
           </div>
@@ -301,8 +307,20 @@ const SuperAdminDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      <GenerateUserTokenModal
+        theme={theme}
+        isOpen={showGenerateUserTokenModal}
+        onClose={() => setShowGenerateUserTokenModal(false)}
+      />
+      <GenerateVisitorTokenModal
+        theme={theme}
+        isOpen={showGenerateVisitorTokenModal}
+        onClose={() => setShowGenerateVisitorTokenModal(false)}
+      />
     </div>
   );
 };
 
-export default SuperAdminDashboard;
+export default LandlordDashboard;

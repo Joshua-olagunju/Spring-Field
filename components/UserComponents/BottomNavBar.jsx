@@ -16,6 +16,7 @@ const BottomNavBar = () => {
     "/forgot-password",
     "/reset-password-otp",
     "/reset-password",
+    "/settings",
   ];
   if (authPages.includes(location.pathname)) {
     return null;
