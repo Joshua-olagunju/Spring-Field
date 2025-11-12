@@ -6,14 +6,19 @@ export const GenerateUserTokenModal = ({ theme, isOpen, onClose }) => {
   const [generatedOtp, setGeneratedOtp] = useState(null);
   const [recipientName, setRecipientName] = useState("");
   const [recipientEmail, setRecipientEmail] = useState("");
-  const [expiresInHours, setExpiresInHours] = useState(24);
-  const [description, setDescription] = useState("");
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
 
   const handleGenerateToken = async () => {
     if (!recipientName.trim() || !recipientEmail.trim()) {
       setError("Please fill in all required fields");
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(recipientEmail.trim())) {
+      setError("Please enter a valid email address");
       return;
     }
 
@@ -27,13 +32,12 @@ export const GenerateUserTokenModal = ({ theme, isOpen, onClose }) => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
           },
           body: JSON.stringify({
-            recipient_name: recipientName,
-            recipient_email: recipientEmail,
-            expires_in_hours: parseInt(expiresInHours),
-            description: description || null,
+            recipient_name: recipientName.trim(),
+            recipient_email: recipientEmail.trim(),
+            expires_in_hours: 72,
           }),
         }
       );
@@ -44,9 +48,8 @@ export const GenerateUserTokenModal = ({ theme, isOpen, onClose }) => {
         setGeneratedOtp(result.data);
         setRecipientName("");
         setRecipientEmail("");
-        setDescription("");
       } else {
-        setError(result.message || "Failed to generate user token");
+        setError(result.message || "Failed to generate token");
       }
     } catch (err) {
       setError("Error generating token. Please try again.");
@@ -66,7 +69,6 @@ export const GenerateUserTokenModal = ({ theme, isOpen, onClose }) => {
     setGeneratedOtp(null);
     setRecipientName("");
     setRecipientEmail("");
-    setDescription("");
     setError("");
   };
 
@@ -96,27 +98,27 @@ export const GenerateUserTokenModal = ({ theme, isOpen, onClose }) => {
           <h2
             className={`text-xl font-bold ${theme.text.primary} mb-2 text-center`}
           >
-            {generatedOtp ? "User OTP Generated!" : "Generate User OTP"}
+            {generatedOtp ? "Resident Token Generated! ✅" : "Generate Resident Token"}
           </h2>
 
           {/* Description */}
           <p className={`text-sm ${theme.text.secondary} mb-4 text-center`}>
             {generatedOtp
-              ? "Share this OTP with the user to enable registration"
-              : "Create a registration OTP for a new resident user"}
+              ? "Share this token with the resident to enable registration"
+              : "Create a registration token for a new resident"}
           </p>
 
           {/* Content */}
           {generatedOtp ? (
             <div className="space-y-4">
-              {/* Generated OTP Display */}
+              {/* Generated Token Display */}
               <div
                 className={`${theme.background.input} p-4 rounded-lg border-2 border-blue-500`}
               >
                 <p
                   className={`text-xs font-medium ${theme.text.secondary} mb-2`}
                 >
-                  📋 Registration OTP Code:
+                  � Registration Token Code:
                 </p>
                 <div className="flex items-center justify-between gap-2 bg-white dark:bg-gray-900 p-3 rounded border border-blue-300">
                   <code className="text-lg font-bold text-blue-600">
@@ -135,12 +137,12 @@ export const GenerateUserTokenModal = ({ theme, isOpen, onClose }) => {
                 </div>
               </div>
 
-              {/* Recipient Details */}
+              {/* Resident Details */}
               <div
                 className={`${theme.background.input} p-3 rounded-lg border ${theme.border.secondary}`}
               >
                 <p className={`text-xs ${theme.text.secondary} mb-2`}>
-                  📧 <strong>Recipient:</strong> {generatedOtp.recipient_name} (
+                  � <strong>Resident:</strong> {generatedOtp.recipient_name} (
                   {generatedOtp.recipient_email})
                 </p>
                 <p className={`text-xs ${theme.text.secondary}`}>
@@ -156,16 +158,16 @@ export const GenerateUserTokenModal = ({ theme, isOpen, onClose }) => {
                 <p
                   className={`text-xs font-medium ${theme.text.secondary} mb-2`}
                 >
-                  📝 How to share this OTP:
+                  📝 Next Steps:
                 </p>
                 <ol
                   className={`text-xs ${theme.text.secondary} space-y-1 list-decimal list-inside`}
                 >
-                  <li>Copy the OTP code above</li>
-                  <li>Share it with the user (via email, message, etc.)</li>
-                  <li>They go to /signup-otp and enter this code</li>
-                  <li>They create their account as a resident</li>
-                  <li>They can then manage their visitors</li>
+                  <li>Copy the token code above</li>
+                  <li>Share it with the resident</li>
+                  <li>Resident goes to signup page</li>
+                  <li>They enter this token to register</li>
+                  <li>They become linked under your account</li>
                 </ol>
               </div>
 
@@ -194,7 +196,7 @@ export const GenerateUserTokenModal = ({ theme, isOpen, onClose }) => {
                 <label
                   className={`block text-sm font-medium ${theme.text.primary} mb-2`}
                 >
-                  Recipient Name
+                  Resident Name
                 </label>
                 <input
                   type="text"
@@ -203,7 +205,7 @@ export const GenerateUserTokenModal = ({ theme, isOpen, onClose }) => {
                     setRecipientName(e.target.value);
                     setError("");
                   }}
-                  placeholder="Enter user's full name"
+                  placeholder="Enter resident's full name"
                   className={`w-full px-4 py-2 rounded-lg ${theme.background.input} ${theme.text.primary} border ${theme.border.secondary} focus:outline-none focus:border-blue-500 transition-colors`}
                   disabled={isLoading}
                 />
@@ -214,7 +216,7 @@ export const GenerateUserTokenModal = ({ theme, isOpen, onClose }) => {
                 <label
                   className={`block text-sm font-medium ${theme.text.primary} mb-2`}
                 >
-                  Recipient Email
+                  Resident Email
                 </label>
                 <input
                   type="email"
@@ -223,54 +225,8 @@ export const GenerateUserTokenModal = ({ theme, isOpen, onClose }) => {
                     setRecipientEmail(e.target.value);
                     setError("");
                   }}
-                  placeholder="Enter user's email"
+                  placeholder="Enter resident's email"
                   className={`w-full px-4 py-2 rounded-lg ${theme.background.input} ${theme.text.primary} border ${theme.border.secondary} focus:outline-none focus:border-blue-500 transition-colors`}
-                  disabled={isLoading}
-                />
-              </div>
-
-              {/* Expires In */}
-              <div>
-                <label
-                  className={`block text-sm font-medium ${theme.text.primary} mb-2`}
-                >
-                  Expires In (Hours)
-                </label>
-                <select
-                  value={expiresInHours}
-                  onChange={(e) => {
-                    setExpiresInHours(e.target.value);
-                    setError("");
-                  }}
-                  className={`w-full px-4 py-2 rounded-lg ${theme.background.input} ${theme.text.primary} border ${theme.border.secondary} focus:outline-none focus:border-blue-500 transition-colors cursor-pointer`}
-                  disabled={isLoading}
-                >
-                  <option value="1">1 hour</option>
-                  <option value="6">6 hours</option>
-                  <option value="12">12 hours</option>
-                  <option value="24">24 hours (recommended)</option>
-                  <option value="48">48 hours</option>
-                  <option value="72">3 days</option>
-                  <option value="168">7 days</option>
-                </select>
-              </div>
-
-              {/* Description */}
-              <div>
-                <label
-                  className={`block text-sm font-medium ${theme.text.primary} mb-2`}
-                >
-                  Description (Optional)
-                </label>
-                <textarea
-                  value={description}
-                  onChange={(e) => {
-                    setDescription(e.target.value);
-                    setError("");
-                  }}
-                  placeholder="Add any notes about this user OTP"
-                  className={`w-full px-4 py-2 rounded-lg ${theme.background.input} ${theme.text.primary} border ${theme.border.secondary} focus:outline-none focus:border-blue-500 transition-colors resize-none`}
-                  rows="2"
                   disabled={isLoading}
                 />
               </div>
@@ -282,16 +238,17 @@ export const GenerateUserTokenModal = ({ theme, isOpen, onClose }) => {
                 <p
                   className={`text-xs font-medium ${theme.text.secondary} mb-2`}
                 >
-                  ℹ️ About User OTP:
+                  ℹ️ How This Works:
                 </p>
                 <ul
                   className={`text-xs ${theme.text.secondary} space-y-1 list-disc list-inside`}
                 >
-                  <li>Generates a unique 6-digit registration code</li>
-                  <li>OTP can be shared with new residents/users</li>
-                  <li>Enables secure account creation for users</li>
-                  <li>OTP expires after the selected time period</li>
-                  <li>Expires automatically after use</li>
+                  <li>Token generated from name & email only</li>
+                  <li>Share token with resident via email/message</li>
+                  <li>Resident enters token at signup page</li>
+                  <li>Resident becomes linked under your account</li>
+                  <li>You can manage their access & visitors</li>
+                  <li>Token expires after 72 hours</li>
                 </ul>
               </div>
 
@@ -329,7 +286,7 @@ export const GenerateUserTokenModal = ({ theme, isOpen, onClose }) => {
                   ) : (
                     <>
                       <Icon icon="mdi:plus-circle" />
-                      Generate OTP
+                      Generate Token
                     </>
                   )}
                 </button>
@@ -367,7 +324,7 @@ export const GenerateVisitorTokenModal = ({ theme, isOpen, onClose }) => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
           },
           body: JSON.stringify({
             visitor_name: visitorName,

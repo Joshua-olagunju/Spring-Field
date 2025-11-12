@@ -15,6 +15,79 @@ use Illuminate\Support\Facades\Mail;
 class RegistrationOtpController extends Controller
 {
     /**
+     * Generate OTP for user registration (Admin/Landlord)
+     * Simpler version without house requirements
+     */
+    public function generateUserOtp(Request $request)
+    {
+        try {
+            // Check if user is landlord (only landlords can generate user OTPs)
+            if (!$request->user()->isLandlord()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only landlords can generate user tokens.'
+                ], 403);
+            }
+
+            $validator = Validator::make($request->all(), [
+                'recipient_email' => 'required|email',
+                'recipient_name' => 'required|string|max:255',
+                'expires_in_hours' => 'nullable|integer|min:1|max:168',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $expiresInHours = $request->input('expires_in_hours', 72); // Default 3 days
+
+            // Create OTP directly without house requirements
+            $otp = RegistrationOtp::create([
+                'otp_code' => RegistrationOtp::generateOtpCode(),
+                'generated_by' => $request->user()->id,
+                'target_role' => RegistrationOtp::TARGET_RESIDENT,
+                'house_id' => null,
+                'house_number' => null,
+                'address' => null,
+                'expires_at' => \Carbon\Carbon::now()->addHours($expiresInHours),
+            ]);
+
+            // Update metadata with recipient info
+            $metadata = [
+                'recipient_email' => $request->recipient_email,
+                'recipient_name' => $request->recipient_name,
+                'generated_by_role' => $request->user()->role,
+                'generated_by_name' => $request->user()->full_name,
+            ];
+            $otp->update(['metadata' => $metadata]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'User token generated successfully',
+                'data' => [
+                    'otp_code' => $otp->otp_code,
+                    'target_role' => $otp->target_role,
+                    'expires_at' => $otp->expires_at,
+                    'generated_by' => $request->user()->full_name,
+                    'recipient_email' => $request->recipient_email,
+                    'recipient_name' => $request->recipient_name,
+                ]
+            ], 201);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to generate user token',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Generate OTP for landlord registration (Super Admin only)
      */
     public function generateLandlordOtp(Request $request)
