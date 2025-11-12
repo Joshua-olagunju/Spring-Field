@@ -21,6 +21,14 @@ export const UserProvider = ({ children }) => {
       const userData = localStorage.getItem("userData");
 
       if (token && userData) {
+        const user = JSON.parse(userData);
+
+        // CRITICAL: If email is not verified, do not authenticate user
+        if (!user.email_verified_at) {
+          clearAuth();
+          return;
+        }
+
         // Verify token is still valid by making a request to backend
         const response = await fetch("http://localhost:8000/api/verify-token", {
           method: "POST",
@@ -33,7 +41,7 @@ export const UserProvider = ({ children }) => {
         if (response.ok) {
           await response.json();
           setAuthToken(token);
-          setUser(JSON.parse(userData));
+          setUser(user);
           setIsAuthenticated(true);
         } else {
           // Token is invalid, clear everything
@@ -62,10 +70,34 @@ export const UserProvider = ({ children }) => {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        const token = result.token;
-        const userData = result.user;
+        const token = result.token || result.data?.token;
+        const userData = result.user || result.data?.user;
 
-        // Store in state
+        // CRITICAL: Check if email is verified
+        if (!userData.email_verified_at) {
+          // Email not verified - ONLY save user data, NOT the token
+          // This prevents access to authenticated routes
+          localStorage.setItem(
+            "pendingVerificationUser",
+            JSON.stringify({
+              email: userData.email,
+              user_id: userData.id,
+              role: userData.role,
+              tempToken: token, // Store temporarily for verification API call
+            })
+          );
+
+          // Do NOT set authenticated state
+          return {
+            success: true,
+            data: result,
+            user: userData,
+            token,
+            needsVerification: true,
+          };
+        }
+
+        // Email is verified - save token and authenticate
         setAuthToken(token);
         setUser(userData);
         setIsAuthenticated(true);
@@ -73,8 +105,9 @@ export const UserProvider = ({ children }) => {
         // Persist in localStorage
         localStorage.setItem("authToken", token);
         localStorage.setItem("userData", JSON.stringify(userData));
+        localStorage.setItem("token", token); // Also save as 'token' for backward compatibility
 
-        return { success: true, data: result, user: userData };
+        return { success: true, data: result, user: userData, token };
       } else {
         return {
           success: false,
@@ -125,6 +158,21 @@ export const UserProvider = ({ children }) => {
     localStorage.setItem("userData", JSON.stringify(userData));
   };
 
+  // Complete email verification and save auth token
+  const completeEmailVerification = (userData, authToken) => {
+    setAuthToken(authToken);
+    setUser(userData);
+    setIsAuthenticated(true);
+
+    // Persist in localStorage - NOW that email is verified
+    localStorage.setItem("authToken", authToken);
+    localStorage.setItem("userData", JSON.stringify(userData));
+    localStorage.setItem("token", authToken); // Also save as 'token' for backward compatibility
+
+    // Clear temporary verification data
+    localStorage.removeItem("pendingVerificationUser");
+  };
+
   // Refresh user data from server
   const refreshUserData = async () => {
     try {
@@ -159,6 +207,7 @@ export const UserProvider = ({ children }) => {
     updateUser,
     refreshUserData,
     checkAuthStatus,
+    completeEmailVerification,
   };
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;

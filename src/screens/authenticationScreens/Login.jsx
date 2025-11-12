@@ -64,10 +64,44 @@ const Login = () => {
     }
   };
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated - with validation checks
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/dashboard", { replace: true });
+      // Get user data from context or localStorage
+      const userData = localStorage.getItem("userData");
+
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+
+          // All checks already passed in UserContext checkAuthStatus
+          // which prevents isAuthenticated from being true if email is not verified
+
+          // Route to appropriate dashboard based on user role
+          let redirectPath = "/dashboard";
+          switch (user.role) {
+            case "super":
+              redirectPath = "/super-admin/dashboard";
+              break;
+            case "landlord":
+              redirectPath = "/admin/dashboard";
+              break;
+            case "resident":
+              redirectPath = "/dashboard";
+              break;
+            case "security":
+              redirectPath = "/dashboard";
+              break;
+            default:
+              redirectPath = "/dashboard";
+          }
+
+          navigate(redirectPath, { replace: true });
+        } catch (error) {
+          console.error("Error parsing user data:", error);
+          navigate("/dashboard", { replace: true });
+        }
+      }
     }
   }, [isAuthenticated, navigate]);
 
@@ -103,44 +137,37 @@ const Login = () => {
       const result = await userLogin(formData.email, formData.password);
 
       if (result.success) {
-        displayModal(
-          "success",
-          "Login Successful",
-          "Redirecting to your dashboard..."
-        );
+        // Check if email needs verification
+        if (result.needsVerification) {
+          displayModal(
+            "warning",
+            "Email Not Verified",
+            "Your email hasn't been verified yet. We'll redirect you to verify it now."
+          );
 
-        setFormData({ email: "", password: "" });
-
-        // Determine redirect based on user role and email verification status
-        const userData = result.user;
-        let redirectPath = "/dashboard";
-
-        // If email is not verified, redirect to email verification
-        if (!userData.email_verified_at) {
-          redirectPath = "/email-verification";
+          setTimeout(() => {
+            navigate("/email-verification", {
+              replace: true,
+              state: {
+                email: result.user.email,
+                user_id: result.user.id,
+                role: result.user.role,
+                autoResend: true,
+                tempToken: result.token,
+              },
+            });
+          }, 2000);
+          setFormData({ email: "", password: "" });
         } else {
-          // Route based on user role
-          switch (userData.role) {
-            case "super":
-              redirectPath = "/super-admin/dashboard";
-              break;
-            case "landlord":
-              redirectPath = "/admin/dashboard";
-              break;
-            case "resident":
-              redirectPath = "/dashboard";
-              break;
-            case "security":
-              redirectPath = "/dashboard";
-              break;
-            default:
-              redirectPath = "/dashboard";
-          }
+          // Email is verified, show success
+          displayModal(
+            "success",
+            "Login Successful",
+            "Redirecting to your dashboard..."
+          );
+          setFormData({ email: "", password: "" });
+          // The useEffect will handle navigation since isAuthenticated is now true
         }
-
-        setTimeout(() => {
-          navigate(redirectPath, { replace: true });
-        }, 1500);
       } else {
         displayModal(
           "error",

@@ -45,23 +45,30 @@ class RegistrationOtpController extends Controller
 
             $expiresInHours = $request->input('expires_in_hours', 72); // Default 3 days
 
-            // Create OTP directly without house requirements
+            // Get landlord's first house to pre-fill for the resident
+            $landlord = $request->user();
+            $landlordHouse = $landlord->ownedHouses()->first();
+
+            // Create OTP with landlord's house info (to be prefilled for resident)
             $otp = RegistrationOtp::create([
                 'otp_code' => RegistrationOtp::generateOtpCode(),
-                'generated_by' => $request->user()->id,
+                'generated_by' => $landlord->id,
                 'target_role' => RegistrationOtp::TARGET_RESIDENT,
-                'house_id' => null,
-                'house_number' => null,
-                'address' => null,
+                'house_id' => $landlordHouse ? $landlordHouse->id : null,
+                'house_number' => $landlordHouse ? $landlordHouse->house_number : null,
+                'address' => $landlordHouse ? $landlordHouse->address : null,
                 'expires_at' => \Carbon\Carbon::now()->addHours($expiresInHours),
             ]);
 
-            // Update metadata with recipient info
+            // Update metadata with recipient info and admin metadata
             $metadata = [
                 'recipient_email' => $request->recipient_email,
                 'recipient_name' => $request->recipient_name,
-                'generated_by_role' => $request->user()->role,
-                'generated_by_name' => $request->user()->full_name,
+                'generated_by_role' => $landlord->role,
+                'generated_by_name' => $landlord->full_name,
+                'admin_house_number' => $landlordHouse ? $landlordHouse->house_number : null,
+                'admin_address' => $landlordHouse ? $landlordHouse->address : null,
+                'admin_house_type' => $landlordHouse ? $landlordHouse->house_type : null,
             ];
             $otp->update(['metadata' => $metadata]);
 
@@ -72,7 +79,7 @@ class RegistrationOtpController extends Controller
                     'otp_code' => $otp->otp_code,
                     'target_role' => $otp->target_role,
                     'expires_at' => $otp->expires_at,
-                    'generated_by' => $request->user()->full_name,
+                    'generated_by' => $landlord->full_name,
                     'recipient_email' => $request->recipient_email,
                     'recipient_name' => $request->recipient_name,
                 ]
@@ -468,12 +475,18 @@ class RegistrationOtpController extends Controller
                 'expires_at' => $otp->expires_at,
             ];
 
-            // Include house info for resident OTPs
-            if ($otp->target_role === RegistrationOtp::TARGET_RESIDENT && $otp->house) {
-                $responseData['house'] = [
-                    'house_number' => $otp->house->house_number,
-                    'address' => $otp->house->address,
-                ];
+            // Include house info for resident OTPs (admin's house details for prefill)
+            if ($otp->target_role === RegistrationOtp::TARGET_RESIDENT) {
+                $responseData['house_number'] = $otp->house_number;
+                $responseData['address'] = $otp->address;
+                $responseData['house_type'] = $otp->house ? $otp->house->house_type : null;
+                
+                // Include metadata for additional context
+                if ($otp->metadata) {
+                    $responseData['admin_house_number'] = $otp->metadata['admin_house_number'] ?? $otp->house_number;
+                    $responseData['admin_address'] = $otp->metadata['admin_address'] ?? $otp->address;
+                    $responseData['admin_house_type'] = $otp->metadata['admin_house_type'] ?? null;
+                }
             }
 
             return response()->json([

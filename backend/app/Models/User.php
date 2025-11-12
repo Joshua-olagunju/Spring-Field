@@ -26,6 +26,7 @@ class User extends Authenticatable
         'password_hash',
         'role',
         'house_id',
+        'house_type',
         'status_active',
         'email_verified_at',
     ];

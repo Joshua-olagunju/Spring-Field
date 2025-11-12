@@ -166,9 +166,12 @@ class AuthController extends Controller
                     'status_active' => $isFirstThreeUsers, // First 3 users are auto-active
                 ];
 
-                // Add house_id for non-super users
-                if ($userRole !== User::ROLE_SUPER && $house) {
-                    $userData['house_id'] = $house->id;
+                // Add house_id and house_type for non-super users
+                if ($userRole !== User::ROLE_SUPER) {
+                    if ($house) {
+                        $userData['house_id'] = $house->id;
+                    }
+                    $userData['house_type'] = $houseType;
                 }
 
                 $user = User::create($userData);
@@ -233,6 +236,7 @@ class AuthController extends Controller
                         'email' => $user->email,
                         'phone' => $user->phone,
                         'role' => $user->role,
+                        'house_type' => $user->house_type,
                         'status_active' => $user->status_active,
                         'email_verified' => $user->hasVerifiedEmail(),
                         'house' => $house ? [
@@ -331,6 +335,7 @@ class AuthController extends Controller
                     'email' => $user->email,
                     'phone' => $user->phone,
                     'role' => $user->role,
+                    'house_type' => $user->house_type,
                     'status_active' => $user->status_active,
                     'email_verified_at' => $user->email_verified_at,
                     'house' => $user->house ? [
