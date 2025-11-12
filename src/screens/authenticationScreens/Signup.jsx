@@ -13,14 +13,16 @@ const SignUp = () => {
   // Get OTP code and target role from location state (from SignUpOtpScreen)
   const otpCode = location.state?.otp_code || null;
   const targetRole = location.state?.target_role || null;
+  const prefillHouseNumber = location.state?.house_number || null;
+  const prefillAddress = location.state?.address || null;
 
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
     phoneNumber: "",
-    houseNumber: "",
-    address: "",
+    houseNumber: prefillHouseNumber || "",
+    address: prefillAddress || "",
     houseType: "room_self",
     description: "",
     password: "",
@@ -419,8 +421,102 @@ const SignUp = () => {
                   )}
                 </div>
 
-                {/* House Number and Address Row - Only show for OTP registration (landlord) or direct registration */}
-                {(!otpCode || targetRole === 'landlord') && (
+                {/* House Number and Address Row - For resident (OTP) registration */}
+                {otpCode && targetRole === 'resident' && (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* House Number */}
+                      <div>
+                        <label
+                          htmlFor="houseNumber"
+                          className={`block text-sm text-start font-semibold ${theme.text.primary} mb-3 flex items-center gap-2`}
+                        >
+                          <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-1 rounded">
+                            <Icon icon="mdi:home" className="text-white text-sm" />
+                          </div>
+                          House Number {prefillHouseNumber ? "(Pre-filled)" : ""} *
+                        </label>
+                        <input
+                          type="text"
+                          id="houseNumber"
+                          value={formData.houseNumber}
+                          onChange={handleInputChange}
+                          disabled={prefillHouseNumber ? true : false}
+                          className={`w-full px-4 py-3 placeholder:text-[0.8rem] ${theme.background.input} ${theme.text.primary} border rounded-[0.3rem] focus:outline-none transition-all focus:${theme.brand.primaryRing} ${prefillHouseNumber ? 'opacity-75 cursor-not-allowed' : ''}`}
+                          placeholder="e.g., 123"
+                        />
+                        {prefillHouseNumber && (
+                          <p className={`text-xs ${theme.text.secondary} mt-1`}>
+                            <Icon icon="mdi:information" className="inline text-sm mr-1" />
+                            This field is pre-filled from your registration token
+                          </p>
+                        )}
+                      </div>
+
+                      {/* House Type */}
+                      <div>
+                        <label
+                          htmlFor="houseType"
+                          className={`block text-sm text-start font-semibold ${theme.text.primary} mb-3 flex items-center gap-2`}
+                        >
+                          <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-1 rounded">
+                            <Icon
+                              icon="mdi:home-roof"
+                              className="text-white text-sm"
+                            />
+                          </div>
+                          House Type *
+                        </label>
+                        <select
+                          id="houseType"
+                          value={formData.houseType}
+                          onChange={handleInputChange}
+                          className={`w-full px-4 py-3 placeholder:text-[0.8rem] ${theme.background.input} ${theme.text.primary} border rounded-[0.3rem] focus:outline-none transition-all focus:${theme.brand.primaryRing}`}
+                        >
+                          <option value="room_self">Room Self</option>
+                          <option value="room_and_parlor">Room and Parlor</option>
+                          <option value="2_bedroom">2-Bedroom</option>
+                          <option value="3_bedroom">3-Bedroom</option>
+                          <option value="duplex">Duplex</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Address field for OTP resident registration */}
+                    <div>
+                      <label
+                        htmlFor="address"
+                        className={`block text-sm text-start font-semibold ${theme.text.primary} mb-3 flex items-center gap-2`}
+                      >
+                        <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-1 rounded">
+                          <Icon
+                            icon="mdi:map-marker"
+                            className="text-white text-sm"
+                          />
+                        </div>
+                        Address {prefillAddress ? "(Pre-filled)" : "(Optional)"} *
+                      </label>
+                      <input
+                        type="text"
+                        id="address"
+                        value={formData.address}
+                        onChange={handleInputChange}
+                        disabled={prefillAddress ? true : false}
+                        className={`w-full px-4 py-3 placeholder:text-[0.8rem] ${theme.background.input} ${theme.text.primary} border rounded-[0.3rem] focus:outline-none transition-all focus:${theme.brand.primaryRing} ${prefillAddress ? 'opacity-75 cursor-not-allowed' : ''}`}
+                        placeholder="Enter address (will be pre-filled if you used a token)"
+                      />
+                      {prefillAddress && (
+                        <p className={`text-xs ${theme.text.secondary} mt-1`}>
+                          <Icon icon="mdi:information" className="inline text-sm mr-1" />
+                          This field is pre-filled from your registration token
+                        </p>
+                      )}
+                    </div>
+                  </>
+                )}
+
+                {/* House Number and Address for Landlord Registration (OTP or direct) */}
+                {otpCode && targetRole === 'landlord' && (
                   <>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {/* House Number */}
@@ -444,90 +540,112 @@ const SignUp = () => {
                         />
                       </div>
 
-                      {/* House Type - Only for OTP registration */}
-                      {otpCode && targetRole === 'landlord' ? (
-                        <div>
-                          <label
-                            htmlFor="houseType"
-                            className={`block text-sm text-start font-semibold ${theme.text.primary} mb-3 flex items-center gap-2`}
-                          >
-                            <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-1 rounded">
-                              <Icon
-                                icon="mdi:home-roof"
-                                className="text-white text-sm"
-                              />
-                            </div>
-                            House Type *
-                          </label>
-                          <select
-                            id="houseType"
-                            value={formData.houseType}
-                            onChange={handleInputChange}
-                            className={`w-full px-4 py-3 placeholder:text-[0.8rem] ${theme.background.input} ${theme.text.primary} border rounded-[0.3rem] focus:outline-none transition-all focus:${theme.brand.primaryRing}`}
-                          >
-                            <option value="room_self">Room Self</option>
-                            <option value="room_and_parlor">Room and Parlor</option>
-                            <option value="2_bedroom">2-Bedroom</option>
-                            <option value="3_bedroom">3-Bedroom</option>
-                            <option value="duplex">Duplex</option>
-                          </select>
-                        </div>
-                      ) : (
-                        /* Address - For direct registration */
-                        <div>
-                          <label
-                            htmlFor="address"
-                            className={`block text-sm text-start font-semibold ${theme.text.primary} mb-3 flex items-center gap-2`}
-                          >
-                            <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-1 rounded">
-                              <Icon
-                                icon="mdi:map-marker"
-                                className="text-white text-sm"
-                              />
-                            </div>
-                            Address *
-                          </label>
-                          <input
-                            type="text"
-                            id="address"
-                            value={formData.address}
-                            onChange={handleInputChange}
-                            className={`w-full px-4 py-3 placeholder:text-[0.8rem] ${theme.background.input} ${theme.text.primary} border rounded-[0.3rem] focus:outline-none transition-all focus:${theme.brand.primaryRing}`}
-                            placeholder="Enter address"
-                          />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Address field for OTP registration (show below house number and type) */}
-                    {otpCode && targetRole === 'landlord' && (
+                      {/* House Type */}
                       <div>
                         <label
-                          htmlFor="address"
+                          htmlFor="houseType"
                           className={`block text-sm text-start font-semibold ${theme.text.primary} mb-3 flex items-center gap-2`}
                         >
                           <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-1 rounded">
                             <Icon
-                              icon="mdi:map-marker"
+                              icon="mdi:home-roof"
                               className="text-white text-sm"
                             />
                           </div>
-                          Address (Optional)
+                          House Type *
                         </label>
-                        <input
-                          type="text"
-                          id="address"
-                          value={formData.address}
+                        <select
+                          id="houseType"
+                          value={formData.houseType}
                           onChange={handleInputChange}
                           className={`w-full px-4 py-3 placeholder:text-[0.8rem] ${theme.background.input} ${theme.text.primary} border rounded-[0.3rem] focus:outline-none transition-all focus:${theme.brand.primaryRing}`}
-                          placeholder="Enter address (optional)"
-                        />
+                        >
+                          <option value="room_self">Room Self</option>
+                          <option value="room_and_parlor">Room and Parlor</option>
+                          <option value="2_bedroom">2-Bedroom</option>
+                          <option value="3_bedroom">3-Bedroom</option>
+                          <option value="duplex">Duplex</option>
+                        </select>
                       </div>
-                    )}
+                    </div>
+
+                    {/* Address field for Landlord OTP registration */}
+                    <div>
+                      <label
+                        htmlFor="address"
+                        className={`block text-sm text-start font-semibold ${theme.text.primary} mb-3 flex items-center gap-2`}
+                      >
+                        <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-1 rounded">
+                          <Icon
+                            icon="mdi:map-marker"
+                            className="text-white text-sm"
+                          />
+                        </div>
+                        Address (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        id="address"
+                        value={formData.address}
+                        onChange={handleInputChange}
+                        className={`w-full px-4 py-3 placeholder:text-[0.8rem] ${theme.background.input} ${theme.text.primary} border rounded-[0.3rem] focus:outline-none transition-all focus:${theme.brand.primaryRing}`}
+                        placeholder="Enter address (optional)"
+                      />
+                    </div>
                   </>
                 )}
 
-                {/* Description Field - Only for direct registration */}
+                {/* House Fields for Direct Registration (non-OTP, first 3 super admins) */}
+                {!otpCode && targetRole !== 'landlord' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* House Number */}
+                    <div>
+                      <label
+                        htmlFor="houseNumber"
+                        className={`block text-sm text-start font-semibold ${theme.text.primary} mb-3 flex items-center gap-2`}
+                      >
+                        <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-1 rounded">
+                          <Icon icon="mdi:home" className="text-white text-sm" />
+                        </div>
+                        House Number *
+                      </label>
+                      <input
+                        type="text"
+                        id="houseNumber"
+                        value={formData.houseNumber}
+                        onChange={handleInputChange}
+                        className={`w-full px-4 py-3 placeholder:text-[0.8rem] ${theme.background.input} ${theme.text.primary} border rounded-[0.3rem] focus:outline-none transition-all focus:${theme.brand.primaryRing}`}
+                        placeholder="e.g., 123"
+                      />
+                    </div>
+
+                    {/* Address */}
+                    <div>
+                      <label
+                        htmlFor="address"
+                        className={`block text-sm text-start font-semibold ${theme.text.primary} mb-3 flex items-center gap-2`}
+                      >
+                        <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-1 rounded">
+                          <Icon
+                            icon="mdi:map-marker"
+                            className="text-white text-sm"
+                          />
+                        </div>
+                        Address *
+                      </label>
+                      <input
+                        type="text"
+                        id="address"
+                        value={formData.address}
+                        onChange={handleInputChange}
+                        className={`w-full px-4 py-3 placeholder:text-[0.8rem] ${theme.background.input} ${theme.text.primary} border rounded-[0.3rem] focus:outline-none transition-all focus:${theme.brand.primaryRing}`}
+                        placeholder="Enter address"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Description Field - Only for direct registration (non-OTP) */}
                 {!otpCode && (
                   <div>
                     <label

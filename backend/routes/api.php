@@ -52,6 +52,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // User routes
     Route::get('/user', [AuthController::class, 'me']);
     
+    // Admin Dashboard routes
+    Route::prefix('admin')->group(function () {
+        Route::post('/generate-user-token', [RegistrationOtpController::class, 'generateUserOtp']);
+    });
+    
     // OTP Management routes
     Route::prefix('otp')->group(function () {
         // Super Admin: Generate OTP for landlords
