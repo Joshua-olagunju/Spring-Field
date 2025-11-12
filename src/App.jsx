@@ -6,9 +6,10 @@ import {
   useLocation,
 } from "react-router-dom";
 import "./App.css";
+import { useState, useEffect } from "react";
 import { ThemeProvider } from "../context/ThemeContext";
 import { UserProvider } from "../context/UserContext";
-import { useUser } from "../context/useUser";
+// import { useUser } from "../context/useUser";
 import Login from "./screens/authenticationScreens/Login";
 import SignUp from "./screens/authenticationScreens/Signup";
 import SignUpOtpScreen from "./screens/authenticationScreens/SignUpOtpScreen";
@@ -18,6 +19,7 @@ import ResetPasswordOtp from "./screens/authenticationScreens/ResetPasswordOtp";
 import ResetPassword from "./screens/authenticationScreens/ResetPassword";
 import DashboardScreen from "./screens/UserDashboardScreens/DashboradScreen/DashboardScreen";
 import VisitorsScreen from "./screens/GeneralScreens/VisitHistoryScreen/VisitorsScreen";
+import SettingsScreen from "./screens/GeneralScreens/SettingsScreen/SettingsScreen";
 import SuperAdminDashboard from "./screens/SuperAdminDashboardScreens/DashboardScreen/SuperAdminDashboard";
 import AdminUsers from "./screens/SuperAdminDashboardScreens/AdminUsersScreen/AdminUsers";
 import ReportScreen from "./screens/SuperAdminDashboardScreens/ReportScreen/ReportScreen";
@@ -28,63 +30,104 @@ import TopNavBar from "../components/GeneralComponents/TopNavBar";
 import BottomNavBar from "../components/UserComponents/BottomNavBar";
 import SuperAdminBottomNav from "../components/SuperAdminComponents/SuperAdminBottomNav";
 import AdminBottomNav from "../components/AdminComponents/AdminBottomNav";
-import ProtectedRoute from "../components/GeneralComponents/ProtectedRoute";
+import LogoutConfirmModal from "../components/GeneralComponents/LogoutConfirmModal";
+// import ProtectedRoute from "../components/GeneralComponents/ProtectedRoute";
 
 // Auto-redirect component for root path
 const AutoRedirect = () => {
-  const { isAuthenticated, isLoading, user } = useUser();
+  // const { isAuthenticated, isLoading, user } = useUser();
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
+  // if (isLoading) {
+  //   return (
+  //     <div className="min-h-screen flex items-center justify-center">
+  //       <div className="text-center">
+  //         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+  //         <p className="text-gray-600">Loading...</p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
+  // if (!isAuthenticated) {
+  //   return <Navigate to="/login" replace />;
+  // }
 
-  // Check if email is verified
-  if (!user?.email_verified_at) {
-    return <Navigate to="/email-verification" replace />;
-  }
+  // // Check if email is verified
+  // if (!user?.email_verified_at) {
+  //   return <Navigate to="/email-verification" replace />;
+  // }
 
-  // Route to appropriate dashboard based on role
-  switch (user?.role) {
-    case "super":
-      return <Navigate to="/super-admin/dashboard" replace />;
-    case "landlord":
-      return <Navigate to="/admin/dashboard" replace />;
-    case "resident":
-      return <Navigate to="/dashboard" replace />;
-    case "security":
-      return <Navigate to="/dashboard" replace />;
-    default:
-      return <Navigate to="/login" replace />;
-  }
+  // // Route to appropriate dashboard based on role
+  // switch (user?.role) {
+  //   case "super":
+  //     return <Navigate to="/super-admin/dashboard" replace />;
+  //   case "landlord":
+  //     return <Navigate to="/admin/dashboard" replace />;
+  //   case "resident":
+  //     return <Navigate to="/dashboard" replace />;
+  //   case "security":
+  //     return <Navigate to="/dashboard" replace />;
+  //   default:
+  //     return <Navigate to="/login" replace />;
+  // }
+
+  // AUTHENTICATION TEMPORARILY DISABLED FOR DEVELOPMENT - Navigate directly to super admin dashboard
+  return <Navigate to="/super-admin/dashboard" replace />;
 };
 
 function AppContent() {
-  const { isAuthenticated } = useUser();
+  // const { isAuthenticated } = useUser();
   const location = useLocation();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // Listen for logout event from TopNavBar
+  useEffect(() => {
+    const handleOpenLogoutModal = () => {
+      setShowLogoutModal(true);
+    };
+
+    window.addEventListener("openLogoutModal", handleOpenLogoutModal);
+    return () =>
+      window.removeEventListener("openLogoutModal", handleOpenLogoutModal);
+  }, []);
+
+  const handleConfirmLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      // Make API call to logout (if needed)
+      // await fetch("http://localhost:8000/api/logout", { ... });
+
+      // Clear local storage
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+
+      // Close modal and redirect to login
+      setShowLogoutModal(false);
+      window.location.href = "/login";
+    } catch (error) {
+      console.error("Error logging out:", error);
+      setIsLoggingOut(false);
+    }
+  };
 
   // Routes that don't require authentication
-  const publicRoutes = [
-    "/login",
-    "/signup-otp",
-    "/signup",
-    "/forgot-password",
-    "/reset-password-otp",
-    "/reset-password",
-  ];
+  // const publicRoutes = [
+  //   "/login",
+  //   "/signup-otp",
+  //   "/signup",
+  //   "/forgot-password",
+  //   "/reset-password-otp",
+  //   "/reset-password",
+  // ];
 
+  // const showNavigation =
+  //   isAuthenticated && !publicRoutes.includes(location.pathname);
+
+  // AUTHENTICATION TEMPORARILY DISABLED - Always show navigation
   const showNavigation =
-    isAuthenticated && !publicRoutes.includes(location.pathname);
+    !location.pathname.includes("/login") &&
+    !location.pathname.includes("/signup");
 
   return (
     <>
@@ -114,37 +157,45 @@ function AppContent() {
           <Route
             path="/dashboard"
             element={
-              <ProtectedRoute requiredRole="resident">
-                <DashboardScreen />
-              </ProtectedRoute>
+              // <ProtectedRoute requiredRole="resident">
+              <DashboardScreen />
+              // </ProtectedRoute>
             }
           />
           <Route
             path="/visitors"
             element={
-              <ProtectedRoute>
-                <VisitorsScreen />
-              </ProtectedRoute>
+              // <ProtectedRoute>
+              <VisitorsScreen />
+              // </ProtectedRoute>
             }
           />
           <Route
             path="/subscription"
             element={
-              <ProtectedRoute>
-                <div className="min-h-screen flex items-center justify-center">
-                  <h2 className="text-2xl">Subscription - Coming Soon</h2>
-                </div>
-              </ProtectedRoute>
+              // <ProtectedRoute>
+              <div className="min-h-screen flex items-center justify-center">
+                <h2 className="text-2xl">Subscription - Coming Soon</h2>
+              </div>
+              // </ProtectedRoute>
             }
           />
           <Route
             path="/profile"
             element={
-              <ProtectedRoute>
-                <div className="min-h-screen flex items-center justify-center">
-                  <h2 className="text-2xl">Profile - Coming Soon</h2>
-                </div>
-              </ProtectedRoute>
+              // <ProtectedRoute>
+              <div className="min-h-screen flex items-center justify-center">
+                <h2 className="text-2xl">Profile - Coming Soon</h2>
+              </div>
+              // </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              // <ProtectedRoute>
+              <SettingsScreen />
+              // </ProtectedRoute>
             }
           />
 
@@ -152,25 +203,35 @@ function AppContent() {
           <Route
             path="/admin/dashboard"
             element={
-              <ProtectedRoute requiredRole="landlord">
-                <LandlordDashboard />
-              </ProtectedRoute>
+              // <ProtectedRoute requiredRole="landlord">
+              <LandlordDashboard />
+              // </ProtectedRoute>
             }
           />
           <Route
             path="/admin/visitors"
             element={
-              <ProtectedRoute requiredRole="landlord">
-                <VisitorsScreen />
-              </ProtectedRoute>
+              // <ProtectedRoute requiredRole="landlord">
+              <VisitorsScreen />
+              // </ProtectedRoute>
             }
           />
           <Route
             path="/admin/users"
             element={
-              <ProtectedRoute requiredRole="landlord">
-                <LandlordUsers />
-              </ProtectedRoute>
+              // <ProtectedRoute requiredRole="landlord">
+              <LandlordUsers />
+              // </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/subscription"
+            element={
+              // <ProtectedRoute>
+              <div className="min-h-screen flex items-center justify-center">
+                <h2 className="text-2xl">Subscription - Coming Soon</h2>
+              </div>
+              // </ProtectedRoute>
             }
           />
 
@@ -178,33 +239,33 @@ function AppContent() {
           <Route
             path="/super-admin/dashboard"
             element={
-              <ProtectedRoute requiredRole="super">
-                <SuperAdminDashboard />
-              </ProtectedRoute>
+              // <ProtectedRoute requiredRole="super">
+              <SuperAdminDashboard />
+              // </ProtectedRoute>
             }
           />
           <Route
             path="/super-admin/visitors"
             element={
-              <ProtectedRoute requiredRole="super">
-                <VisitorsScreen />
-              </ProtectedRoute>
+              // <ProtectedRoute requiredRole="super">
+              <VisitorsScreen />
+              // </ProtectedRoute>
             }
           />
           <Route
             path="/super-admin/admins"
             element={
-              <ProtectedRoute requiredRole="super">
-                <AdminUsers />
-              </ProtectedRoute>
+              // <ProtectedRoute requiredRole="super">
+              <AdminUsers />
+              // </ProtectedRoute>
             }
           />
           <Route
             path="/super-admin/reports"
             element={
-              <ProtectedRoute requiredRole="super">
-                <ReportScreen />
-              </ProtectedRoute>
+              // <ProtectedRoute requiredRole="super">
+              <ReportScreen />
+              // </ProtectedRoute>
             }
           />
 
@@ -222,6 +283,14 @@ function AppContent() {
         ) : (
           <BottomNavBar />
         ))}
+
+      {/* Global Logout Confirmation Modal */}
+      <LogoutConfirmModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={handleConfirmLogout}
+        isLoading={isLoggingOut}
+      />
     </>
   );
 }
