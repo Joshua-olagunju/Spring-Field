@@ -17,7 +17,7 @@ const SecDashboard = () => {
     // TODO: Navigate to active tokens screen
   };
 
-  const handleGenerateToken = () => {
+  const handleInputToken = () => {
     console.log("Generate Token clicked");
     // TODO: Navigate to token generation screen
   };
@@ -128,17 +128,17 @@ const SecDashboard = () => {
               <h2
                 className={`text-xl sm:text-2xl font-bold ${theme.text.primary} mb-2`}
               >
-                Generate Token
+                Input Token
               </h2>
               <p className={`text-sm sm:text-base ${theme.text.secondary} mb-6 max-w-md`}>
                 Create a new visitor access token
               </p>
               <button
-                onClick={handleGenerateToken}
+                onClick={handleInputToken}
                 className="bg-gradient-to-r from-purple-600 via-purple-600 to-purple-600 hover:from-purple-700 hover:via-purple-700 hover:to-purple-700 text-white font-semibold px-8 py-3 sm:px-10 sm:py-4 rounded-xl transition-all active:scale-95 shadow-lg hover:shadow-xl flex items-center gap-2"
               >
                 <Icon icon="mdi:plus-circle" className="text-xl" />
-                Generate Token
+                Input Token
               </button>
             </div>
           </div>
