@@ -28,6 +28,7 @@ import LandlordDashboard from "./screens/AdminDashboardScreens/DashboardScreen/L
 import LandlordUsers from "./screens/AdminDashboardScreens/DashboardScreen/LandlordUsers";
 import SecDashboard from "./screens/SecurityDashboardScreens/ReportScreen/SecDashboard";
 import SecurityReportScreen from "./screens/SecurityDashboardScreens/ReportScreen/ReportScreen";
+import UsersScreen from "./screens/SecurityDashboardScreens/ReportScreen/UsersScreen";
 import TopNavBar from "../components/GeneralComponents/TopNavBar";
 import BottomNavBar from "../components/UserComponents/BottomNavBar";
 import SuperAdminBottomNav from "../components/SuperAdminComponents/SuperAdminBottomNav";
@@ -286,6 +287,14 @@ function AppContent() {
             element={
               // <ProtectedRoute requiredRole="security">
               <SecurityReportScreen />
+              // </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/security/users"
+            element={
+              // <ProtectedRoute requiredRole="security">
+              <UsersScreen />
               // </ProtectedRoute>
             }
           />
