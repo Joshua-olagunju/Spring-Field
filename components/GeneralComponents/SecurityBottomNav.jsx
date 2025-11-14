@@ -34,6 +34,12 @@ const SecurityBottomNav = () => {
       icon: "mdi:file-chart-outline",
       iconFilled: "mdi:file-chart",
     },
+    {
+      name: "Users",
+      path: "/security/users",
+      icon: "mdi:account-multiple-outline",
+      iconFilled: "mdi:account-multiple",
+    },
   ];
 
   return (
