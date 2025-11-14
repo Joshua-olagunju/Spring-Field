@@ -22,14 +22,17 @@ import VisitorsScreen from "./screens/GeneralScreens/VisitHistoryScreen/Visitors
 import SettingsScreen from "./screens/GeneralScreens/SettingsScreen/SettingsScreen";
 import SuperAdminDashboard from "./screens/SuperAdminDashboardScreens/DashboardScreen/SuperAdminDashboard";
 import AdminUsers from "./screens/SuperAdminDashboardScreens/AdminUsersScreen/AdminUsers";
-import ReportScreen from "./screens/SuperAdminDashboardScreens/ReportScreen/ReportScreen";
+import SuperAdminReportScreen from "./screens/SuperAdminDashboardScreens/ReportScreen/ReportScreen";
 import StatusBar from "../components/GeneralComponents/StatusBar";
 import LandlordDashboard from "./screens/AdminDashboardScreens/DashboardScreen/LandlordDashboard";
 import LandlordUsers from "./screens/AdminDashboardScreens/DashboardScreen/LandlordUsers";
+import SecDashboard from "./screens/SecurityDashboardScreens/ReportScreen/SecDashboard";
+import SecurityReportScreen from "./screens/SecurityDashboardScreens/ReportScreen/ReportScreen";
 import TopNavBar from "../components/GeneralComponents/TopNavBar";
 import BottomNavBar from "../components/UserComponents/BottomNavBar";
 import SuperAdminBottomNav from "../components/SuperAdminComponents/SuperAdminBottomNav";
 import AdminBottomNav from "../components/AdminComponents/AdminBottomNav";
+import SecurityBottomNav from "../components/GeneralComponents/SecurityBottomNav";
 import LogoutConfirmModal from "../components/GeneralComponents/LogoutConfirmModal";
 // import ProtectedRoute from "../components/GeneralComponents/ProtectedRoute";
 
@@ -264,7 +267,25 @@ function AppContent() {
             path="/super-admin/reports"
             element={
               // <ProtectedRoute requiredRole="super">
-              <ReportScreen />
+              <SuperAdminReportScreen />
+              // </ProtectedRoute>
+            }
+          />
+
+          {/* Security Guard Routes */}
+          <Route
+            path="/security/dashboard"
+            element={
+              // <ProtectedRoute requiredRole="security">
+              <SecDashboard />
+              // </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/security/reports"
+            element={
+              // <ProtectedRoute requiredRole="security">
+              <SecurityReportScreen />
               // </ProtectedRoute>
             }
           />
@@ -280,6 +301,8 @@ function AppContent() {
           <SuperAdminBottomNav />
         ) : location.pathname.startsWith("/admin/") ? (
           <AdminBottomNav />
+        ) : location.pathname.startsWith("/security/") ? (
+          <SecurityBottomNav />
         ) : (
           <BottomNavBar />
         ))}
