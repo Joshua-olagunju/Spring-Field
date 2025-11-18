@@ -1,104 +1,123 @@
 import { useState, useRef, useEffect } from "react";
 import { Icon } from "@iconify/react";
+import { useUser } from "../../../../context/useUser";
+import UserDetailsModal from "../../../../components/AdminComponents/UserDetailsModal";
 
-const AdminUsersActions = ({ theme, admin, adminIndex }) => {
+const AdminUsersActions = ({
+  theme,
+  admin,
+  adminIndex,
+  onGenerateToken,
+  onAdminUpdate,
+}) => {
+  const { authToken } = useUser();
   const [activeModal, setActiveModal] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState("below");
   const menuButtonRef = useRef(null);
   const menuRef = useRef(null);
+  const [adminUsers, setAdminUsers] = useState([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
 
-  // Mock users data for the selected admin
-  const adminUsers = [
-    {
-      id: 1,
-      name: "Alice Johnson",
-      phone: "+234 812 111 2222",
-      email: "alice@gmail.com",
-      houseNumber: "Block A, Unit 1",
-      status: "active",
-    },
-    {
-      id: 2,
-      name: "Bob Smith",
-      phone: "+234 812 333 4444",
-      email: "bob@gmail.com",
-      houseNumber: "Block A, Unit 2",
-      status: "active",
-    },
-    {
-      id: 3,
-      name: "Carol Davis",
-      phone: "+234 812 555 6666",
-      email: "carol@gmail.com",
-      houseNumber: "Block A, Unit 3",
-      status: "inactive",
-    },
-    {
-      id: 4,
-      name: "Carol Davis",
-      phone: "+234 812 555 6666",
-      email: "carol@gmail.com",
-      houseNumber: "Block A, Unit 3",
-      status: "inactive",
-    },
-    {
-      id: 5,
-      name: "Carol Davis",
-      phone: "+234 812 555 6666",
-      email: "carol@gmail.com",
-      houseNumber: "Block A, Unit 3",
-      status: "inactive",
-    },
-    {
-      id: 6,
-      name: "Carol Davis",
-      phone: "+234 812 555 6666",
-      email: "carol@gmail.com",
-      houseNumber: "Block A, Unit 3",
-      status: "inactive",
-    },
-    {
-      id: 7,
-      name: "Carol Davis",
-      phone: "+234 812 555 6666",
-      email: "carol@gmail.com",
-      houseNumber: "Block A, Unit 3",
-      status: "inactive",
-    },
-    {
-      id: 8,
-      name: "Carol Davis",
-      phone: "+234 812 555 6666",
-      email: "carol@gmail.com",
-      houseNumber: "Block A, Unit 3",
-      status: "inactive",
-    },
-    {
-      id: 9,
-      name: "Carol Davis",
-      phone: "+234 812 555 6666",
-      email: "carol@gmail.com",
-      houseNumber: "Block A, Unit 3",
-      status: "inactive",
-    },
-    {
-      id: 10,
-      name: "Carol Davis",
-      phone: "+234 812 555 6666",
-      email: "carol@gmail.com",
-      houseNumber: "Block A, Unit 3",
-      status: "inactive",
-    },
-    {
-      id: 11,
-      name: "Carol Davis",
-      phone: "+234 812 555 6666",
-      email: "carol@gmail.com",
-      houseNumber: "Block A, Unit 3",
-      status: "inactive",
-    },
-  ];
+  // Fetch admin's users from API
+  const fetchAdminUsers = async () => {
+    try {
+      setIsLoadingUsers(true);
+      const response = await fetch(
+        `http://localhost:8000/api/super-admin/landlord-users/${admin.id}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${
+              authToken || localStorage.getItem("authToken")
+            }`,
+          },
+        }
+      );
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        setAdminUsers(result.data || []);
+      } else {
+        console.error("Failed to fetch admin users:", result.message);
+      }
+    } catch (error) {
+      console.error("Error fetching admin users:", error);
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  };
+
+  // User management actions
+  const handleToggleUserStatus = async (userId, action) => {
+    try {
+      const token = authToken || localStorage.getItem("authToken");
+      const response = await fetch(
+        `http://localhost:8000/api/super-admin/users/${userId}/${action}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const result = await response.json();
+
+      if (response.ok) {
+        // Refresh admin list
+        if (onAdminUpdate) onAdminUpdate();
+        setActiveModal(null);
+      } else {
+        console.error(
+          `Failed to ${action} user:`,
+          result.message || response.statusText
+        );
+        if (response.status === 401) {
+          console.error("Auth token may be invalid");
+        }
+      }
+    } catch (error) {
+      console.error(`Error ${action} user:`, error);
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    try {
+      const token = authToken || localStorage.getItem("authToken");
+      const response = await fetch(
+        `http://localhost:8000/api/super-admin/users/${userId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const result = await response.json();
+
+      if (response.ok) {
+        // Refresh users list
+        fetchAdminUsers();
+      } else {
+        console.error(
+          "Failed to delete user:",
+          result.message || response.statusText
+        );
+        if (response.status === 401) {
+          console.error("Auth token may be invalid");
+        }
+      }
+    } catch (error) {
+      console.error("Error deleting user:", error);
+    }
+  };
 
   // Dynamically calculate menu position based on available space
   useEffect(() => {
@@ -161,11 +180,16 @@ const AdminUsersActions = ({ theme, admin, adminIndex }) => {
   }, [isMenuOpen]);
 
   const handleGenerateOTP = () => {
-    setActiveModal("generateOTP");
+    setIsMenuOpen(false);
+    onGenerateToken();
   };
 
   const handleDeactivate = () => {
     setActiveModal("deactivate");
+  };
+
+  const handleActivate = () => {
+    setActiveModal("activate");
   };
 
   const handleDelete = () => {
@@ -174,6 +198,7 @@ const AdminUsersActions = ({ theme, admin, adminIndex }) => {
 
   const handleViewUsers = () => {
     setActiveModal("viewUsers");
+    fetchAdminUsers();
   };
 
   const handleViewDetails = () => {
@@ -286,13 +311,30 @@ const AdminUsersActions = ({ theme, admin, adminIndex }) => {
 
             <button
               onClick={() => {
-                handleDeactivate();
+                admin.status === "active"
+                  ? handleDeactivate()
+                  : handleActivate();
                 setIsMenuOpen(false);
               }}
-              className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-yellow-50 transition-colors text-yellow-700 border-b ${theme.border.secondary}`}
+              className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:${
+                admin.status === "active" ? "bg-yellow-50" : "bg-green-50"
+              } transition-colors ${
+                admin.status === "active" ? "text-yellow-700" : "text-green-700"
+              } border-b ${theme.border.secondary}`}
             >
-              <Icon icon="mdi:pause-circle" className="text-lg" />
-              <span className="text-sm font-medium">Deactivate Admin</span>
+              <Icon
+                icon={
+                  admin.status === "active"
+                    ? "mdi:pause-circle"
+                    : "mdi:play-circle"
+                }
+                className="text-lg"
+              />
+              <span className="text-sm font-medium">
+                {admin.status === "active"
+                  ? "Deactivate Admin"
+                  : "Activate Admin"}
+              </span>
             </button>
 
             <button
@@ -303,7 +345,7 @@ const AdminUsersActions = ({ theme, admin, adminIndex }) => {
               className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-red-50 transition-colors text-red-700"
             >
               <Icon icon="mdi:trash-can" className="text-lg" />
-              <span className="text-sm font-medium">Delete Users</span>
+              <span className="text-sm font-medium">Delete Admin</span>
             </button>
           </div>
         )}
@@ -392,8 +434,8 @@ const AdminUsersActions = ({ theme, admin, adminIndex }) => {
               </h2>
               <p className={`text-sm ${theme.text.secondary} mb-6`}>
                 Are you sure you want to deactivate{" "}
-                <strong>{admin.name}</strong>? They will not be able to access
-                the system.
+                <strong>{admin.full_name}</strong>? They will not be able to
+                access the system.
               </p>
               <div className="flex gap-3">
                 <button
@@ -403,10 +445,60 @@ const AdminUsersActions = ({ theme, admin, adminIndex }) => {
                   Cancel
                 </button>
                 <button
-                  onClick={() => confirmAction("Deactivate")}
+                  onClick={() => {
+                    handleToggleUserStatus(admin.id, "deactivate");
+                    setActiveModal(null);
+                  }}
                   className="flex-1 px-4 py-2 rounded-lg bg-yellow-600 hover:bg-yellow-700 text-white font-medium transition-colors"
                 >
                   Deactivate
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Activate Admin Confirmation Modal */}
+      {activeModal === "activate" && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setActiveModal(null)}
+          />
+          <div
+            className={`${theme.background.card} w-full max-w-md rounded-2xl ${theme.shadow.large} relative max-h-[90vh] overflow-y-auto`}
+          >
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
+                <Icon
+                  icon="mdi:check-circle"
+                  className="text-3xl text-green-600"
+                />
+              </div>
+              <h2 className={`text-xl font-bold ${theme.text.primary} mb-2`}>
+                Activate Admin?
+              </h2>
+              <p className={`text-sm ${theme.text.secondary} mb-6`}>
+                Are you sure you want to activate{" "}
+                <strong>{admin.full_name}</strong>? They will be able to access
+                the system again.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setActiveModal(null)}
+                  className={`flex-1 px-4 py-2 rounded-lg ${theme.background.input} ${theme.text.primary} font-medium hover:${theme.background.card} transition-colors`}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    handleToggleUserStatus(admin.id, "activate");
+                    setActiveModal(null);
+                  }}
+                  className="flex-1 px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium transition-colors"
+                >
+                  Activate
                 </button>
               </div>
             </div>
@@ -487,37 +579,130 @@ const AdminUsersActions = ({ theme, admin, adminIndex }) => {
 
             {/* Users List */}
             <div className="p-6 space-y-3">
-              {adminUsers.map((user, index) => (
-                <div
-                  key={user.id}
-                  className={`${theme.background.input} rounded-lg p-4 border ${theme.border.secondary}`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`font-semibold ${theme.text.primary}`}>
-                          {index + 1}. {user.name}
-                        </span>
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                            user.status === "active"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-gray-200 text-gray-800"
-                          }`}
-                        >
-                          {user.status}
-                        </span>
+              {isLoadingUsers ? (
+                <div className="flex items-center justify-center py-8">
+                  <Icon
+                    icon="mdi:loading"
+                    className={`animate-spin text-3xl ${theme.text.tertiary}`}
+                  />
+                </div>
+              ) : adminUsers.length === 0 ? (
+                <div className="text-center py-8">
+                  <Icon
+                    icon="mdi:account-group-outline"
+                    className={`text-5xl ${theme.text.tertiary} mb-3`}
+                  />
+                  <p className={`text-sm ${theme.text.secondary}`}>
+                    No users found for this admin
+                  </p>
+                </div>
+              ) : (
+                adminUsers.map((user, index) => (
+                  <div
+                    key={user.id}
+                    className={`${theme.background.input} rounded-lg p-4 border ${theme.border.secondary} hover:border-blue-500 transition-colors`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-3 flex-1">
+                        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                          <span className="text-white font-bold text-xs">
+                            {index + 1}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4
+                            className={`font-medium ${theme.text.primary} text-sm`}
+                          >
+                            {user.full_name || user.name}
+                          </h4>
+                          <p
+                            className={`text-xs ${theme.text.secondary} truncate`}
+                          >
+                            {user.house_number || user.houseNumber} •{" "}
+                            {user.email}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${
+                                user.status === "active"
+                                  ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                                  : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                              }`}
+                            >
+                              <Icon
+                                icon={
+                                  user.status === "active"
+                                    ? "mdi:check-circle"
+                                    : "mdi:close-circle"
+                                }
+                                className="text-xs"
+                              />
+                              {user.status?.charAt(0).toUpperCase() +
+                                user.status?.slice(1) || "Unknown"}
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                      <p className={`text-sm ${theme.text.secondary}`}>
-                        {user.email}
-                      </p>
-                      <p className={`text-xs ${theme.text.tertiary}`}>
-                        {user.phone} • {user.houseNumber}
-                      </p>
+
+                      {/* User Actions */}
+                      <div className="flex items-center gap-1">
+                        {/* View Details */}
+                        <button
+                          onClick={() => setSelectedUser(user)}
+                          className="p-1.5 rounded-full bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:hover:bg-blue-800 transition-colors"
+                          title="View Details"
+                        >
+                          <Icon
+                            icon="mdi:eye"
+                            className="text-blue-600 dark:text-blue-400 text-sm"
+                          />
+                        </button>
+
+                        {/* Toggle Status */}
+                        {user.status === "active" ? (
+                          <button
+                            onClick={() =>
+                              handleToggleUserStatus(user.id, "deactivate")
+                            }
+                            className="p-1.5 rounded-full bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-900 dark:hover:bg-yellow-800 transition-colors"
+                            title="Deactivate User"
+                          >
+                            <Icon
+                              icon="mdi:account-off"
+                              className="text-yellow-600 dark:text-yellow-400 text-sm"
+                            />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() =>
+                              handleToggleUserStatus(user.id, "activate")
+                            }
+                            className="p-1.5 rounded-full bg-green-100 hover:bg-green-200 dark:bg-green-900 dark:hover:bg-green-800 transition-colors"
+                            title="Activate User"
+                          >
+                            <Icon
+                              icon="mdi:account-check"
+                              className="text-green-600 dark:text-green-400 text-sm"
+                            />
+                          </button>
+                        )}
+
+                        {/* Delete */}
+                        <button
+                          onClick={() => handleDeleteUser(user.id)}
+                          className="p-1.5 rounded-full bg-red-100 hover:bg-red-200 dark:bg-red-900 dark:hover:bg-red-800 transition-colors"
+                          title="Delete User"
+                        >
+                          <Icon
+                            icon="mdi:delete"
+                            className="text-red-600 dark:text-red-400 text-sm"
+                          />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -564,11 +749,11 @@ const AdminUsersActions = ({ theme, admin, adminIndex }) => {
                     </span>
                   </div>
                   <h3 className={`text-lg font-semibold ${theme.text.primary}`}>
-                    {admin.name}
+                    {admin.full_name}
                   </h3>
                 </div>
                 <p className={`text-sm ${theme.text.secondary}`}>
-                  {admin.role}
+                  {admin.role || "Administrator"}
                 </p>
               </div>
 
@@ -577,37 +762,41 @@ const AdminUsersActions = ({ theme, admin, adminIndex }) => {
                 <DetailItem
                   icon="mdi:phone"
                   label="Phone"
-                  value={admin.phone}
+                  value={admin.phone || "N/A"}
                   theme={theme}
                 />
                 <DetailItem
                   icon="mdi:email"
                   label="Email"
-                  value={admin.email}
+                  value={admin.email || "N/A"}
                   theme={theme}
                 />
                 <DetailItem
                   icon="mdi:home"
                   label="House"
-                  value={admin.houseNumber}
+                  value={admin.house_number || "Not Assigned"}
                   theme={theme}
                 />
                 <DetailItem
                   icon="mdi:map-marker"
                   label="Address"
-                  value={admin.address}
+                  value={admin.address || "N/A"}
                   theme={theme}
                 />
                 <DetailItem
                   icon="mdi:account-group"
                   label="Total Users"
-                  value={admin.totalUsers.toString()}
+                  value={(admin.residents_count || 0).toString()}
                   theme={theme}
                 />
                 <DetailItem
                   icon="mdi:calendar"
                   label="Join Date"
-                  value={new Date(admin.joinDate).toLocaleDateString()}
+                  value={
+                    admin.created_at
+                      ? new Date(admin.created_at).toLocaleDateString()
+                      : "N/A"
+                  }
                   theme={theme}
                 />
               </div>
@@ -643,21 +832,16 @@ const AdminUsersActions = ({ theme, admin, adminIndex }) => {
           </div>
         </div>
       )}
+
+      {/* User Details Modal */}
+      <UserDetailsModal
+        user={selectedUser}
+        theme={theme}
+        isOpen={selectedUser !== null}
+        onClose={() => setSelectedUser(null)}
+      />
     </>
   );
 };
-
-// Helper component for modal details
-const DetailItem = ({ icon, label, value, theme }) => (
-  <div>
-    <div className="flex items-center gap-1.5 mb-1">
-      <Icon icon={icon} className={`text-base ${theme.text.tertiary}`} />
-      <span className={`text-xs font-medium ${theme.text.secondary}`}>
-        {label}
-      </span>
-    </div>
-    <p className={`text-sm ${theme.text.primary}`}>{value}</p>
-  </div>
-);
 
 export default AdminUsersActions;

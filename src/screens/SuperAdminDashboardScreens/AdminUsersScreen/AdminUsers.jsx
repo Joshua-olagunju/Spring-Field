@@ -1,117 +1,100 @@
+import { useState, useEffect } from "react";
 import { useTheme } from "../../../../context/useTheme";
+import { useUser } from "../../../../context/useUser";
 import { Icon } from "@iconify/react";
 import AdminUsersActions from "./AdminUsersActions";
+import { GenerateUserTokenModal } from "../../AdminDashboardScreens/TokenGenerationModals";
 
 const AdminUsers = () => {
   const { theme, isDarkMode } = useTheme();
+  const { authToken } = useUser();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [admins, setAdmins] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showTokenModal, setShowTokenModal] = useState(false);
+  const [selectedAdmin, setSelectedAdmin] = useState(null);
 
-  // Dummy data for admins (replace with API call)
-  const admins = [
-    {
-      id: 1,
-      name: "John Michael",
-      phone: "+234 812 345 6789",
-      email: "john.michael@springfield.com",
-      houseNumber: "Block A, Unit 1",
-      address: "123 Estate Road, Lagos",
-      role: "Security Manager",
-      totalUsers: 24,
-      status: "active",
-      joinDate: "2024-01-15",
-      lastActive: "2025-11-10T14:30:00",
-    },
-    {
-      id: 2,
-      name: "Sarah Okonkwo",
-      phone: "+234 803 987 6543",
-      email: "sarah.okonkwo@springfield.com",
-      houseNumber: "Block B, Unit 5",
-      address: "456 Estate Road, Lagos",
-      role: "Facilities Admin",
-      totalUsers: 18,
-      status: "active",
-      joinDate: "2024-03-20",
-      lastActive: "2025-11-10T16:45:00",
-    },
-    {
-      id: 4,
-      name: "Chisom Adeyemi",
-      phone: "+234 905 234 5678",
-      email: "chisom.adeyemi@springfield.com",
-      houseNumber: "Block C, Unit 12",
-      address: "789 Estate Road, Lagos",
-      role: "Payments Admin",
-      totalUsers: 31,
-      status: "active",
-      joinDate: "2024-02-10",
-      lastActive: "2025-11-10T13:20:00",
-    },
-    {
-      id: 5,
-      name: "Chisom Adeyemi",
-      phone: "+234 905 234 5678",
-      email: "chisom.adeyemi@springfield.com",
-      houseNumber: "Block C, Unit 12",
-      address: "789 Estate Road, Lagos",
-      role: "Payments Admin",
-      totalUsers: 31,
-      status: "active",
-      joinDate: "2024-02-10",
-      lastActive: "2025-11-10T13:20:00",
-    },
-    {
-      id: 6,
-      name: "Chisom Adeyemi",
-      phone: "+234 905 234 5678",
-      email: "chisom.adeyemi@springfield.com",
-      houseNumber: "Block C, Unit 12",
-      address: "789 Estate Road, Lagos",
-      role: "Payments Admin",
-      totalUsers: 31,
-      status: "active",
-      joinDate: "2024-02-10",
-      lastActive: "2025-11-10T13:20:00",
-    },
-    {
-      id: 7,
-      name: "Chisom Adeyemi",
-      phone: "+234 905 234 5678",
-      email: "chisom.adeyemi@springfield.com",
-      houseNumber: "Block C, Unit 12",
-      address: "789 Estate Road, Lagos",
-      role: "Payments Admin",
-      totalUsers: 31,
-      status: "active",
-      joinDate: "2024-02-10",
-      lastActive: "2025-11-10T13:20:00",
-    },
-    {
-      id: 8,
-      name: "Chisom Adeyemi",
-      phone: "+234 905 234 5678",
-      email: "chisom.adeyemi@springfield.com",
-      houseNumber: "Block C, Unit 12",
-      address: "789 Estate Road, Lagos",
-      role: "Payments Admin",
-      totalUsers: 31,
-      status: "active",
-      joinDate: "2024-02-10",
-      lastActive: "2025-11-10T13:20:00",
-    },
-    {
-      id: 9,
-      name: "Chisom Adeyemi",
-      phone: "+234 905 234 5678",
-      email: "chisom.adeyemi@springfield.com",
-      houseNumber: "Block C, Unit 12",
-      address: "789 Estate Road, Lagos",
-      role: "Payments Admin",
-      totalUsers: 31,
-      status: "active",
-      joinDate: "2024-02-10",
-      lastActive: "2025-11-10T13:20:00",
-    },
-  ];
+  // Fetch admins/landlords from API
+  useEffect(() => {
+    const fetchAdmins = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch(
+          "http://localhost:8000/api/super-admin/landlords",
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${
+                authToken || localStorage.getItem("authToken")
+              }`,
+            },
+          }
+        );
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+          setAdmins(result.data || []);
+        } else {
+          console.error("Failed to fetch admins:", result.message);
+        }
+      } catch (error) {
+        console.error("Error fetching admins:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAdmins();
+  }, [authToken]);
+
+  // Handle token generation for specific admin
+  const handleGenerateTokenForAdmin = (admin) => {
+    setSelectedAdmin(admin);
+    setShowTokenModal(true);
+  };
+
+  const handleTokenModalClose = () => {
+    setShowTokenModal(false);
+    setSelectedAdmin(null);
+  };
+
+  // Refresh admins list (for use by child components)
+  const refreshAdmins = async () => {
+    try {
+      const response = await fetch(
+        "http://localhost:8000/api/super-admin/landlords",
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${
+              authToken || localStorage.getItem("authToken")
+            }`,
+          },
+        }
+      );
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        setAdmins(result.data || []);
+      }
+    } catch (error) {
+      console.error("Error refreshing admins:", error);
+    }
+  };
+
+  // Filter admins based on search query
+  const filteredAdmins = admins.filter(
+    (admin) =>
+      admin.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      admin.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      admin.phone?.includes(searchQuery) ||
+      admin.house_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      admin.role?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="min-h-screen pt-16 pb-20 w-full relative">
@@ -139,7 +122,55 @@ const AdminUsers = () => {
               View and manage all administrator accounts
             </p>
           </div>
+          {/* Sticky Search Bar */}
+          <div
+            className="sticky top-16 z-999 pb-6 mb-6"
+            style={{
+              background: isDarkMode
+                ? "linear-gradient(to bottom right, rgb(17, 24, 39), rgb(31, 41, 55), rgb(17, 24, 39))"
+                : "linear-gradient(to bottom right, rgb(249, 250, 251), rgb(243, 244, 246), rgb(249, 250, 251))",
+            }}
+          >
+            <div className="pt-4">
+              <div
+                className={`relative max-w-md flex items-center gap-1 px-3 py-2 rounded-lg ${theme.background.card} ${theme.shadow.small} border ${theme.border.secondary}`}
+              >
+                <Icon
+                  icon="mdi:magnify"
+                  className={`text-lg ${theme.text.tertiary}`}
+                />
 
+                <input
+                  type="text"
+                  placeholder="Search admins…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className={`flex-1 bg-transparent text-sm ${theme.text.primary} placeholder-current placeholder-opacity-40 outline-none`}
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className={`p-1 rounded-full hover:${theme.background.secondary} transition-colors`}
+                  >
+                    <Icon
+                      icon="mdi:close"
+                      className={`text-sm ${theme.text.tertiary}`}
+                    />
+                  </button>
+                )}
+              </div>
+
+              {/* Search Results Count */}
+              {searchQuery && (
+                <div className="mt-2 px-1">
+                  <span className={`text-sm ${theme.text.secondary}`}>
+                    Found {filteredAdmins.length} of {admins.length}{" "}
+                    administrators
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>{" "}
           {/* Total Admins Stat Card */}
           <div
             className={`${theme.background.card} rounded-2xl ${theme.shadow.medium} p-6 sm:p-8 mb-8`}
@@ -154,7 +185,7 @@ const AdminUsers = () => {
                 <p
                   className={`text-3xl sm:text-4xl font-bold ${theme.text.primary}`}
                 >
-                  {admins.length}
+                  {filteredAdmins.length}
                 </p>
               </div>
               <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center shadow-lg">
@@ -165,10 +196,16 @@ const AdminUsers = () => {
               </div>
             </div>
           </div>
-
           {/* Admin Cards List */}
           <div className="space-y-4">
-            {admins.length === 0 ? (
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Icon
+                  icon="mdi:loading"
+                  className={`animate-spin text-4xl ${theme.text.tertiary}`}
+                />
+              </div>
+            ) : filteredAdmins.length === 0 ? (
               <div
                 className={`${theme.background.card} rounded-xl ${theme.shadow.small} p-8 sm:p-12 text-center`}
               >
@@ -177,14 +214,18 @@ const AdminUsers = () => {
                   className={`text-6xl ${theme.text.tertiary} mb-4 mx-auto`}
                 />
                 <p className={`text-base ${theme.text.secondary} mb-1`}>
-                  No administrators found
+                  {searchQuery
+                    ? "No administrators found"
+                    : "No administrators found"}
                 </p>
                 <p className={`text-sm ${theme.text.tertiary}`}>
-                  Administrator records will appear here
+                  {searchQuery
+                    ? "Try adjusting your search terms"
+                    : "Administrator records will appear here"}
                 </p>
               </div>
             ) : (
-              admins.map((admin, index) => (
+              filteredAdmins.map((admin, index) => (
                 <div
                   key={admin.id}
                   className={`w-full ${theme.background.card} rounded-xl ${theme.shadow.small} p-4 sm:p-5 border ${theme.border.secondary} hover:border-orange-500 transition-all`}
@@ -197,29 +238,78 @@ const AdminUsers = () => {
                       </span>
                     </div>
 
-                    {/* Admin Info - Start at top */}
+                    {/* Admin Info */}
                     <div className="flex-1 min-w-0 pt-0.5">
                       <h3
                         className={`font-semibold ${theme.text.primary} text-base sm:text-lg truncate`}
                       >
-                        {admin.name}
+                        {admin.full_name}
                       </h3>
                       <p
                         className={`text-xs sm:text-sm ${theme.text.secondary} truncate mb-2`}
                       >
-                        {admin.houseNumber}
+                        {admin.house_number || "No house assigned"}
                       </p>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-4 flex-wrap">
+                        {/* Status Badge */}
                         <span
-                          className={`text-xs sm:text-sm font-medium ${theme.text.secondary}`}
+                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
+                            admin.status === "active"
+                              ? theme.status.success
+                              : admin.status === "inactive"
+                              ? theme.status.error
+                              : theme.status.warning
+                          }`}
                         >
-                          Total Users:
+                          <Icon
+                            icon={
+                              admin.status === "active"
+                                ? "mdi:check-circle"
+                                : admin.status === "inactive"
+                                ? "mdi:close-circle"
+                                : "mdi:clock-outline"
+                            }
+                            className="text-sm"
+                          />
+                          {admin.status?.charAt(0).toUpperCase() +
+                            admin.status?.slice(1) || "Unknown"}
                         </span>
-                        <span
-                          className={`text-lg sm:text-xl font-bold ${theme.brand.primaryText}`}
-                        >
-                          {admin.totalUsers}
-                        </span>
+
+                        {/* Total Users */}
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`text-xs sm:text-sm font-medium ${theme.text.secondary}`}
+                          >
+                            Users:
+                          </span>
+                          <span
+                            className={`text-lg sm:text-xl font-bold ${theme.brand.primaryText}`}
+                          >
+                            {admin.residents_count || 0}
+                          </span>
+                        </div>
+
+                        {/* Payment Count */}
+                        {admin.payment_count !== undefined && (
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`text-xs sm:text-sm font-medium ${theme.text.secondary}`}
+                            >
+                              Payments:
+                            </span>
+                            <span
+                              className={`text-sm font-bold ${
+                                admin.payment_count >= 10
+                                  ? "text-green-600 dark:text-green-400"
+                                  : admin.payment_count >= 6
+                                  ? "text-yellow-600 dark:text-yellow-400"
+                                  : "text-red-600 dark:text-red-400"
+                              }`}
+                            >
+                              {admin.payment_count}/12
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -229,6 +319,10 @@ const AdminUsers = () => {
                         theme={theme}
                         admin={admin}
                         adminIndex={index + 1}
+                        onGenerateToken={() =>
+                          handleGenerateTokenForAdmin(admin)
+                        }
+                        onAdminUpdate={refreshAdmins}
                       />
                     </div>
                   </div>
@@ -238,6 +332,25 @@ const AdminUsers = () => {
           </div>
         </div>
       </div>
+
+      {/* Token Generation Modal */}
+      {showTokenModal && selectedAdmin && (
+        <GenerateUserTokenModal
+          theme={theme}
+          isOpen={showTokenModal}
+          onClose={handleTokenModalClose}
+          adminContext={{
+            id: selectedAdmin.id,
+            name: selectedAdmin.full_name,
+            house_number:
+              selectedAdmin.house_number ||
+              selectedAdmin.house?.house_number ||
+              "N/A",
+            address:
+              selectedAdmin.address || selectedAdmin.house?.address || "N/A",
+          }}
+        />
+      )}
     </div>
   );
 };

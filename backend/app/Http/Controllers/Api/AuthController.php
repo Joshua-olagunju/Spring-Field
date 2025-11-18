@@ -51,11 +51,17 @@ class AuthController extends Controller
 
             // If OTP is provided, we need to validate against it
             if ($request->has('otp_code')) {
-                // For landlord OTP registration, require house_number and house_type
-                // Address is optional (nullable)
-                $validationRules['house_number'] = 'required|string|max:50';
-                $validationRules['house_type'] = 'required|string|in:room_self,room_and_parlor,2_bedroom,3_bedroom,duplex';
-                $validationRules['address'] = 'nullable|string|max:255'; // Optional for OTP
+                // Check OTP to determine if house fields are needed
+                $tempOtp = RegistrationOtp::where('otp_code', $request->otp_code)->first();
+                $needsHouseInfo = $tempOtp && $tempOtp->target_role !== 'security';
+                
+                if ($needsHouseInfo) {
+                    // For landlord/resident OTP registration, require house_number and house_type
+                    // Address is optional (nullable)
+                    $validationRules['house_number'] = 'required|string|max:50';
+                    $validationRules['house_type'] = 'required|string|in:room_self,room_and_parlor,2_bedroom,3_bedroom,duplex';
+                    $validationRules['address'] = 'nullable|string|max:255'; // Optional for OTP
+                }
             } else if (!$isFirstThreeUsers) {
                 // Non-first-3 users without OTP need house info
                 $validationRules['house_number'] = 'required|string|max:50';
@@ -105,9 +111,13 @@ class AuthController extends Controller
                     }
 
                     // Set role based on OTP target role
-                    $userRole = $otp->target_role === RegistrationOtp::TARGET_LANDLORD 
-                              ? User::ROLE_LANDLORD 
-                              : User::ROLE_RESIDENT;
+                    if ($otp->target_role === RegistrationOtp::TARGET_LANDLORD) {
+                        $userRole = User::ROLE_LANDLORD;
+                    } elseif ($otp->target_role === RegistrationOtp::TARGET_SECURITY) {
+                        $userRole = User::ROLE_SECURITY;
+                    } else {
+                        $userRole = User::ROLE_RESIDENT;
+                    }
 
                     // For resident registration via landlord OTP, use pre-filled house info
                     if ($otp->target_role === RegistrationOtp::TARGET_RESIDENT) {
@@ -122,9 +132,9 @@ class AuthController extends Controller
 
                 $house = null;
 
-                // Create or find house for non-super-admin users
+                // Create or find house for users who need houses (not super admins, landlords, or security)
                 // For landlords registering via OTP, we'll create the house AFTER user creation
-                if ($userRole !== User::ROLE_SUPER && $userRole !== User::ROLE_LANDLORD) {
+                if ($userRole !== User::ROLE_SUPER && $userRole !== User::ROLE_LANDLORD && $userRole !== User::ROLE_SECURITY) {
                     if ($houseId) {
                         // Use existing house from OTP
                         $house = House::find($houseId);
@@ -163,15 +173,20 @@ class AuthController extends Controller
                     'email' => $request->email,
                     'password_hash' => Hash::make($request->password),
                     'role' => $userRole,
-                    'status_active' => $isFirstThreeUsers, // First 3 users are auto-active
+                    'status_active' => $isFirstThreeUsers || $userRole === User::ROLE_RESIDENT, // First 3 users and residents are auto-active
                 ];
 
-                // Add house_id and house_type for non-super users
-                if ($userRole !== User::ROLE_SUPER) {
+                // Add house_id and house_type for users who need houses (not super admins or security)
+                if ($userRole !== User::ROLE_SUPER && $userRole !== User::ROLE_SECURITY) {
                     if ($house) {
                         $userData['house_id'] = $house->id;
                     }
                     $userData['house_type'] = $houseType;
+                }
+
+                // Set landlord_id for residents who register via landlord OTP
+                if ($otp && $userRole === User::ROLE_RESIDENT && $otp->target_role === RegistrationOtp::TARGET_RESIDENT) {
+                    $userData['landlord_id'] = $otp->generated_by;
                 }
 
                 $user = User::create($userData);
@@ -450,6 +465,305 @@ class AuthController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to check super admin count',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get all landlords for super admin dashboard
+     */
+    public function getLandlords(Request $request)
+    {
+        try {
+            // Check if user is super admin
+            if ($request->user()->role !== User::ROLE_SUPER) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized'
+                ], 403);
+            }
+
+            $landlords = User::where('role', User::ROLE_LANDLORD)
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->map(function ($landlord) {
+                    // Get residents count manually
+                    $residentsCount = User::where('landlord_id', $landlord->id)
+                        ->where('role', User::ROLE_RESIDENT)
+                        ->count();
+                        
+                    // Calculate payment stats for the year
+                    $paymentCount = 0; // Placeholder - implement actual payment counting logic
+                    
+                    return [
+                        'id' => $landlord->id,
+                        'full_name' => $landlord->full_name,
+                        'email' => $landlord->email,
+                        'phone' => $landlord->phone,
+                        'house_number' => $landlord->house_number,
+                        'address' => $landlord->address,
+                        'status' => $landlord->status,
+                        'created_at' => $landlord->created_at,
+                        'email_verified_at' => $landlord->email_verified_at,
+                        'residents_count' => $residentsCount,
+                        'payment_count' => $paymentCount,
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => $landlords
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch landlords',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get users under a specific landlord
+     */
+    public function getLandlordUsers(Request $request, $landlordId = null)
+    {
+        try {
+            $user = $request->user();
+            
+            // If landlordId is provided, it's a super admin request
+            if ($landlordId) {
+                if ($user->role !== User::ROLE_SUPER) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Unauthorized'
+                    ], 403);
+                }
+                $landlord = User::findOrFail($landlordId);
+            } else {
+                // It's a landlord requesting their own users
+                if ($user->role !== User::ROLE_LANDLORD) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Unauthorized'
+                    ], 403);
+                }
+                $landlord = $user;
+            }
+
+            // Get all residents under this landlord
+            $residents = User::where('role', User::ROLE_RESIDENT)
+                ->where('landlord_id', $landlord->id)
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->map(function ($resident) {
+                    // Calculate payment stats for the year (placeholder)
+                    $paymentCount = 0; // Placeholder - implement actual payment counting logic
+                    
+                    return [
+                        'id' => $resident->id,
+                        'full_name' => $resident->full_name,
+                        'email' => $resident->email,
+                        'phone' => $resident->phone,
+                        'house_number' => $resident->house_number,
+                        'house_type' => $resident->house_type,
+                        'address' => $resident->address,
+                        'status' => $resident->status,
+                        'created_at' => $resident->created_at,
+                        'payment_count' => $paymentCount,
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => $residents
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch users',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get payment statistics for landlord
+     */
+    public function getPaymentStats(Request $request)
+    {
+        try {
+            $user = $request->user();
+            
+            if ($user->role !== User::ROLE_LANDLORD) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized'
+                ], 403);
+            }
+
+            $currentYear = date('Y');
+            
+            // Placeholder payment count - implement actual payment counting logic
+            $totalPayments = 0;
+            
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'totalPayments' => $totalPayments,
+                    'currentYear' => (int) $currentYear,
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch payment stats',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Deactivate a user
+     */
+    public function deactivateUser(Request $request, $userId)
+    {
+        try {
+            $user = $request->user();
+            
+            // Check authorization - super admin can deactivate anyone, landlord can deactivate their residents
+            if (!in_array($user->role, [User::ROLE_SUPER, User::ROLE_LANDLORD])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized'
+                ], 403);
+            }
+
+            $targetUser = User::findOrFail($userId);
+            
+            // If landlord, ensure they can only deactivate their own residents
+            if ($user->role === User::ROLE_LANDLORD) {
+                if ($targetUser->landlord_id !== $user->id || $targetUser->role !== User::ROLE_RESIDENT) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Unauthorized'
+                    ], 403);
+                }
+            }
+
+            $targetUser->status_active = false;
+            $targetUser->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'User deactivated successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to deactivate user',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Activate a user
+     */
+    public function activateUser(Request $request, $userId)
+    {
+        try {
+            $user = $request->user();
+            
+            // Check authorization - super admin can activate anyone, landlord can activate their residents
+            if (!in_array($user->role, [User::ROLE_SUPER, User::ROLE_LANDLORD])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized'
+                ], 403);
+            }
+
+            $targetUser = User::findOrFail($userId);
+            
+            // If landlord, ensure they can only activate their own residents
+            if ($user->role === User::ROLE_LANDLORD) {
+                if ($targetUser->landlord_id !== $user->id || $targetUser->role !== User::ROLE_RESIDENT) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Unauthorized'
+                    ], 403);
+                }
+            }
+
+            $targetUser->status_active = true;
+            $targetUser->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'User activated successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to activate user',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete a user
+     */
+    public function deleteUser(Request $request, $userId)
+    {
+        try {
+            $user = $request->user();
+            
+            // Check authorization - super admin can delete anyone, landlord can delete their residents
+            if (!in_array($user->role, [User::ROLE_SUPER, User::ROLE_LANDLORD])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized'
+                ], 403);
+            }
+
+            $targetUser = User::findOrFail($userId);
+            
+            // If landlord, ensure they can only delete their own residents
+            if ($user->role === User::ROLE_LANDLORD) {
+                if ($targetUser->landlord_id !== $user->id || $targetUser->role !== User::ROLE_RESIDENT) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Unauthorized'
+                    ], 403);
+                }
+            }
+
+            // Prevent deleting super admins unless done by another super admin
+            if ($targetUser->role === User::ROLE_SUPER && $user->role !== User::ROLE_SUPER) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete super admin'
+                ], 403);
+            }
+
+            $targetUser->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'User deleted successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete user',
                 'error' => $e->getMessage()
             ], 500);
         }

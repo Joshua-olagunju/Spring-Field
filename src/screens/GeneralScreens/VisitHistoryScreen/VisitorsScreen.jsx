@@ -1,44 +1,51 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTheme } from "../../../../context/useTheme";
+import { useUser } from "../../../../context/useUser";
 import { Icon } from "@iconify/react";
 import { format } from "date-fns";
 
 const VisitorsScreen = () => {
   const { theme, isDarkMode } = useTheme();
+  const { authToken } = useUser();
   const [selectedVisitor, setSelectedVisitor] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [visitors, setVisitors] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Dummy data (replace with API call)
-  const visitors = [
-    {
-      id: 1,
-      name: "John Smith",
-      phone: "+234 812 345 6789",
-      purpose: "Family Visit",
-      unit: "Block A, Unit 12",
-      signIn: "2025-11-10T09:30:00",
-      signOut: "2025-11-10T14:45:00",
-      status: "completed",
-      host: "Mrs. Williams",
-      vehicleDetails: "Toyota Camry (White) - LAG 123 XY",
-      idType: "Driver's License",
-      notes: "Regular visitor, host's brother",
-    },
-    {
-      id: 2,
-      name: "Sarah Johnson",
-      phone: "+234 803 987 6543",
-      purpose: "Maintenance Work",
-      unit: "Block C, Unit 5",
-      signIn: "2025-11-10T11:15:00",
-      signOut: null,
-      status: "active",
-      host: "Mr. Thompson",
-      vehicleDetails: "None (Walked in)",
-      idType: "Work ID",
-      notes: "Plumbing repairs in kitchen",
-    },
-  ];
+  // Fetch visitor entries from API
+  useEffect(() => {
+    const fetchVisitorEntries = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch(
+          "http://localhost:8000/api/visitor-tokens/my-entries",
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${
+                authToken || localStorage.getItem("authToken")
+              }`,
+            },
+          }
+        );
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+          setVisitors(result.data.entries || []);
+        } else {
+          console.error("Failed to fetch visitor entries:", result.message);
+        }
+      } catch (error) {
+        console.error("Error fetching visitor entries:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchVisitorEntries();
+  }, [authToken]);
 
   const handleCardClick = (visitor) => {
     setSelectedVisitor(visitor);
@@ -78,7 +85,14 @@ const VisitorsScreen = () => {
 
           {/* Visitor Cards */}
           <div className="space-y-4">
-            {visitors.length === 0 ? (
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Icon
+                  icon="mdi:loading"
+                  className={`animate-spin text-4xl ${theme.text.tertiary}`}
+                />
+              </div>
+            ) : visitors.length === 0 ? (
               <div
                 className={`${theme.background.card} rounded-xl ${theme.shadow.small} p-8 sm:p-12 text-center`}
               >
@@ -106,13 +120,13 @@ const VisitorsScreen = () => {
                       <h3
                         className={`font-semibold ${theme.text.primary} mb-1 text-base sm:text-lg truncate`}
                       >
-                        {visitor.name}
+                        {visitor.visitor_name}
                       </h3>
                       <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
                         <p
                           className={`text-xs sm:text-sm ${theme.text.secondary} truncate`}
                         >
-                          {visitor.purpose} • {visitor.unit}
+                          Host: {visitor.resident_name} • {visitor.house_number}
                         </p>
                       </div>
                     </div>
@@ -128,7 +142,7 @@ const VisitorsScreen = () => {
                           <span
                             className={`text-xs sm:text-sm ${theme.text.secondary}`}
                           >
-                            {formatTime(visitor.signIn)}
+                            {formatTime(visitor.entered_at)}
                           </span>
                         </div>
                         <div className="flex items-center gap-1.5">
@@ -138,13 +152,13 @@ const VisitorsScreen = () => {
                           />
                           <span
                             className={`text-xs sm:text-sm ${
-                              visitor.status === "active"
+                              visitor.is_active
                                 ? "text-green-600 font-medium"
                                 : theme.text.secondary
                             }`}
                           >
-                            {visitor.signOut
-                              ? formatTime(visitor.signOut)
+                            {visitor.exited_at
+                              ? formatTime(visitor.exited_at)
                               : "Active"}
                           </span>
                         </div>
@@ -198,10 +212,10 @@ const VisitorsScreen = () => {
                 <h3
                   className={`text-lg font-semibold ${theme.text.primary} mb-1`}
                 >
-                  {selectedVisitor.name}
+                  {selectedVisitor.visitor_name}
                 </h3>
                 <p className={`text-sm ${theme.text.secondary}`}>
-                  {selectedVisitor.purpose}
+                  Visiting {selectedVisitor.resident_name}
                 </p>
               </div>
 
@@ -210,47 +224,52 @@ const VisitorsScreen = () => {
                 <DetailItem
                   icon="mdi:phone"
                   label="Phone"
-                  value={selectedVisitor.phone}
+                  value={selectedVisitor.visitor_phone || "N/A"}
                   theme={theme}
                 />
                 <DetailItem
                   icon="mdi:home"
-                  label="Unit"
-                  value={selectedVisitor.unit}
+                  label="House"
+                  value={selectedVisitor.house_number}
                   theme={theme}
                 />
                 <DetailItem
                   icon="mdi:account"
                   label="Host"
-                  value={selectedVisitor.host}
+                  value={selectedVisitor.resident_name}
                   theme={theme}
                 />
                 <DetailItem
-                  icon="mdi:car"
-                  label="Vehicle"
-                  value={selectedVisitor.vehicleDetails}
-                  theme={theme}
-                />
-                <DetailItem
-                  icon="mdi:card-account-details"
-                  label="ID Type"
-                  value={selectedVisitor.idType}
+                  icon="mdi:shield-account"
+                  label="Guard"
+                  value={selectedVisitor.guard_name || "N/A"}
                   theme={theme}
                 />
                 <DetailItem
                   icon="mdi:clock"
                   label="Duration"
                   value={
-                    selectedVisitor.signOut
-                      ? "5 hours 15 mins"
+                    selectedVisitor.duration_minutes
+                      ? `${Math.floor(
+                          selectedVisitor.duration_minutes / 60
+                        )}h ${selectedVisitor.duration_minutes % 60}m`
                       : "Currently Active"
                   }
+                  theme={theme}
+                />
+                <DetailItem
+                  icon="mdi:calendar"
+                  label="Date"
+                  value={format(
+                    new Date(selectedVisitor.entered_at),
+                    "MMM dd, yyyy"
+                  )}
                   theme={theme}
                 />
               </div>
 
               {/* Notes */}
-              {selectedVisitor.notes && (
+              {selectedVisitor.note && (
                 <div className="mt-4">
                   <h4
                     className={`text-sm font-medium ${theme.text.secondary} mb-1`}
@@ -258,7 +277,7 @@ const VisitorsScreen = () => {
                     Additional Notes
                   </h4>
                   <p className={`text-sm ${theme.text.primary}`}>
-                    {selectedVisitor.notes}
+                    {selectedVisitor.note}
                   </p>
                 </div>
               )}
@@ -267,7 +286,7 @@ const VisitorsScreen = () => {
             {/* Status Footer */}
             <div
               className={`${
-                selectedVisitor.status === "active"
+                selectedVisitor.is_active
                   ? "bg-green-50"
                   : theme.background.input
               } px-6 py-4 rounded-b-2xl border-t ${
@@ -277,33 +296,28 @@ const VisitorsScreen = () => {
               <div className="flex items-center gap-2">
                 <Icon
                   icon={
-                    selectedVisitor.status === "active"
+                    selectedVisitor.is_active
                       ? "mdi:check-circle"
                       : "mdi:check-circle"
                   }
                   className={`text-xl ${
-                    selectedVisitor.status === "active"
+                    selectedVisitor.is_active
                       ? "text-green-600"
                       : theme.text.tertiary
                   }`}
                 />
                 <span
                   className={`text-sm font-medium ${
-                    selectedVisitor.status === "active"
+                    selectedVisitor.is_active
                       ? "text-green-700"
                       : theme.text.secondary
                   }`}
                 >
-                  {selectedVisitor.status === "active"
+                  {selectedVisitor.is_active
                     ? "Currently on premises"
                     : "Visit completed"}
                 </span>
               </div>
-              <button
-                className={`text-xs ${theme.text.link} hover:${theme.text.linkHover}`}
-              >
-                View Full Log
-              </button>
             </div>
           </div>
         </div>

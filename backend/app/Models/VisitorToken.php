@@ -9,6 +9,9 @@ class VisitorToken extends Model
 {
     use HasFactory;
 
+    // Disable updated_at timestamp since the table doesn't have it
+    const UPDATED_AT = null;
+
     protected $fillable = [
         'resident_id',
         'token_hash',

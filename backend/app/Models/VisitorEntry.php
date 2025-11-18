@@ -9,6 +9,9 @@ class VisitorEntry extends Model
 {
     use HasFactory;
 
+    // Disable updated_at timestamp since the table doesn't have it
+    const UPDATED_AT = null;
+
     protected $fillable = [
         'token_id',
         'visitor_name',

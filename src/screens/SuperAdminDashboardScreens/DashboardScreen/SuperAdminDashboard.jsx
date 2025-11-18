@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "../../../../context/useTheme";
 import { Icon } from "@iconify/react";
-import { GenerateAccountTokenModal } from "./TokenGenerationModals";
+import {
+  GenerateAccountTokenModal,
+  GenerateSecurityTokenModal,
+} from "./TokenGenerationModals";
 import { GenerateVisitorTokenModal } from "../../GeneralScreens/VisitorsTokenGenerationModal/VisitorsGenerationToken";
 
 const SuperAdminDashboard = () => {
@@ -10,6 +13,7 @@ const SuperAdminDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showAccountTokenModal, setShowAccountTokenModal] = useState(false);
   const [showVisitorTokenModal, setShowVisitorTokenModal] = useState(false);
+  const [showSecurityTokenModal, setShowSecurityTokenModal] = useState(false);
 
   useEffect(() => {
     // Fetch recent visitors from API
@@ -51,6 +55,10 @@ const SuperAdminDashboard = () => {
 
   const handleGenerateVisitorToken = () => {
     setShowVisitorTokenModal(true);
+  };
+
+  const handleGenerateSecurityToken = () => {
+    setShowSecurityTokenModal(true);
   };
 
   return (
@@ -138,6 +146,37 @@ const SuperAdminDashboard = () => {
               >
                 <Icon icon="mdi:plus-circle" className="text-xl" />
                 Generate Visitor Token
+              </button>
+            </div>
+          </div>
+
+          {/* Security Action: Generate Security Token Card */}
+          <div
+            className={`${theme.background.card} rounded-2xl ${theme.shadow.medium} p-6 sm:p-8 mb-8`}
+          >
+            <div className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center mb-4 shadow-lg">
+                <Icon
+                  icon="mdi:shield-account"
+                  className="text-white text-3xl sm:text-4xl"
+                />
+              </div>
+              <h2
+                className={`text-xl sm:text-2xl font-bold ${theme.text.primary} mb-2`}
+              >
+                Generate Security Account
+              </h2>
+              <p
+                className={`text-sm sm:text-base ${theme.text.secondary} mb-6 max-w-md`}
+              >
+                Create access credentials for security personnel
+              </p>
+              <button
+                onClick={handleGenerateSecurityToken}
+                className="bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-600 hover:from-purple-700 hover:via-indigo-700 hover:to-purple-700 text-white font-semibold px-8 py-3 sm:px-10 sm:py-4 rounded-xl transition-all active:scale-95 shadow-lg hover:shadow-xl flex items-center gap-2"
+              >
+                <Icon icon="mdi:plus-circle" className="text-xl" />
+                Generate Security Token
               </button>
             </div>
           </div>
@@ -331,6 +370,11 @@ const SuperAdminDashboard = () => {
         theme={theme}
         isOpen={showVisitorTokenModal}
         onClose={() => setShowVisitorTokenModal(false)}
+      />
+      <GenerateSecurityTokenModal
+        theme={theme}
+        isOpen={showSecurityTokenModal}
+        onClose={() => setShowSecurityTokenModal(false)}
       />
     </div>
   );

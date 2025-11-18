@@ -34,6 +34,7 @@ class RegistrationOtp extends Model
 
     const TARGET_LANDLORD = 'landlord';
     const TARGET_RESIDENT = 'resident';
+    const TARGET_SECURITY = 'security';
 
     /**
      * Generate a new OTP code (6-digit numeric)

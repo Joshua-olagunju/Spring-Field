@@ -2,14 +2,16 @@ import { useState, useRef } from "react";
 import { Icon } from "@iconify/react";
 import { QRCodeSVG as QRCode } from "qrcode.react";
 import { ShareTokenImage } from "./ShareTokenImage";
-// import { useUser } from "../../../../context/useUser"; // Uncomment when API is ready
+import { useUser } from "../../../../context/useUser";
 
 export const GenerateVisitorTokenModal = ({ theme, isOpen, onClose }) => {
-  // const { authToken } = useUser(); // Uncomment when API is ready
+  const { authToken, isAuthenticated } = useUser();
   const qrRef = useRef();
   const [visitorName, setVisitorName] = useState("");
+  const [visitorPhone, setVisitorPhone] = useState("");
   const [stayType, setStayType] = useState("short");
   const [duration, setDuration] = useState("1");
+  const [note, setNote] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [generatedToken, setGeneratedToken] = useState(null);
@@ -22,67 +24,61 @@ export const GenerateVisitorTokenModal = ({ theme, isOpen, onClose }) => {
       return;
     }
 
+    if (!isAuthenticated || !authToken) {
+      setError("Authentication required. Please log in again.");
+      return;
+    }
+
     setIsLoading(true);
     setError("");
 
     try {
-      // TEMPORARY: Mock data for testing UI without API
-      const mockToken = `VT-${Math.random()
-        .toString(36)
-        .substring(2, 11)
-        .toUpperCase()}`;
-      const expiresDate = new Date();
-      expiresDate.setHours(
-        expiresDate.getHours() +
-          (stayType === "short" ? parseInt(duration) : parseInt(duration) * 24)
-      );
-
-      const mockData = {
-        token: mockToken,
-        visitor_name: visitorName,
-        stay_type: stayType,
+      console.log("Sending token generation request with:", {
+        issued_for_name: visitorName,
+        issued_for_phone: visitorPhone,
+        visit_type: stayType,
         duration: parseInt(duration),
-        expires_at: expiresDate.toISOString(),
-      };
+        note: note,
+      });
 
-      // Simulate API delay
-      setTimeout(() => {
-        setGeneratedToken(mockData);
-        setVisitorName("");
-        setIsLoading(false);
-      }, 1000);
-
-      // ORIGINAL API CALL - COMMENTED OUT FOR TESTING
-      /*
-      const token = authToken || localStorage.getItem("authToken");
       const response = await fetch(
-        "http://localhost:8000/api/admin/generate-visitor-token",
+        "http://localhost:8000/api/visitor-tokens/generate",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${authToken}`,
+            Accept: "application/json",
           },
           body: JSON.stringify({
-            visitor_name: visitorName,
-            stay_type: stayType,
+            issued_for_name: visitorName,
+            issued_for_phone: visitorPhone,
+            visit_type: stayType,
             duration: parseInt(duration),
+            note: note,
           }),
         }
       );
 
+      console.log("Response status:", response.status);
       const result = await response.json();
+      console.log("Response data:", result);
 
       if (response.ok && result.success) {
         setGeneratedToken(result.data);
         setVisitorName("");
+        setVisitorPhone("");
+        setNote("");
       } else {
-        setError(result.message || "Failed to generate visitor token");
+        setError(
+          result.message ||
+            `Failed to generate visitor token: ${response.status}`
+        );
       }
-      */
     } catch (err) {
-      setError("Error generating token. Please try again.");
-      console.error(err);
+      setError("Error generating token. Please check console for details.");
+      console.error("Token generation error:", err);
+    } finally {
       setIsLoading(false);
     }
   };
@@ -149,8 +145,10 @@ Springfield Estate Security System`;
   const handleReset = () => {
     setGeneratedToken(null);
     setVisitorName("");
+    setVisitorPhone("");
     setStayType("short");
     setDuration("1");
+    setNote("");
     setError("");
   };
 
@@ -248,6 +246,8 @@ Springfield Estate Security System`;
                 >
                   <Icon icon="mdi:account" className="text-sm" />
                   <strong>Visitor:</strong> {generatedToken.visitor_name}
+                  {generatedToken.visitor_phone &&
+                    ` (${generatedToken.visitor_phone})`}
                 </p>
                 <p
                   className={`text-xs ${theme.text.secondary} mb-2 flex items-center gap-1`}
@@ -380,6 +380,26 @@ Springfield Estate Security System`;
                 />
               </div>
 
+              {/* Visitor Phone */}
+              <div>
+                <label
+                  className={`block text-sm font-medium ${theme.text.primary} mb-2`}
+                >
+                  Visitor Phone (Optional)
+                </label>
+                <input
+                  type="tel"
+                  value={visitorPhone}
+                  onChange={(e) => {
+                    setVisitorPhone(e.target.value);
+                    setError("");
+                  }}
+                  placeholder="Enter visitor's phone number"
+                  className={`w-full px-4 py-2 rounded-lg ${theme.background.input} ${theme.text.primary} border ${theme.border.secondary} focus:outline-none focus:border-purple-500 transition-colors`}
+                  disabled={isLoading}
+                />
+              </div>
+
               {/* Stay Type */}
               <div>
                 <label
@@ -436,6 +456,32 @@ Springfield Estate Security System`;
                     </>
                   )}
                 </select>
+              </div>
+
+              {/* Note */}
+              <div>
+                <label
+                  className={`block text-sm font-medium ${theme.text.primary} mb-2`}
+                >
+                  Note (Optional)
+                </label>
+                <textarea
+                  value={note}
+                  onChange={(e) => {
+                    setNote(e.target.value);
+                    setError("");
+                  }}
+                  placeholder="Any additional information or instructions"
+                  className={`w-full px-4 py-2 rounded-lg ${theme.background.input} ${theme.text.primary} border ${theme.border.secondary} focus:outline-none focus:border-purple-500 transition-colors resize-none`}
+                  rows={3}
+                  maxLength={500}
+                  disabled={isLoading}
+                />
+                {note.length > 0 && (
+                  <p className={`text-xs ${theme.text.tertiary} mt-1`}>
+                    {note.length}/500 characters
+                  </p>
+                )}
               </div>
 
               {/* Info Box */}

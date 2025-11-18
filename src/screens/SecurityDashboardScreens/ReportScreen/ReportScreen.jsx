@@ -1,66 +1,75 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTheme } from "../../../../context/useTheme";
+import { useUser } from "../../../../context/useUser";
 import { Icon } from "@iconify/react";
 
 const ReportScreen = () => {
   const { theme, isDarkMode } = useTheme();
+  const { authToken } = useUser();
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all"); // 'all', 'active', 'inactive'
+  const [tokenHistory, setTokenHistory] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Dummy token history data (replace with API call)
-  const tokenHistory = [
-    {
-      id: "TKN-001",
-      dateIssued: "2025-11-14",
-      status: "active",
-      visitorName: "John Smith",
-      expiryDate: "2025-11-21",
-    },
-    {
-      id: "TKN-002",
-      dateIssued: "2025-11-13",
-      status: "active",
-      visitorName: "Sarah Johnson",
-      expiryDate: "2025-11-20",
-    },
-    {
-      id: "TKN-003",
-      dateIssued: "2025-11-12",
-      status: "inactive",
-      visitorName: "Michael Brown",
-      expiryDate: "2025-11-19",
-    },
-    {
-      id: "TKN-004",
-      dateIssued: "2025-11-11",
-      status: "active",
-      visitorName: "Emma Davis",
-      expiryDate: "2025-11-18",
-    },
-    {
-      id: "TKN-005",
-      dateIssued: "2025-11-10",
-      status: "inactive",
-      visitorName: "James Wilson",
-      expiryDate: "2025-11-17",
-    },
-    {
-      id: "TKN-006",
-      dateIssued: "2025-11-09",
-      status: "active",
-      visitorName: "Lisa Anderson",
-      expiryDate: "2025-11-16",
-    },
-  ];
+  // Fetch token history from API
+  useEffect(() => {
+    const fetchTokenHistory = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch(
+          "http://localhost:8000/api/visitor-tokens/all-entries",
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${
+                authToken || localStorage.getItem("authToken")
+              }`,
+            },
+          }
+        );
 
-  // Filter token history based on search query
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+          // Transform API data to match component structure
+          const transformedData = result.data.entries.map((entry) => ({
+            id: entry.id,
+            dateIssued: new Date(entry.entered_at).toISOString().split("T")[0],
+            status: entry.is_active ? "active" : "inactive",
+            visitorName: entry.visitor_name,
+            expiryDate: entry.exited_at || "Active",
+            resident: entry.resident_name,
+            house: entry.house_number,
+          }));
+          setTokenHistory(transformedData);
+        } else {
+          console.error("Failed to fetch token history:", result.message);
+        }
+      } catch (error) {
+        console.error("Error fetching token history:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTokenHistory();
+  }, [authToken]);
+
+  // Filter token history based on search query and status
   const filteredTokens = tokenHistory.filter((token) => {
     const query = searchQuery.toLowerCase();
-    return (
-      token.id.toLowerCase().includes(query) ||
-      token.visitorName.toLowerCase().includes(query) ||
-      token.dateIssued.toLowerCase().includes(query) ||
-      token.status.toLowerCase().includes(query)
-    );
+    const matchesSearch =
+      String(token.id).toLowerCase().includes(query) ||
+      (token.visitorName || "").toLowerCase().includes(query) ||
+      (token.dateIssued || "").toLowerCase().includes(query) ||
+      (token.resident || "").toLowerCase().includes(query) ||
+      (token.house || "").toLowerCase().includes(query);
+
+    const matchesStatus =
+      statusFilter === "all" || token.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
   });
 
   const handleTokenClick = (token) => {
@@ -107,132 +116,182 @@ const ReportScreen = () => {
       />
 
       {/* Content */}
-      <div className="w-full px-0">
-        <div className="max-w-full mx-auto px-4 sm:px-6">
-          {/* Header */}
-          <div className="mb-8">
-            <h1
-              className={`text-2xl sm:text-3xl font-bold ${theme.text.primary} mb-2`}
-            >
-              Token Reports
-            </h1>
-            <p className={`text-sm sm:text-base ${theme.text.secondary}`}>
-              View and manage all token history
-            </p>
-          </div>
+      <div className="w-full ">
+        {/* Header */}
+        <div className="mb-8">
+          <h1
+            className={`text-2xl sm:text-3xl font-bold ${theme.text.primary} mb-2`}
+          >
+            Token Reports
+          </h1>
+          <p className={`text-sm sm:text-base ${theme.text.secondary}`}>
+            View and manage all token history
+          </p>
+        </div>
 
-          {/* Search Bar */}
-          <div className="mb-6">
+        {/* Sticky Search Bar and Filters */}
+        <div
+          className="sticky top-16 z-30 pb-6 mb-6"
+          style={{
+            background: isDarkMode
+              ? "linear-gradient(to bottom right, rgb(17, 24, 39), rgb(31, 41, 55), rgb(17, 24, 39))"
+              : "linear-gradient(to bottom right, rgb(249, 250, 251), rgb(243, 244, 246), rgb(249, 250, 251))",
+          }}
+        >
+          <div className="space-y-4 pt-4">
+            {/* Search Bar */}
             <div
-              className={`relative max-w-md ${theme.background.card} rounded-lg ${theme.shadow.small} border ${theme.border.secondary}`}
+              className={`max-w-md flex items-center gap-3 px-3 py-2 rounded-lg ${theme.background.card} ${theme.shadow.small} border ${theme.border.secondary}`}
             >
               <Icon
                 icon="mdi:magnify"
-                className={`absolute left-3 top-1/2 transform -translate-y-1/2 text-lg ${theme.text.tertiary}`}
+                className={`text-lg ${theme.text.tertiary}`}
               />
+
               <input
                 type="text"
                 placeholder="Search token history…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className={`w-full pl-10 pr-3 py-2 bg-transparent text-sm ${theme.text.primary} placeholder-current placeholder-opacity-40 outline-none`}
+                className={`flex-1 bg-transparent text-sm ${theme.text.primary} placeholder-current placeholder-opacity-40 outline-none`}
               />
+            </div>
+
+            {/* Status Filter */}
+            <div className="flex flex-wrap justify-center sm:justify-start gap-2">
+              <button
+                onClick={() => setStatusFilter("all")}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  statusFilter === "all"
+                    ? "bg-blue-600 text-white"
+                    : `${theme.background.card} ${theme.text.secondary} hover:${theme.background.secondary}`
+                }`}
+              >
+                All ({tokenHistory.length})
+              </button>
+
+              <button
+                onClick={() => setStatusFilter("active")}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  statusFilter === "active"
+                    ? "bg-green-600 text-white"
+                    : `${theme.background.card} ${theme.text.secondary} hover:${theme.background.secondary}`
+                }`}
+              >
+                Active (
+                {tokenHistory.filter((t) => t.status === "active").length})
+              </button>
+
+              <button
+                onClick={() => setStatusFilter("inactive")}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  statusFilter === "inactive"
+                    ? "bg-gray-600 text-white"
+                    : `${theme.background.card} ${theme.text.secondary} hover:${theme.background.secondary}`
+                }`}
+              >
+                Inactive (
+                {tokenHistory.filter((t) => t.status === "inactive").length})
+              </button>
             </div>
           </div>
+        </div>
 
-          {/* Token History Section */}
-          <div
-            className={`${theme.background.card} rounded-xl ${theme.shadow.medium} p-6 flex flex-col`}
-          >
-            {/* Header */}
-            <div className="mb-4 flex items-center gap-2 flex-shrink-0">
-              <Icon
-                icon="mdi:qrcode"
-                className={`text-2xl ${theme.brand.primaryText}`}
-              />
-              <h2
-                className={`text-xl sm:text-2xl font-bold ${theme.text.primary}`}
-              >
-                Token History
-              </h2>
-            </div>
+        {/* Token History Section */}
+        <div
+          className={`${theme.background.card} rounded-xl ${theme.shadow.medium} p-6`}
+        >
+          {/* Header */}
+          <div className="mb-4 flex items-center gap-2">
+            <Icon
+              icon="mdi:qrcode"
+              className={`text-2xl ${theme.brand.primaryText}`}
+            />
+            <h2
+              className={`text-xl sm:text-2xl font-bold ${theme.text.primary}`}
+            >
+              Token History
+            </h2>
+          </div>
 
-            {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto pr-2 space-y-3 max-h-[500px] lg:max-h-[600px]">
-              {tokenHistory.length === 0 ? (
-                <div className="flex items-center justify-center h-64">
-                  <div className="text-center">
-                    <Icon
-                      icon="mdi:qrcode-scan"
-                      className={`text-5xl ${theme.text.tertiary} mb-3 mx-auto opacity-50`}
-                    />
-                    <p className={`text-sm ${theme.text.secondary}`}>
-                      You don't have any token history yet.
-                    </p>
-                  </div>
+          {/* Token List */}
+          <div className="space-y-3">
+            {isLoading ? (
+              <div className="flex items-center justify-center h-64">
+                <Icon
+                  icon="mdi:loading"
+                  className={`text-4xl ${theme.text.tertiary} animate-spin`}
+                />
+              </div>
+            ) : tokenHistory.length === 0 ? (
+              <div className="flex items-center justify-center h-64">
+                <div className="text-center">
+                  <Icon
+                    icon="mdi:qrcode-scan"
+                    className={`text-5xl ${theme.text.tertiary} mb-3 mx-auto opacity-50`}
+                  />
+                  <p className={`text-sm ${theme.text.secondary}`}>
+                    You don't have any token history yet.
+                  </p>
                 </div>
-              ) : filteredTokens.length === 0 ? (
-                <div className="flex items-center justify-center h-64">
-                  <div className="text-center">
-                    <Icon
-                      icon="mdi:magnify-close"
-                      className={`text-5xl ${theme.text.tertiary} mb-3 mx-auto opacity-50`}
-                    />
-                    <p className={`text-sm ${theme.text.secondary}`}>
-                      No results found
-                    </p>
-                  </div>
+              </div>
+            ) : filteredTokens.length === 0 ? (
+              <div className="flex items-center justify-center h-64">
+                <div className="text-center">
+                  <Icon
+                    icon="mdi:magnify-close"
+                    className={`text-5xl ${theme.text.tertiary} mb-3 mx-auto opacity-50`}
+                  />
+                  <p className={`text-sm ${theme.text.secondary}`}>
+                    No results found
+                  </p>
                 </div>
-              ) : (
-                filteredTokens.map((token) => (
-                  <button
-                    key={token.id}
-                    onClick={() => handleTokenClick(token)}
-                    className={`w-full ${theme.background.secondary} hover:${theme.background.card} rounded-lg p-4 transition-all border ${theme.border.secondary} hover:border-blue-500 text-left`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p
-                            className={`font-mono text-xs sm:text-sm font-semibold ${theme.text.primary}`}
-                          >
-                            {token.id}
-                          </p>
-                        </div>
+              </div>
+            ) : (
+              filteredTokens.map((token) => (
+                <button
+                  key={token.id}
+                  onClick={() => handleTokenClick(token)}
+                  className={`w-full ${theme.background.secondary} hover:${theme.background.card} rounded-lg p-4 transition-all border ${theme.border.secondary} hover:border-blue-500 text-left`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
                         <p
-                          className={`text-xs sm:text-sm ${theme.text.secondary} truncate`}
+                          className={`font-mono text-xs sm:text-sm font-semibold ${theme.text.primary}`}
                         >
-                          {token.visitorName}
-                        </p>
-                        <p
-                          className={`text-xs ${theme.text.tertiary} mt-1`}
-                        >
-                          Issued: {token.dateIssued}
-                        </p>
-                        <p
-                          className={`text-xs ${theme.text.tertiary}`}
-                        >
-                          Expires: {token.expiryDate}
+                          {token.id}
                         </p>
                       </div>
-                      <div className="flex-shrink-0">
-                        <span
-                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(
-                            token.status
-                          )}`}
-                        >
-                          <Icon
-                            icon={getStatusIcon(token.status)}
-                            className="text-sm"
-                          />
-                          <span className="capitalize">{token.status}</span>
-                        </span>
-                      </div>
+                      <p
+                        className={`text-xs sm:text-sm ${theme.text.secondary} truncate`}
+                      >
+                        {token.visitorName}
+                      </p>
+                      <p className={`text-xs ${theme.text.tertiary} mt-1`}>
+                        Issued: {token.dateIssued}
+                      </p>
+                      <p className={`text-xs ${theme.text.tertiary}`}>
+                        Expires: {token.expiryDate}
+                      </p>
                     </div>
-                  </button>
-                ))
-              )}
-            </div>
+                    <div className="flex-shrink-0">
+                      <span
+                        className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(
+                          token.status
+                        )}`}
+                      >
+                        <Icon
+                          icon={getStatusIcon(token.status)}
+                          className="text-sm"
+                        />
+                        <span className="capitalize">{token.status}</span>
+                      </span>
+                    </div>
+                  </div>
+                </button>
+              ))
+            )}
           </div>
         </div>
       </div>

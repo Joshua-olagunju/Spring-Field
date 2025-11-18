@@ -148,6 +148,9 @@ const SignUp = () => {
       (req) => req === true
     );
 
+    // Security personnel don't need house information
+    const needsHouseInfo = targetRole !== "security";
+
     const isValid =
       formData.firstName.trim() !== "" &&
       formData.lastName.trim() !== "" &&
@@ -155,8 +158,8 @@ const SignUp = () => {
       validateEmail(formData.email) &&
       formData.phoneNumber.trim() !== "" &&
       validatePhoneNumber(formData.phoneNumber) &&
-      formData.houseNumber.trim() !== "" &&
-      formData.address.trim() !== "" &&
+      (!needsHouseInfo || formData.houseNumber.trim() !== "") &&
+      (!needsHouseInfo || formData.address.trim() !== "") &&
       formData.password.trim() !== "" &&
       formData.confirmPassword.trim() !== "" &&
       formData.password === formData.confirmPassword &&
@@ -164,7 +167,7 @@ const SignUp = () => {
       Object.values(errors).every((error) => error === "");
 
     setIsFormValid(isValid);
-  }, [formData, passwordRequirements, errors]);
+  }, [formData, passwordRequirements, errors, targetRole]);
 
   const displayModal = (
     type,

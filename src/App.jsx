@@ -9,7 +9,7 @@ import "./App.css";
 import { useState, useEffect } from "react";
 import { ThemeProvider } from "../context/ThemeContext";
 import { UserProvider } from "../context/UserContext";
-// import { useUser } from "../context/useUser";
+import { useUser } from "../context/useUser";
 import Login from "./screens/authenticationScreens/Login";
 import SignUp from "./screens/authenticationScreens/Signup";
 import SignUpOtpScreen from "./screens/authenticationScreens/SignUpOtpScreen";
@@ -33,7 +33,7 @@ import TopNavBar from "../components/GeneralComponents/TopNavBar";
 import BottomNavBar from "../components/UserComponents/BottomNavBar";
 import SuperAdminBottomNav from "../components/SuperAdminComponents/SuperAdminBottomNav";
 import AdminBottomNav from "../components/AdminComponents/AdminBottomNav";
-import SecurityBottomNav from "../components/GeneralComponents/SecurityBottomNav";
+import SecurityBottomNav from "../components/SecurityComponents/SecurityBottomNav";
 import LogoutConfirmModal from "../components/GeneralComponents/LogoutConfirmModal";
 // import ProtectedRoute from "../components/GeneralComponents/ProtectedRoute";
 
@@ -80,7 +80,7 @@ const AutoRedirect = () => {
 };
 
 function AppContent() {
-  // const { isAuthenticated } = useUser();
+  const { logout } = useUser();
   const location = useLocation();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -99,12 +99,8 @@ function AppContent() {
   const handleConfirmLogout = async () => {
     setIsLoggingOut(true);
     try {
-      // Make API call to logout (if needed)
-      // await fetch("http://localhost:8000/api/logout", { ... });
-
-      // Clear local storage
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
+      // Use UserContext logout method which handles API call and localStorage cleanup
+      await logout();
 
       // Close modal and redirect to login
       setShowLogoutModal(false);
@@ -283,7 +279,7 @@ function AppContent() {
             }
           />
           <Route
-            path="/security/reports"
+            path="/security/history"
             element={
               // <ProtectedRoute requiredRole="security">
               <SecurityReportScreen />

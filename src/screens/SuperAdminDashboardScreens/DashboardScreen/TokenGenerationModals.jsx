@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Icon } from "@iconify/react";
+import { useUser } from "../../../../context/useUser";
 
 export const GenerateAccountTokenModal = ({ theme, isOpen, onClose }) => {
+  const { authToken, isAuthenticated } = useUser();
   const [isLoading, setIsLoading] = useState(false);
   const [generatedOtp, setGeneratedOtp] = useState(null);
   const [recipientName, setRecipientName] = useState("");
@@ -22,10 +24,14 @@ export const GenerateAccountTokenModal = ({ theme, isOpen, onClose }) => {
       return;
     }
 
+    if (!isAuthenticated || !authToken) {
+      setError("Authentication required. Please log in again.");
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError("");
-      const authToken = localStorage.getItem("authToken");
 
       const response = await fetch(
         "http://localhost:8000/api/otp/generate-landlord",
@@ -34,6 +40,7 @@ export const GenerateAccountTokenModal = ({ theme, isOpen, onClose }) => {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${authToken}`,
+            Accept: "application/json",
           },
           body: JSON.stringify({
             recipient_name: recipientName,
@@ -342,6 +349,338 @@ export const GenerateAccountTokenModal = ({ theme, isOpen, onClose }) => {
                       Generate OTP
                     </>
                   )}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const GenerateSecurityTokenModal = ({ theme, isOpen, onClose }) => {
+  const { authToken, isAuthenticated } = useUser();
+  const [isLoading, setIsLoading] = useState(false);
+  const [generatedOtp, setGeneratedOtp] = useState(null);
+  const [recipientName, setRecipientName] = useState("");
+  const [recipientEmail, setRecipientEmail] = useState("");
+  const [expiresInHours, setExpiresInHours] = useState(24);
+  const [description, setDescription] = useState("");
+  const [error, setError] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  const handleGenerateToken = async () => {
+    // Validation
+    if (!recipientName.trim()) {
+      setError("Please enter security personnel name");
+      return;
+    }
+    if (!recipientEmail.trim()) {
+      setError("Please enter security personnel email");
+      return;
+    }
+
+    if (!isAuthenticated || !authToken) {
+      setError("Authentication required. Please log in again.");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError("");
+
+      const response = await fetch(
+        "http://localhost:8000/api/otp/generate-security",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authToken}`,
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            recipient_name: recipientName,
+            recipient_email: recipientEmail,
+            expires_in_hours: parseInt(expiresInHours),
+            description: description || undefined,
+          }),
+        }
+      );
+
+      console.log("Security OTP Response status:", response.status);
+      const result = await response.json();
+      console.log("Security OTP Response data:", result);
+
+      if (response.ok && result.success) {
+        setGeneratedOtp(result.data);
+        setRecipientName("");
+        setRecipientEmail("");
+        setExpiresInHours(24);
+        setDescription("");
+      } else {
+        // Show detailed error if available
+        if (result.errors) {
+          const errorMessages = Object.values(result.errors).flat();
+          setError(errorMessages.join(". "));
+        } else {
+          setError(
+            result.message || "Failed to generate security personnel OTP"
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Error generating security OTP:", error);
+      setError("Error generating OTP. Please check your connection.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const copyToClipboard = () => {
+    if (generatedOtp) {
+      navigator.clipboard.writeText(generatedOtp.otp_code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleReset = () => {
+    setGeneratedOtp(null);
+    setRecipientName("");
+    setRecipientEmail("");
+    setExpiresInHours(24);
+    setDescription("");
+    setError("");
+  };
+
+  const handleClose = () => {
+    handleReset();
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={handleClose}
+      />
+      <div
+        className={`${theme.background.card} w-full max-w-md rounded-2xl ${theme.shadow.large} relative max-h-[90vh] overflow-y-auto`}
+      >
+        <div className="p-6">
+          {/* Icon */}
+          <div className="flex justify-center mb-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center">
+              <Icon icon="mdi:shield-account" className="text-white text-3xl" />
+            </div>
+          </div>
+
+          {/* Header */}
+          <div className="text-center mb-6">
+            <h2 className={`text-2xl font-bold ${theme.text.primary} mb-2`}>
+              Generate Security Account
+            </h2>
+            <p className={`text-sm ${theme.text.secondary}`}>
+              Create an access token for security personnel registration
+            </p>
+          </div>
+
+          {!generatedOtp ? (
+            // Form
+            <div className="space-y-4">
+              {error && (
+                <div className="bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded-lg text-sm">
+                  {error}
+                </div>
+              )}
+
+              <div>
+                <label
+                  className={`block text-sm font-medium ${theme.text.primary} mb-2`}
+                >
+                  Security Personnel Name
+                </label>
+                <input
+                  type="text"
+                  value={recipientName}
+                  onChange={(e) => setRecipientName(e.target.value)}
+                  className={`w-full p-3 rounded-lg border ${theme.border.primary} ${theme.background.input} ${theme.text.primary} focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
+                  placeholder="Enter full name"
+                />
+              </div>
+
+              <div>
+                <label
+                  className={`block text-sm font-medium ${theme.text.primary} mb-2`}
+                >
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  value={recipientEmail}
+                  onChange={(e) => setRecipientEmail(e.target.value)}
+                  className={`w-full p-3 rounded-lg border ${theme.border.primary} ${theme.background.input} ${theme.text.primary} focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
+                  placeholder="Enter email address"
+                />
+              </div>
+
+              <div>
+                <label
+                  className={`block text-sm font-medium ${theme.text.primary} mb-2`}
+                >
+                  Token Expires In (Hours)
+                </label>
+                <select
+                  value={expiresInHours}
+                  onChange={(e) => setExpiresInHours(parseInt(e.target.value))}
+                  className={`w-full p-3 rounded-lg border ${theme.border.primary} ${theme.background.input} ${theme.text.primary} focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
+                >
+                  <option value={1}>1 hour</option>
+                  <option value={6}>6 hours</option>
+                  <option value={12}>12 hours</option>
+                  <option value={24}>24 hours</option>
+                  <option value={48}>2 days</option>
+                  <option value={72}>3 days</option>
+                  <option value={168}>1 week</option>
+                </select>
+              </div>
+
+              <div>
+                <label
+                  className={`block text-sm font-medium ${theme.text.primary} mb-2`}
+                >
+                  Description (Optional)
+                </label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={3}
+                  className={`w-full p-3 rounded-lg border ${theme.border.primary} ${theme.background.input} ${theme.text.primary} focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none`}
+                  placeholder="Purpose of this security account..."
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={handleClose}
+                  className={`flex-1 py-3 px-4 rounded-lg font-medium ${theme.button.secondary} transition-all`}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleGenerateToken}
+                  disabled={isLoading}
+                  className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-medium py-3 px-4 rounded-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {isLoading ? (
+                    <>
+                      <Icon icon="mdi:loading" className="animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Icon icon="mdi:plus-circle" />
+                      Generate OTP
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          ) : (
+            // Success State
+            <div className="text-center">
+              <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Icon icon="mdi:check" className="text-white text-3xl" />
+              </div>
+
+              <h3 className={`text-xl font-bold ${theme.text.primary} mb-2`}>
+                Security OTP Generated!
+              </h3>
+
+              <p className={`text-sm ${theme.text.secondary} mb-6`}>
+                Share this code with {generatedOtp.recipient_name} to create
+                their security account
+              </p>
+
+              <div
+                className={`${theme.background.secondary} p-4 rounded-lg mb-4`}
+              >
+                <label
+                  className={`block text-sm font-medium ${theme.text.secondary} mb-2`}
+                >
+                  Security Account OTP
+                </label>
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`flex-1 font-mono text-2xl font-bold ${theme.text.primary} text-center py-2`}
+                  >
+                    {generatedOtp.otp_code}
+                  </div>
+                  <button
+                    onClick={copyToClipboard}
+                    className={`p-2 rounded-lg ${theme.button.secondary} hover:${theme.button.secondaryHover} transition-all`}
+                  >
+                    <Icon
+                      icon={copied ? "mdi:check" : "mdi:content-copy"}
+                      className={copied ? "text-green-600" : ""}
+                    />
+                  </button>
+                </div>
+              </div>
+
+              <div
+                className={`text-left ${theme.background.tertiary} p-4 rounded-lg mb-6 space-y-2`}
+              >
+                <div className="flex justify-between">
+                  <span className={`text-sm ${theme.text.secondary}`}>
+                    Recipient:
+                  </span>
+                  <span className={`text-sm font-medium ${theme.text.primary}`}>
+                    {generatedOtp.recipient_name}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className={`text-sm ${theme.text.secondary}`}>
+                    Email:
+                  </span>
+                  <span className={`text-sm ${theme.text.primary}`}>
+                    {generatedOtp.recipient_email}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className={`text-sm ${theme.text.secondary}`}>
+                    Expires:
+                  </span>
+                  <span className={`text-sm ${theme.text.primary}`}>
+                    {new Date(generatedOtp.expires_at).toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className={`text-sm ${theme.text.secondary}`}>
+                    Role:
+                  </span>
+                  <span className={`text-sm font-medium text-purple-600`}>
+                    Security Personnel
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={handleReset}
+                  className={`flex-1 py-3 px-4 rounded-lg font-medium ${theme.button.secondary} transition-all flex items-center justify-center gap-2`}
+                >
+                  <Icon icon="mdi:plus-circle" />
+                  Generate Another
+                </button>
+                <button
+                  onClick={handleClose}
+                  className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-medium py-3 px-4 rounded-lg transition-all"
+                >
+                  Done
                 </button>
               </div>
             </div>

@@ -90,7 +90,7 @@ const Login = () => {
               redirectPath = "/dashboard";
               break;
             case "security":
-              redirectPath = "/dashboard";
+              redirectPath = "/security/dashboard";
               break;
             default:
               redirectPath = "/dashboard";
@@ -274,7 +274,7 @@ const Login = () => {
                       id="password"
                       value={formData.password}
                       onChange={handleInputChange}
-                      className={`w-full   placeholder:text-[0.8rem] ${
+                      className={`w-full px-4 py-3 placeholder:text-[0.8rem] ${
                         theme.background.input
                       } ${
                         theme.text.primary
