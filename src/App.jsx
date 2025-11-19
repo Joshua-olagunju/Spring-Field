@@ -35,48 +35,47 @@ import SuperAdminBottomNav from "../components/SuperAdminComponents/SuperAdminBo
 import AdminBottomNav from "../components/AdminComponents/AdminBottomNav";
 import SecurityBottomNav from "../components/SecurityComponents/SecurityBottomNav";
 import LogoutConfirmModal from "../components/GeneralComponents/LogoutConfirmModal";
-// import ProtectedRoute from "../components/GeneralComponents/ProtectedRoute";
+import ProtectedRoute from "../components/GeneralComponents/ProtectedRoute";
+import SignupProtectedRoute from "../components/GeneralComponents/SignupProtectedRoute";
+import EmailVerificationProtectedRoute from "../components/GeneralComponents/EmailVerificationProtectedRoute";
 
 // Auto-redirect component for root path
 const AutoRedirect = () => {
-  // const { isAuthenticated, isLoading, user } = useUser();
+  const { isAuthenticated, isLoading, user } = useUser();
 
-  // if (isLoading) {
-  //   return (
-  //     <div className="min-h-screen flex items-center justify-center">
-  //       <div className="text-center">
-  //         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-  //         <p className="text-gray-600">Loading...</p>
-  //       </div>
-  //     </div>
-  //   );
-  // }
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
-  // if (!isAuthenticated) {
-  //   return <Navigate to="/login" replace />;
-  // }
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
 
-  // // Check if email is verified
-  // if (!user?.email_verified_at) {
-  //   return <Navigate to="/email-verification" replace />;
-  // }
+  // Check if email is verified
+  if (!user?.email_verified_at) {
+    return <Navigate to="/email-verification" replace />;
+  }
 
-  // // Route to appropriate dashboard based on role
-  // switch (user?.role) {
-  //   case "super":
-  //     return <Navigate to="/super-admin/dashboard" replace />;
-  //   case "landlord":
-  //     return <Navigate to="/admin/dashboard" replace />;
-  //   case "resident":
-  //     return <Navigate to="/dashboard" replace />;
-  //   case "security":
-  //     return <Navigate to="/dashboard" replace />;
-  //   default:
-  //     return <Navigate to="/login" replace />;
-  // }
-
-  // AUTHENTICATION TEMPORARILY DISABLED FOR DEVELOPMENT - Navigate directly to super admin dashboard
-  return <Navigate to="/super-admin/dashboard" replace />;
+  // Route to appropriate dashboard based on role
+  switch (user?.role) {
+    case "super":
+      return <Navigate to="/super-admin/dashboard" replace />;
+    case "landlord":
+      return <Navigate to="/admin/dashboard" replace />;
+    case "resident":
+      return <Navigate to="/dashboard" replace />;
+    case "security":
+      return <Navigate to="/security/dashboard" replace />;
+    default:
+      return <Navigate to="/login" replace />;
+  }
 };
 
 function AppContent() {
@@ -111,23 +110,21 @@ function AppContent() {
     }
   };
 
+  const { isAuthenticated } = useUser();
+
   // Routes that don't require authentication
-  // const publicRoutes = [
-  //   "/login",
-  //   "/signup-otp",
-  //   "/signup",
-  //   "/forgot-password",
-  //   "/reset-password-otp",
-  //   "/reset-password",
-  // ];
+  const publicRoutes = [
+    "/login",
+    "/signup-otp",
+    "/signup",
+    "/forgot-password",
+    "/reset-password-otp",
+    "/reset-password",
+    "/email-verification",
+  ];
 
-  // const showNavigation =
-  //   isAuthenticated && !publicRoutes.includes(location.pathname);
-
-  // AUTHENTICATION TEMPORARILY DISABLED - Always show navigation
   const showNavigation =
-    !location.pathname.includes("/login") &&
-    !location.pathname.includes("/signup");
+    isAuthenticated && !publicRoutes.includes(location.pathname);
 
   return (
     <>
@@ -144,10 +141,21 @@ function AppContent() {
           <Route path="/" element={<AutoRedirect />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup-otp" element={<SignUpOtpScreen />} />
-          <Route path="/signup" element={<SignUp />} />
+          <Route
+            path="/signup"
+            element={
+              <SignupProtectedRoute>
+                <SignUp />
+              </SignupProtectedRoute>
+            }
+          />
           <Route
             path="/email-verification"
-            element={<EmailVerificationOtp />}
+            element={
+              <EmailVerificationProtectedRoute>
+                <EmailVerificationOtp />
+              </EmailVerificationProtectedRoute>
+            }
           />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password-otp" element={<ResetPasswordOtp />} />
@@ -157,45 +165,45 @@ function AppContent() {
           <Route
             path="/dashboard"
             element={
-              // <ProtectedRoute requiredRole="resident">
-              <DashboardScreen />
-              // </ProtectedRoute>
+              <ProtectedRoute requiredRole="resident">
+                <DashboardScreen />
+              </ProtectedRoute>
             }
           />
           <Route
             path="/visitors"
             element={
-              // <ProtectedRoute>
-              <VisitorsScreen />
-              // </ProtectedRoute>
+              <ProtectedRoute>
+                <VisitorsScreen />
+              </ProtectedRoute>
             }
           />
           <Route
             path="/subscription"
             element={
-              // <ProtectedRoute>
-              <div className="min-h-screen flex items-center justify-center">
-                <h2 className="text-2xl">Subscription - Coming Soon</h2>
-              </div>
-              // </ProtectedRoute>
+              <ProtectedRoute>
+                <div className="min-h-screen flex items-center justify-center">
+                  <h2 className="text-2xl">Subscription - Coming Soon</h2>
+                </div>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/profile"
             element={
-              // <ProtectedRoute>
-              <div className="min-h-screen flex items-center justify-center">
-                <h2 className="text-2xl">Profile - Coming Soon</h2>
-              </div>
-              // </ProtectedRoute>
+              <ProtectedRoute>
+                <div className="min-h-screen flex items-center justify-center">
+                  <h2 className="text-2xl">Profile - Coming Soon</h2>
+                </div>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/settings"
             element={
-              // <ProtectedRoute>
-              <SettingsScreen />
-              // </ProtectedRoute>
+              <ProtectedRoute>
+                <SettingsScreen />
+              </ProtectedRoute>
             }
           />
 
@@ -203,35 +211,35 @@ function AppContent() {
           <Route
             path="/admin/dashboard"
             element={
-              // <ProtectedRoute requiredRole="landlord">
-              <LandlordDashboard />
-              // </ProtectedRoute>
+              <ProtectedRoute requiredRole="landlord">
+                <LandlordDashboard />
+              </ProtectedRoute>
             }
           />
           <Route
             path="/admin/visitors"
             element={
-              // <ProtectedRoute requiredRole="landlord">
-              <VisitorsScreen />
-              // </ProtectedRoute>
+              <ProtectedRoute requiredRole="landlord">
+                <VisitorsScreen />
+              </ProtectedRoute>
             }
           />
           <Route
             path="/admin/users"
             element={
-              // <ProtectedRoute requiredRole="landlord">
-              <LandlordUsers />
-              // </ProtectedRoute>
+              <ProtectedRoute requiredRole="landlord">
+                <LandlordUsers />
+              </ProtectedRoute>
             }
           />
           <Route
             path="/admin/subscription"
             element={
-              // <ProtectedRoute>
-              <div className="min-h-screen flex items-center justify-center">
-                <h2 className="text-2xl">Subscription - Coming Soon</h2>
-              </div>
-              // </ProtectedRoute>
+              <ProtectedRoute requiredRole="landlord">
+                <div className="min-h-screen flex items-center justify-center">
+                  <h2 className="text-2xl">Subscription - Coming Soon</h2>
+                </div>
+              </ProtectedRoute>
             }
           />
 
@@ -239,33 +247,33 @@ function AppContent() {
           <Route
             path="/super-admin/dashboard"
             element={
-              // <ProtectedRoute requiredRole="super">
-              <SuperAdminDashboard />
-              // </ProtectedRoute>
+              <ProtectedRoute requiredRole="super">
+                <SuperAdminDashboard />
+              </ProtectedRoute>
             }
           />
           <Route
             path="/super-admin/visitors"
             element={
-              // <ProtectedRoute requiredRole="super">
-              <VisitorsScreen />
-              // </ProtectedRoute>
+              <ProtectedRoute requiredRole="super">
+                <VisitorsScreen />
+              </ProtectedRoute>
             }
           />
           <Route
             path="/super-admin/admins"
             element={
-              // <ProtectedRoute requiredRole="super">
-              <AdminUsers />
-              // </ProtectedRoute>
+              <ProtectedRoute requiredRole="super">
+                <AdminUsers />
+              </ProtectedRoute>
             }
           />
           <Route
             path="/super-admin/reports"
             element={
-              // <ProtectedRoute requiredRole="super">
-              <SuperAdminReportScreen />
-              // </ProtectedRoute>
+              <ProtectedRoute requiredRole="super">
+                <SuperAdminReportScreen />
+              </ProtectedRoute>
             }
           />
 
@@ -273,25 +281,25 @@ function AppContent() {
           <Route
             path="/security/dashboard"
             element={
-              // <ProtectedRoute requiredRole="security">
-              <SecDashboard />
-              // </ProtectedRoute>
+              <ProtectedRoute requiredRole="security">
+                <SecDashboard />
+              </ProtectedRoute>
             }
           />
           <Route
             path="/security/history"
             element={
-              // <ProtectedRoute requiredRole="security">
-              <SecurityReportScreen />
-              // </ProtectedRoute>
+              <ProtectedRoute requiredRole="security">
+                <SecurityReportScreen />
+              </ProtectedRoute>
             }
           />
           <Route
             path="/security/users"
             element={
-              // <ProtectedRoute requiredRole="security">
-              <UsersScreen />
-              // </ProtectedRoute>
+              <ProtectedRoute requiredRole="security">
+                <UsersScreen />
+              </ProtectedRoute>
             }
           />
 
