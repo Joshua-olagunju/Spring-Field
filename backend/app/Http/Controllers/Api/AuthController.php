@@ -328,6 +328,9 @@ class AuthController extends Controller
             }
 
             $token = $user->createToken('auth_token')->plainTextToken;
+            
+            // Update last login timestamp
+            $user->update(['last_login_at' => now()]);
 
             // Log the login
             Log::logAction(
@@ -410,16 +413,31 @@ class AuthController extends Controller
         try {
             $user = $request->user();
             
+            // Split full_name into first_name and last_name if they don't exist
+            $firstName = $user->first_name;
+            $lastName = $user->last_name;
+            
+            if (!$firstName && !$lastName && $user->full_name) {
+                $nameParts = explode(' ', $user->full_name, 2);
+                $firstName = $nameParts[0] ?? '';
+                $lastName = $nameParts[1] ?? '';
+            }
+            
             return response()->json([
                 'success' => true,
                 'data' => [
                     'user' => [
                         'id' => $user->id,
+                        'first_name' => $firstName,
+                        'last_name' => $lastName,
                         'full_name' => $user->full_name,
                         'email' => $user->email,
                         'phone' => $user->phone,
+                        'address' => $user->address,
                         'role' => $user->role,
                         'status_active' => $user->status_active,
+                        'theme_preference' => $user->theme_preference ?? 'light',
+                        'last_login_at' => $user->last_login_at,
                         'house' => $user->house ? [
                             'id' => $user->house->id,
                             'house_number' => $user->house->house_number,
@@ -764,6 +782,103 @@ class AuthController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to delete user',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get all users for security personnel to view
+     */
+    public function getAllUsersForSecurity(Request $request)
+    {
+        try {
+            // Check if this is a test call (no auth required for test endpoint)
+            $isTestCall = $request->routeIs('*test-security-users*') || str_contains($request->path(), 'test-security-users');
+            
+            if (!$isTestCall) {
+                // Verify user is authenticated for regular endpoint
+                $currentUser = $request->user();
+                if (!$currentUser) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Unauthorized'
+                    ], 401);
+                }
+            }
+
+            // Get search and pagination parameters
+            $search = $request->get('search', '');
+            $page = max(1, intval($request->get('page', 1)));
+            $perPage = 20; // Fixed at 20 per page as requested
+
+            // Build the query
+            $query = User::select([
+                'id',
+                'full_name',
+                'email',
+                'phone',
+                'role',
+                'status_active',
+                'created_at',
+                'updated_at'
+            ]);
+
+            // Apply search if provided
+            if ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('full_name', 'LIKE', "%{$search}%")
+                      ->orWhere('email', 'LIKE', "%{$search}%")
+                      ->orWhere('phone', 'LIKE', "%{$search}%")
+                      ->orWhere('role', 'LIKE', "%{$search}%");
+                });
+            }
+
+            // Get total count before pagination
+            $totalUsers = $query->count();
+            $totalPages = ceil($totalUsers / $perPage);
+
+            // Apply pagination
+            $users = $query->orderBy('created_at', 'desc')
+                          ->skip(($page - 1) * $perPage)
+                          ->take($perPage)
+                          ->get();
+
+            // Format users for frontend
+            $formattedUsers = $users->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->full_name,
+                    'email' => $user->email,
+                    'phone' => $user->phone,
+                    'role' => ucfirst($user->role),
+                    'status' => $user->status_active ? 'active' : 'inactive',
+                    'created_at' => $user->created_at->format('Y-m-d'),
+                    'updated_at' => $user->updated_at->format('Y-m-d'),
+                    'last_login_at' => 'Never', // We don't have last_login_at field in database
+                    'last_active' => 'Never'   // We don't have last_login_at field in database
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'users' => $formattedUsers,
+                    'pagination' => [
+                        'current_page' => $page,
+                        'per_page' => $perPage,
+                        'total' => $totalUsers,
+                        'total_pages' => $totalPages,
+                        'has_next' => $page < $totalPages,
+                        'has_prev' => $page > 1
+                    ]
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch users',
                 'error' => $e->getMessage()
             ], 500);
         }

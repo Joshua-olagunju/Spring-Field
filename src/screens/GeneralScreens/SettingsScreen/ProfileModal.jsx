@@ -38,7 +38,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:8000/api/user", {
+      const response = await fetch("http://localhost:8000/api/settings/profile", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -94,7 +94,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
     setSuccess("");
 
     try {
-      const response = await fetch("http://localhost:8000/api/user/profile", {
+      const response = await fetch("http://localhost:8000/api/settings/profile", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

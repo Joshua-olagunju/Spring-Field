@@ -1,97 +1,88 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTheme } from "../../../../context/useTheme";
+import { useUser } from "../../../../context/useUser";
 import { Icon } from "@iconify/react";
 
 const UsersScreen = () => {
   const { theme, isDarkMode } = useTheme();
+  const { user } = useUser();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
   const [showUserModal, setShowUserModal] = useState(false);
-
-  // Dummy users data (replace with API call)
-  const allUsers = [
-    {
-      id: "USR-001",
-      name: "Admin User",
-      dateCreated: "2025-10-01",
-      status: "active",
-      role: "Administrator",
-      lastActive: "2025-11-14",
-    },
-    {
-      id: "USR-002",
-      name: "John Resident",
-      dateCreated: "2025-10-15",
-      status: "active",
-      role: "Resident",
-      lastActive: "2025-11-14",
-      paymentStatus: "current",
-      paymentsThisYear: 11,
-    },
-    {
-      id: "USR-003",
-      name: "Sarah Tenant",
-      dateCreated: "2025-10-20",
-      status: "suspended",
-      role: "Resident",
-      lastActive: "2025-11-05",
-      paymentStatus: "overdue",
-      paymentsThisYear: 8,
-    },
-    {
-      id: "USR-004",
-      name: "Michael Guest",
-      dateCreated: "2025-11-01",
-      status: "active",
-      role: "Guest",
-      lastActive: "2025-11-12",
-    },
-    {
-      id: "USR-005",
-      name: "Emma Visitor",
-      dateCreated: "2025-11-08",
-      status: "active",
-      role: "Visitor",
-      lastActive: "2025-11-13",
-    },
-    {
-      id: "USR-006",
-      name: "Security Guard 1",
-      dateCreated: "2025-09-15",
-      status: "active",
-      role: "Security",
-      lastActive: "2025-11-14",
-    },
-    {
-      id: "USR-007",
-      name: "Super Admin",
-      dateCreated: "2025-09-01",
-      status: "active",
-      role: "Super Admin",
-      lastActive: "2025-11-14",
-    },
-    {
-      id: "USR-008",
-      name: "Inactive User",
-      dateCreated: "2025-08-15",
-      status: "suspended",
-      role: "Resident",
-      lastActive: "2025-10-30",
-      paymentStatus: "pending",
-      paymentsThisYear: 6,
-    },
-  ];
-
-  // Filter users based on search query
-  const filteredUsers = allUsers.filter((user) => {
-    const query = searchQuery.toLowerCase();
-    return (
-      user.id.toLowerCase().includes(query) ||
-      user.name.toLowerCase().includes(query) ||
-      user.role.toLowerCase().includes(query) ||
-      user.status.toLowerCase().includes(query)
-    );
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    per_page: 20,
+    total: 0,
+    total_pages: 0,
+    has_next: false,
+    has_prev: false
   });
+
+  // Fetch users from API
+  const fetchUsers = async (page = 1, search = "") => {
+    try {
+      setLoading(true);
+      setError("");
+      
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("Authentication required");
+        return;
+      }
+
+      const searchParam = search.trim() ? `&search=${encodeURIComponent(search.trim())}` : "";
+      const response = await fetch(
+        `http://localhost:8000/api/test-security-users?page=${page}${searchParam}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        setUsers(data.data.users);
+        setPagination(data.data.pagination);
+      } else {
+        setError(data.message || "Failed to fetch users");
+      }
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      setError("Unable to connect to server");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Search with debounce
+  useEffect(() => {
+    const delayedSearch = setTimeout(() => {
+      setCurrentPage(1);
+      fetchUsers(1, searchQuery);
+    }, 500);
+
+    return () => clearTimeout(delayedSearch);
+  }, [searchQuery]);
+
+  // Initial load
+  useEffect(() => {
+    fetchUsers(1, searchQuery);
+  }, []);
+
+  // Handle page change
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= pagination.total_pages) {
+      setCurrentPage(newPage);
+      fetchUsers(newPage, searchQuery);
+    }
+  };
 
   const handleUserClick = (user) => {
     setSelectedUser(user);
@@ -131,8 +122,10 @@ const UsersScreen = () => {
 
   const getRoleIcon = (role) => {
     switch (role.toLowerCase()) {
+      case "admin":
       case "administrator":
         return "mdi:shield-account";
+      case "super_admin":
       case "super admin":
         return "mdi:crown";
       case "security":
@@ -150,8 +143,10 @@ const UsersScreen = () => {
 
   const getRoleColor = (role) => {
     switch (role.toLowerCase()) {
+      case "admin":
       case "administrator":
         return "from-blue-500 to-blue-600";
+      case "super_admin":
       case "super admin":
         return "from-purple-500 to-purple-600";
       case "security":
@@ -241,25 +236,43 @@ const UsersScreen = () => {
             <span
               className={`ml-auto px-3 py-1 rounded-full text-xs font-semibold ${theme.background.secondary} ${theme.text.secondary}`}
             >
-              {filteredUsers.length} users
+              {pagination.total} users
             </span>
           </div>
 
           {/* Users List */}
           <div className="space-y-3">
-            {allUsers.length === 0 ? (
+            {loading ? (
               <div className="flex items-center justify-center h-64">
                 <div className="text-center">
                   <Icon
-                    icon="mdi:account-group"
-                    className={`text-5xl ${theme.text.tertiary} mb-3 mx-auto opacity-50`}
+                    icon="mdi:loading"
+                    className={`text-5xl ${theme.text.tertiary} mb-3 mx-auto opacity-50 animate-spin`}
                   />
                   <p className={`text-sm ${theme.text.secondary}`}>
-                    No users found.
+                    Loading users...
                   </p>
                 </div>
               </div>
-            ) : filteredUsers.length === 0 ? (
+            ) : error ? (
+              <div className="flex items-center justify-center h-64">
+                <div className="text-center">
+                  <Icon
+                    icon="mdi:alert-circle"
+                    className={`text-5xl text-red-500 mb-3 mx-auto opacity-50`}
+                  />
+                  <p className={`text-sm text-red-600 dark:text-red-400 mb-2`}>
+                    {error}
+                  </p>
+                  <button
+                    onClick={() => fetchUsers(currentPage, searchQuery)}
+                    className={`px-4 py-2 rounded-lg ${theme.brand.primary} text-white text-sm hover:opacity-90 transition-opacity`}
+                  >
+                    Try Again
+                  </button>
+                </div>
+              </div>
+            ) : users.length === 0 ? (
               <div className="flex items-center justify-center h-64">
                 <div className="text-center">
                   <Icon
@@ -272,7 +285,7 @@ const UsersScreen = () => {
                 </div>
               </div>
             ) : (
-              filteredUsers.map((user) => (
+              users.map((user) => (
                 <button
                   key={user.id}
                   onClick={() => handleUserClick(user)}
@@ -304,20 +317,24 @@ const UsersScreen = () => {
                             className={`text-xs px-2 py-0.5 rounded-full bg-opacity-20 truncate`}
                             style={{
                               backgroundColor:
-                                user.role.toLowerCase() === "super admin"
+                                user.role.toLowerCase() === "super_admin" || user.role.toLowerCase() === "super admin"
                                   ? "rgb(168, 85, 247)"
-                                  : user.role.toLowerCase() === "administrator"
+                                  : user.role.toLowerCase() === "admin" || user.role.toLowerCase() === "administrator"
                                   ? "rgb(59, 130, 246)"
                                   : user.role.toLowerCase() === "security"
                                   ? "rgb(239, 68, 68)"
+                                  : user.role.toLowerCase() === "resident"
+                                  ? "rgb(34, 197, 94)"
                                   : "rgb(107, 114, 128)",
                               color:
-                                user.role.toLowerCase() === "super admin"
+                                user.role.toLowerCase() === "super_admin" || user.role.toLowerCase() === "super admin"
                                   ? "rgb(216, 180, 254)"
-                                  : user.role.toLowerCase() === "administrator"
+                                  : user.role.toLowerCase() === "admin" || user.role.toLowerCase() === "administrator"
                                   ? "rgb(191, 219, 254)"
                                   : user.role.toLowerCase() === "security"
                                   ? "rgb(254, 205, 211)"
+                                  : user.role.toLowerCase() === "resident"
+                                  ? "rgb(187, 247, 208)"
                                   : "rgb(209, 213, 219)",
                             }}
                           >
@@ -327,13 +344,13 @@ const UsersScreen = () => {
                         <p
                           className={`text-xs ${theme.text.secondary} truncate`}
                         >
-                          ID: {user.id}
+                          {user.email}
                         </p>
                         <p className={`text-xs ${theme.text.tertiary} mt-1`}>
-                          Created: {user.dateCreated}
+                          Created: {user.created_at}
                         </p>
                         <p className={`text-xs ${theme.text.tertiary}`}>
-                          Last Active: {user.lastActive}
+                          Last Active: {user.last_active}
                         </p>
                       </div>
                     </div>
@@ -357,6 +374,76 @@ const UsersScreen = () => {
               ))
             )}
           </div>
+
+          {/* Pagination Controls */}
+          {!loading && !error && pagination.total_pages > 1 && (
+            <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-2">
+                <p className={`text-sm ${theme.text.secondary}`}>
+                  Page {pagination.current_page} of {pagination.total_pages}
+                </p>
+                <span className={`text-xs ${theme.text.tertiary}`}>
+                  ({pagination.total} total users)
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={!pagination.has_prev}
+                  className={`p-2 rounded-lg ${
+                    pagination.has_prev
+                      ? `${theme.background.input} hover:${theme.background.card} ${theme.text.primary}`
+                      : `${theme.background.secondary} ${theme.text.tertiary} cursor-not-allowed`
+                  } transition-colors`}
+                >
+                  <Icon icon="mdi:chevron-left" className="text-lg" />
+                </button>
+                
+                {/* Page numbers */}
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, pagination.total_pages) }, (_, i) => {
+                    let pageNum;
+                    if (pagination.total_pages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= pagination.total_pages - 2) {
+                      pageNum = pagination.total_pages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                          pageNum === currentPage
+                            ? `${theme.brand.primary} text-white`
+                            : `${theme.background.input} hover:${theme.background.card} ${theme.text.primary}`
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+                
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={!pagination.has_next}
+                  className={`p-2 rounded-lg ${
+                    pagination.has_next
+                      ? `${theme.background.input} hover:${theme.background.card} ${theme.text.primary}`
+                      : `${theme.background.secondary} ${theme.text.tertiary} cursor-not-allowed`
+                  } transition-colors`}
+                >
+                  <Icon icon="mdi:chevron-right" className="text-lg" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -424,9 +511,15 @@ const UsersScreen = () => {
               >
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <p className={`${theme.text.tertiary} mb-1`}>User ID</p>
-                    <p className={`${theme.text.primary} font-mono`}>
-                      {selectedUser.id}
+                    <p className={`${theme.text.tertiary} mb-1`}>Email</p>
+                    <p className={`${theme.text.primary}`}>
+                      {selectedUser.email}
+                    </p>
+                  </div>
+                  <div>
+                    <p className={`${theme.text.tertiary} mb-1`}>Phone</p>
+                    <p className={`${theme.text.primary}`}>
+                      {selectedUser.phone || 'Not provided'}
                     </p>
                   </div>
                   <div>
@@ -436,69 +529,28 @@ const UsersScreen = () => {
                     </p>
                   </div>
                   <div>
+                    <p className={`${theme.text.tertiary} mb-1`}>Status</p>
+                    <p className={`${theme.text.primary} capitalize`}>
+                      {selectedUser.status}
+                    </p>
+                  </div>
+                  <div>
                     <p className={`${theme.text.tertiary} mb-1`}>
                       Date Created
                     </p>
                     <p className={`${theme.text.primary}`}>
-                      {selectedUser.dateCreated}
+                      {selectedUser.created_at}
                     </p>
                   </div>
                   <div>
-                    <p className={`${theme.text.tertiary} mb-1`}>Last Active</p>
+                    <p className={`${theme.text.tertiary} mb-1`}>Last Login</p>
                     <p className={`${theme.text.primary}`}>
-                      {selectedUser.lastActive}
+                      {selectedUser.last_login_at}
                     </p>
                   </div>
                 </div>
 
-                {/* Payment Information (for residents/users) */}
-                {selectedUser.role.toLowerCase() === "resident" && (
-                  <div className="border-t pt-4 mt-4">
-                    <h4
-                      className={`${theme.text.primary} font-semibold mb-3 text-sm`}
-                    >
-                      Payment Information
-                    </h4>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <p className={`${theme.text.tertiary} mb-1`}>
-                          Payment Status
-                        </p>
-                        <span
-                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                            selectedUser.paymentStatus === "current"
-                              ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                              : selectedUser.paymentStatus === "overdue"
-                              ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                              : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-                          }`}
-                        >
-                          <Icon
-                            icon={
-                              selectedUser.paymentStatus === "current"
-                                ? "mdi:check-circle"
-                                : selectedUser.paymentStatus === "overdue"
-                                ? "mdi:alert-circle"
-                                : "mdi:clock-outline"
-                            }
-                            className="text-sm"
-                          />
-                          <span className="capitalize">
-                            {selectedUser.paymentStatus || "current"}
-                          </span>
-                        </span>
-                      </div>
-                      <div>
-                        <p className={`${theme.text.tertiary} mb-1`}>
-                          Payments This Year
-                        </p>
-                        <p className={`${theme.text.primary} font-semibold`}>
-                          {selectedUser.paymentsThisYear || 10}/12 months
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
+
               </div>
 
               {/* Actions */}

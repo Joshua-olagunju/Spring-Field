@@ -17,9 +17,13 @@ const VisitorsScreen = () => {
     const fetchVisitorEntries = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch(
-          "http://localhost:8000/api/visitor-tokens/my-entries",
-          {
+        // For admin users, fetch all entries; for regular users, fetch their entries
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        const endpoint = user.role === "admin" || user.role === "super_admin" 
+          ? "http://localhost:8000/api/visitor-tokens/all-entries"
+          : "http://localhost:8000/api/visitor-tokens/my-entries";
+          
+        const response = await fetch(endpoint, {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
@@ -76,10 +80,10 @@ const VisitorsScreen = () => {
             <h1
               className={`text-2xl sm:text-3xl font-bold ${theme.text.primary} mb-2`}
             >
-              Visitor History
+              Visitors Log
             </h1>
             <p className={`text-sm sm:text-base ${theme.text.secondary}`}>
-              View all verified visitor entries
+              Complete history of all visitor entries and token usage
             </p>
           </div>
 

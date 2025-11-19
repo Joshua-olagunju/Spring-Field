@@ -127,5 +127,109 @@ Route::middleware('auth:sanctum')->group(function () {
         
         // Get active entries (currently on premises)
         Route::get('/active-entries', [VisitorTokenController::class, 'getActiveEntries']);
+        
+        // Test token expiration (for debugging)
+        Route::post('/test-expiration', [VisitorTokenController::class, 'testTokenExpiration']);
+        
+        // Get expired tokens (for monitoring)
+        Route::get('/expired', [VisitorTokenController::class, 'getExpiredTokens']);
+        
+        // Clear expired temp tokens (security cleanup)
+        Route::post('/clear-expired-temps', [VisitorTokenController::class, 'clearExpiredTempTokens']);
+        
+        // Get admin dashboard statistics
+        Route::get('/admin-dashboard-stats', [VisitorTokenController::class, 'getAdminDashboardStats']);
     });
+    
+    // Security Dashboard routes
+    Route::prefix('security')->group(function () {
+        // Get all users for security personnel view
+        Route::get('/all-users', [AuthController::class, 'getAllUsersForSecurity']);
+    });
+    
+    // Settings routes - Available to all authenticated users
+    Route::prefix('settings')->group(function () {
+        Route::get('/profile', [App\Http\Controllers\Api\SettingsController::class, 'getProfile']);
+        Route::post('/profile', [App\Http\Controllers\Api\SettingsController::class, 'updateProfile']);
+        Route::post('/change-password', [App\Http\Controllers\Api\SettingsController::class, 'changePassword']);
+        Route::post('/theme', [App\Http\Controllers\Api\SettingsController::class, 'updateTheme']);
+        Route::get('/summary', [App\Http\Controllers\Api\SettingsController::class, 'getSettings']);
+        Route::post('/last-login', [App\Http\Controllers\Api\SettingsController::class, 'updateLastLogin']);
+    });
+});
+
+// Test endpoint (no auth required)
+Route::get('/test-dashboard-stats', [VisitorTokenController::class, 'getTestDashboardStats']);
+
+// Test endpoint for security users (no auth required for testing)
+Route::get('/test-security-users', [AuthController::class, 'getAllUsersForSecurity']);
+
+// Test endpoint to check actual user table structure
+Route::get('/test-user-fields', function() {
+    try {
+        $user = App\Models\User::first();
+        if ($user) {
+            return response()->json([
+                'success' => true,
+                'user_attributes' => $user->getAttributes(),
+                'fillable_fields' => $user->getFillable()
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'No users found',
+                'total_users' => App\Models\User::count()
+            ]);
+        }
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage()
+        ]);
+    }
+});
+
+// Test settings API (no auth required for testing)
+Route::get('/test-settings-profile', function() {
+    try {
+        $user = App\Models\User::first(); // Get first user for testing
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No users found'
+            ]);
+        }
+        
+        // Simulate the SettingsController getProfile method
+        $firstName = $user->first_name;
+        $lastName = $user->last_name;
+        
+        if (!$firstName && !$lastName && $user->full_name) {
+            $nameParts = explode(' ', $user->full_name, 2);
+            $firstName = $nameParts[0] ?? '';
+            $lastName = $nameParts[1] ?? '';
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $user->id,
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'full_name' => $user->full_name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'address' => $user->address,
+                'role' => $user->role,
+                'theme_preference' => $user->theme_preference ?? 'light',
+                'created_at' => $user->created_at,
+                'last_login_at' => $user->last_login_at
+            ]
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage()
+        ]);
+    }
 });

@@ -20,6 +20,8 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
+        'first_name',
+        'last_name',
         'full_name',
         'phone',
         'email',
@@ -30,6 +32,9 @@ class User extends Authenticatable
         'status_active',
         'email_verified_at',
         'landlord_id',
+        'theme_preference',
+        'address',
+        'last_login_at',
     ];
 
     /**
@@ -52,6 +57,7 @@ class User extends Authenticatable
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'email_verified_at' => 'datetime',
+        'last_login_at' => 'datetime',
     ];
 
     /**

@@ -15,6 +15,7 @@ class VisitorToken extends Model
     protected $fillable = [
         'resident_id',
         'token_hash',
+        'temp_token',
         'issued_for_name',
         'issued_for_phone',
         'visit_type',
@@ -47,7 +48,8 @@ class VisitorToken extends Model
 
     public function isExpired()
     {
-        return $this->expires_at < now();
+        // Use Carbon for more precise comparison
+        return \Carbon\Carbon::parse($this->expires_at)->isPast();
     }
 
     public function isUsed()
@@ -58,5 +60,23 @@ class VisitorToken extends Model
     public function isActive()
     {
         return !$this->isExpired() && !$this->isUsed();
+    }
+    
+    public function getTimeUntilExpiry()
+    {
+        if ($this->isExpired()) {
+            return null;
+        }
+        
+        return \Carbon\Carbon::parse($this->expires_at)->diffForHumans();
+    }
+    
+    public function getRemainingMinutes()
+    {
+        if ($this->isExpired()) {
+            return 0;
+        }
+        
+        return \Carbon\Carbon::now()->diffInMinutes($this->expires_at);
     }
 }

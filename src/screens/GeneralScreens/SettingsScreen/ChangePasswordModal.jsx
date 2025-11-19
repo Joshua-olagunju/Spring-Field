@@ -24,8 +24,15 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
       setError("Please enter a new password");
       return;
     }
-    if (newPassword.length < 6) {
-      setError("New password must be at least 6 characters");
+    if (newPassword.length < 8) {
+      setError("New password must be at least 8 characters");
+      return;
+    }
+    
+    // Check password complexity
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&\-_])[A-Za-z\d@$!%*?&\-_]*$/;
+    if (!passwordRegex.test(newPassword)) {
+      setError("Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character");
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -43,7 +50,7 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
 
     try {
       const response = await fetch(
-        "http://localhost:8000/api/user/change-password",
+        "http://localhost:8000/api/settings/change-password",
         {
           method: "POST",
           headers: {
@@ -254,7 +261,10 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
               <ul
                 className={`text-xs ${theme.text.secondary} space-y-1 list-disc list-inside`}
               >
-                <li>At least 6 characters long</li>
+                <li>At least 8 characters long</li>
+                <li>Contains uppercase and lowercase letters</li>
+                <li>Contains at least one number</li>
+                <li>Contains at least one special character (@$!%*?&-_)</li>
                 <li>Different from your current password</li>
                 <li>Passwords must match</li>
               </ul>
