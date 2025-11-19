@@ -1,25 +1,83 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTheme } from "../../../../context/useTheme";
+import { useUser } from "../../../../context/useUser";
 import { Icon } from "@iconify/react";
+import TokenVerificationModal from "./TokenVerificationModal";
+import ActiveTokensModal from "./ActiveTokensModal";
 
 const SecDashboard = () => {
   const { theme, isDarkMode } = useTheme();
-  const [totalTokens] = useState(100);
-  const [activeTokens] = useState(50);
+  const { authToken } = useUser();
+  const [totalTokens, setTotalTokens] = useState(0);
+  const [activeTokens, setActiveTokens] = useState(0);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [showActiveTokensModal, setShowActiveTokensModal] = useState(false);
+
+  // Fetch token statistics
+  useEffect(() => {
+    const fetchTokenStats = async () => {
+      try {
+        // Fetch all entries for total count
+        const allEntriesResponse = await fetch(
+          "http://localhost:8000/api/visitor-tokens/all-entries",
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${
+                authToken || localStorage.getItem("authToken")
+              }`,
+            },
+          }
+        );
+
+        // Fetch active entries
+        const activeEntriesResponse = await fetch(
+          "http://localhost:8000/api/visitor-tokens/active-entries",
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${
+                authToken || localStorage.getItem("authToken")
+              }`,
+            },
+          }
+        );
+
+        const allResult = await allEntriesResponse.json();
+        const activeResult = await activeEntriesResponse.json();
+
+        if (allEntriesResponse.ok && allResult.success) {
+          setTotalTokens(
+            allResult.data.pagination?.total ||
+              allResult.data.entries?.length ||
+              0
+          );
+        }
+
+        if (activeEntriesResponse.ok && activeResult.success) {
+          setActiveTokens(activeResult.data?.length || 0);
+        }
+      } catch (error) {
+        console.error("Error fetching token stats:", error);
+      }
+    };
+
+    fetchTokenStats();
+  }, [authToken]);
 
   const handleViewAllTokens = () => {
+    // This would navigate to ReportScreen - implement with router when needed
     console.log("View All Tokens clicked");
-    // TODO: Navigate to all tokens screen
   };
 
   const handleViewActiveTokens = () => {
-    console.log("View Active Tokens clicked");
-    // TODO: Navigate to active tokens screen
+    setShowActiveTokensModal(true);
   };
 
-  const handleInputToken = () => {
-    console.log("Generate Token clicked");
-    // TODO: Navigate to token generation screen
+  const handleVerifyToken = () => {
+    setShowVerificationModal(true);
   };
 
   return (
@@ -36,7 +94,7 @@ const SecDashboard = () => {
 
       {/* Content */}
       <div className="w-full px-0">
-        <div className="max-w-full mx-auto px-4 sm:px-6">
+        <div className="max-w-full mx-auto ">
           {/* Welcome Section */}
           <div className="mb-8">
             <h1
@@ -49,6 +107,69 @@ const SecDashboard = () => {
             </p>
           </div>
 
+          {/* Verify Token Section */}
+          <div
+            className={`${theme.background.card} rounded-2xl ${theme.shadow.medium} mb-5 p-6 sm:p-8`}
+          >
+            <div className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center mb-4 shadow-lg">
+                <Icon
+                  icon="mdi:shield-check"
+                  className="text-white text-3xl sm:text-4xl"
+                />
+              </div>
+              <h2
+                className={`text-xl sm:text-2xl font-bold ${theme.text.primary} mb-2`}
+              >
+                Verify Token
+              </h2>
+              <p
+                className={`text-sm sm:text-base ${theme.text.secondary} mb-6 max-w-md`}
+              >
+                Verify visitor access tokens and grant entry
+              </p>
+              <button
+                onClick={handleVerifyToken}
+                className="bg-gradient-to-r from-purple-600 via-purple-600 to-purple-600 hover:from-purple-700 hover:via-purple-700 hover:to-purple-700 text-white font-semibold px-8 py-3 sm:px-10 sm:py-4 rounded-xl transition-all active:scale-95 shadow-lg hover:shadow-xl flex items-center gap-2"
+              >
+                <Icon icon="mdi:qrcode-scan" className="text-xl" />
+                Verify Token
+              </button>
+            </div>
+          </div>
+
+          {/* Active Tokens Section */}
+          <div
+            className={`${theme.background.card} rounded-2xl ${theme.shadow.medium} mb-5 p-6 sm:p-8`}
+          >
+            <div className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mb-4 shadow-lg">
+                <Icon
+                  icon="mdi:account-group"
+                  className="text-white text-3xl sm:text-4xl"
+                />
+              </div>
+              <h2
+                className={`text-xl sm:text-2xl font-bold ${theme.text.primary} mb-2`}
+              >
+                Active Visitors
+              </h2>
+              <p
+                className={`text-sm sm:text-base ${theme.text.secondary} mb-4 max-w-md`}
+              >
+                {activeTokens} {activeTokens === 1 ? "visitor" : "visitors"}{" "}
+                currently on premises
+              </p>
+              <button
+                onClick={handleViewActiveTokens}
+                className="bg-gradient-to-r from-green-600 via-green-600 to-green-600 hover:from-green-700 hover:via-green-700 hover:to-green-700 text-white font-semibold px-8 py-3 sm:px-10 sm:py-4 rounded-xl transition-all active:scale-95 shadow-lg hover:shadow-xl flex items-center gap-2"
+              >
+                <Icon icon="mdi:account-clock" className="text-xl" />
+                View Active Tokens
+              </button>
+            </div>
+          </div>
+
           {/* Token Statistics Section */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-8">
             {/* Total Tokens Card */}
@@ -57,7 +178,9 @@ const SecDashboard = () => {
             >
               <div className="flex items-start justify-between mb-6">
                 <div>
-                  <p className={`text-sm sm:text-base ${theme.text.secondary} mb-2`}>
+                  <p
+                    className={`text-sm sm:text-base ${theme.text.secondary} mb-2`}
+                  >
                     Total Tokens
                   </p>
                   <p
@@ -88,7 +211,9 @@ const SecDashboard = () => {
             >
               <div className="flex items-start justify-between mb-6">
                 <div>
-                  <p className={`text-sm sm:text-base ${theme.text.secondary} mb-2`}>
+                  <p
+                    className={`text-sm sm:text-base ${theme.text.secondary} mb-2`}
+                  >
                     Active Tokens
                   </p>
                   <p
@@ -113,37 +238,22 @@ const SecDashboard = () => {
               </button>
             </div>
           </div>
-
-          {/* Generate Token Section */}
-          <div
-            className={`${theme.background.card} rounded-2xl ${theme.shadow.medium} p-6 sm:p-8`}
-          >
-            <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center mb-4 shadow-lg">
-                <Icon
-                  icon="mdi:qrcode-plus"
-                  className="text-white text-3xl sm:text-4xl"
-                />
-              </div>
-              <h2
-                className={`text-xl sm:text-2xl font-bold ${theme.text.primary} mb-2`}
-              >
-                Input Token
-              </h2>
-              <p className={`text-sm sm:text-base ${theme.text.secondary} mb-6 max-w-md`}>
-                Create a new visitor access token
-              </p>
-              <button
-                onClick={handleInputToken}
-                className="bg-gradient-to-r from-purple-600 via-purple-600 to-purple-600 hover:from-purple-700 hover:via-purple-700 hover:to-purple-700 text-white font-semibold px-8 py-3 sm:px-10 sm:py-4 rounded-xl transition-all active:scale-95 shadow-lg hover:shadow-xl flex items-center gap-2"
-              >
-                <Icon icon="mdi:plus-circle" className="text-xl" />
-                Input Token
-              </button>
-            </div>
-          </div>
         </div>
       </div>
+
+      {/* Token Verification Modal */}
+      <TokenVerificationModal
+        theme={theme}
+        isOpen={showVerificationModal}
+        onClose={() => setShowVerificationModal(false)}
+      />
+
+      {/* Active Tokens Modal */}
+      <ActiveTokensModal
+        theme={theme}
+        isOpen={showActiveTokensModal}
+        onClose={() => setShowActiveTokensModal(false)}
+      />
     </div>
   );
 };

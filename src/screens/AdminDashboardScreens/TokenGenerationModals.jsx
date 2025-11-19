@@ -2,7 +2,12 @@ import { useState } from "react";
 import { Icon } from "@iconify/react";
 import { useUser } from "../../../context/useUser";
 
-export const GenerateUserTokenModal = ({ theme, isOpen, onClose }) => {
+export const GenerateUserTokenModal = ({
+  theme,
+  isOpen,
+  onClose,
+  adminContext = null,
+}) => {
   const { authToken, user } = useUser();
   const [isLoading, setIsLoading] = useState(false);
   const [generatedOtp, setGeneratedOtp] = useState(null);
@@ -28,25 +33,38 @@ export const GenerateUserTokenModal = ({ theme, isOpen, onClose }) => {
     setError("");
 
     try {
-      const response = await fetch(
-        "http://localhost:8000/api/admin/generate-user-token",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${
-              authToken || localStorage.getItem("authToken")
-            }`,
-          },
-          body: JSON.stringify({
+      // Choose API endpoint based on context
+      const endpoint = adminContext
+        ? "http://localhost:8000/api/super-admin/generate-user-token-for-landlord"
+        : "http://localhost:8000/api/admin/generate-user-token";
+
+      const payload = adminContext
+        ? {
             recipient_name: recipientName.trim(),
             recipient_email: recipientEmail.trim(),
             expires_in_hours: 72,
-            admin_house_number: user?.house_number,
-            admin_address: user?.address,
-          }),
-        }
-      );
+            landlord_id: adminContext.id,
+            landlord_house_number: adminContext.house_number,
+            landlord_address: adminContext.address,
+          }
+        : {
+            recipient_name: recipientName.trim(),
+            recipient_email: recipientEmail.trim(),
+            expires_in_hours: 72,
+            admin_house_number: user?.house_number || user?.house?.house_number,
+            admin_address: user?.address || user?.house?.address,
+          };
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${
+            authToken || localStorage.getItem("authToken")
+          }`,
+        },
+        body: JSON.stringify(payload),
+      });
 
       const result = await response.json();
 
@@ -106,6 +124,8 @@ export const GenerateUserTokenModal = ({ theme, isOpen, onClose }) => {
           >
             {generatedOtp
               ? "Resident Token Generated! ✅"
+              : adminContext
+              ? `Generate Token for ${adminContext.name}`
               : "Generate Resident Token"}
           </h2>
 
@@ -113,6 +133,8 @@ export const GenerateUserTokenModal = ({ theme, isOpen, onClose }) => {
           <p className={`text-sm ${theme.text.secondary} mb-4 text-center`}>
             {generatedOtp
               ? "Share this token with the resident to enable registration"
+              : adminContext
+              ? `Creating a registration token on behalf of ${adminContext.name}`
               : "Create a registration token for a new resident"}
           </p>
 
@@ -175,7 +197,11 @@ export const GenerateUserTokenModal = ({ theme, isOpen, onClose }) => {
                   <li>Share it with the resident</li>
                   <li>Resident goes to signup page</li>
                   <li>They enter this token to register</li>
-                  <li>They become linked under your account</li>
+                  <li>
+                    {adminContext
+                      ? `Resident becomes linked under ${adminContext.name}'s account`
+                      : "Resident becomes linked under your account"}
+                  </li>
                 </ol>
               </div>
 
@@ -254,8 +280,16 @@ export const GenerateUserTokenModal = ({ theme, isOpen, onClose }) => {
                   <li>Token generated from name & email only</li>
                   <li>Share token with resident via email/message</li>
                   <li>Resident enters token at signup page</li>
-                  <li>Resident becomes linked under your account</li>
-                  <li>You can manage their access & visitors</li>
+                  <li>
+                    {adminContext
+                      ? `Resident becomes linked under ${adminContext.name}'s account`
+                      : "Resident becomes linked under your account"}
+                  </li>
+                  <li>
+                    {adminContext
+                      ? `${adminContext.name} can manage their access & visitors`
+                      : "You can manage their access & visitors"}
+                  </li>
                   <li>Token expires after 72 hours</li>
                 </ul>
               </div>

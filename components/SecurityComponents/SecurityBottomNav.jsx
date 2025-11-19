@@ -29,10 +29,10 @@ const SecurityBottomNav = () => {
       iconFilled: "mdi:home",
     },
     {
-      name: "Reports",
-      path: "/security/reports",
-      icon: "mdi:file-chart-outline",
-      iconFilled: "mdi:file-chart",
+      name: "History",
+      path: "/security/history",
+      icon: "mdi:history",
+      iconFilled: "mdi:history",
     },
     {
       name: "Users",

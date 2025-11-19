@@ -117,7 +117,7 @@ const EmailVerificationOtp = () => {
           super: "/super-admin/dashboard",
           landlord: "/admin/dashboard",
           resident: "/dashboard",
-          security: "/security-dashboard",
+          security: "/security/dashboard",
         };
         const route = dashboardRoutes[userRole] || "/dashboard";
         navigate(route, { state: { userId, userRole } });
@@ -209,7 +209,7 @@ const EmailVerificationOtp = () => {
 
         // Complete email verification in UserContext
         // This saves the auth token and marks user as authenticated
-        completeEmailVerification(verifiedUser, tempToken);
+        completeEmailVerification(verifiedUser, result.token || tempToken);
 
         displayModal(
           "success",

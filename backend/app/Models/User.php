@@ -29,6 +29,7 @@ class User extends Authenticatable
         'house_type',
         'status_active',
         'email_verified_at',
+        'landlord_id',
     ];
 
     /**
@@ -86,6 +87,22 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the residents under this landlord.
+     */
+    public function residents()
+    {
+        return $this->hasMany(User::class, 'landlord_id');
+    }
+
+    /**
+     * Get the landlord of this user (for residents).
+     */
+    public function landlord()
+    {
+        return $this->belongsTo(User::class, 'landlord_id');
+    }
+
+    /**
      * Get the payments made by this user.
      */
     public function payments()
@@ -139,6 +156,22 @@ class User extends Authenticatable
     public function isActive()
     {
         return $this->status_active;
+    }
+
+    /**
+     * Get status attribute (for frontend consistency)
+     */
+    public function getStatusAttribute()
+    {
+        return $this->status_active ? 'active' : 'inactive';
+    }
+
+    /**
+     * Set status attribute (for frontend consistency)
+     */
+    public function setStatusAttribute($value)
+    {
+        $this->status_active = $value === 'active' || $value === true;
     }
 
     /**
@@ -205,6 +238,22 @@ class User extends Authenticatable
         return $this->forceFill([
             'email_verified_at' => $this->freshTimestamp(),
         ])->save();
+    }
+
+    /**
+     * Get house number from related house
+     */
+    public function getHouseNumberAttribute()
+    {
+        return $this->house ? $this->house->house_number : null;
+    }
+
+    /**
+     * Get address from related house
+     */
+    public function getAddressAttribute()
+    {
+        return $this->house ? $this->house->address : null;
     }
 
     /**

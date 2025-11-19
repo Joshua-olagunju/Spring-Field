@@ -150,6 +150,8 @@ export const UserProvider = ({ children }) => {
     setIsAuthenticated(false);
     localStorage.removeItem("authToken");
     localStorage.removeItem("userData");
+    localStorage.removeItem("token"); // Also clear backward compatibility token
+    localStorage.removeItem("pendingVerificationUser");
   };
 
   // Update user data
