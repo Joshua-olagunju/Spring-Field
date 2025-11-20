@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Icon } from "@iconify/react";
 import { useUser } from "../../../../context/useUser";
+import { API_BASE_URL } from "../../../config/apiConfig";
 import UserDetailsModal from "../../../../components/AdminComponents/UserDetailsModal";
 
 const LandlordUsersActions = ({ theme, user, userIndex, onUserUpdate }) => {
@@ -16,7 +17,7 @@ const LandlordUsersActions = ({ theme, user, userIndex, onUserUpdate }) => {
     try {
       const token = authToken || localStorage.getItem("authToken");
       const response = await fetch(
-        `http://localhost:8000/api/landlord/users/${user.id}/activate`,
+        `${API_BASE_URL}/api/landlord/users/${user.id}/activate`,
         {
           method: "PATCH",
           headers: {
@@ -50,7 +51,7 @@ const LandlordUsersActions = ({ theme, user, userIndex, onUserUpdate }) => {
     try {
       const token = authToken || localStorage.getItem("authToken");
       const response = await fetch(
-        `http://localhost:8000/api/landlord/users/${user.id}/deactivate`,
+        `${API_BASE_URL}/api/landlord/users/${user.id}/deactivate`,
         {
           method: "PATCH",
           headers: {
@@ -84,7 +85,7 @@ const LandlordUsersActions = ({ theme, user, userIndex, onUserUpdate }) => {
     try {
       const token = authToken || localStorage.getItem("authToken");
       const response = await fetch(
-        `http://localhost:8000/api/landlord/users/${user.id}`,
+        `${API_BASE_URL}/api/landlord/users/${user.id}`,
         {
           method: "DELETE",
           headers: {

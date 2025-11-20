@@ -35,6 +35,9 @@ class User extends Authenticatable
         'theme_preference',
         'address',
         'last_login_at',
+        'payment_count',
+        'is_payment_up_to_date',
+        'last_payment_check',
     ];
 
     /**
@@ -58,6 +61,9 @@ class User extends Authenticatable
         'updated_at' => 'datetime',
         'email_verified_at' => 'datetime',
         'last_login_at' => 'datetime',
+        'payment_count' => 'integer',
+        'is_payment_up_to_date' => 'boolean',
+        'last_payment_check' => 'datetime',
     ];
 
     /**
@@ -287,6 +293,133 @@ class User extends Authenticatable
                 'success' => false,
                 'message' => 'Failed to send verification email'
             ];
+        }
+    }
+
+    /**
+     * Payment tracking methods
+     */
+    
+    /**
+     * Calculate how many months have passed since registration
+     * Month counter starts at 1 immediately upon registration
+     */
+    public function getMonthsSinceRegistration(): int
+    {
+        // Add 1 because the first month starts immediately upon registration
+        return $this->created_at->diffInMonths(now()) + 1;
+    }
+
+    /**
+     * Calculate required payments based on registration date
+     */
+    public function getRequiredPayments(): int
+    {
+        return $this->getMonthsSinceRegistration();
+    }
+
+    /**
+     * Check if user is up to date with payments
+     * User must have paid for ALL months since registration (starting from month 1)
+     */
+    public function isPaymentUpToDate(): bool
+    {
+        $requiredPayments = $this->getRequiredPayments();
+        
+        // User must have paid for at least the required months
+        // No exceptions - even new users owe 1 month immediately
+        return $this->payment_count >= $requiredPayments;
+    }
+
+    /**
+     * Get how many months the user is behind
+     */
+    public function getMonthsBehind(): int
+    {
+        $required = $this->getRequiredPayments();
+        $paid = $this->payment_count;
+        return max(0, $required - $paid);
+    }
+
+    /**
+     * Get how many months the user is ahead
+     */
+    public function getMonthsAhead(): int
+    {
+        $required = $this->getRequiredPayments();
+        $paid = $this->payment_count;
+        return max(0, $paid - $required);
+    }
+
+    /**
+     * Increment payment count when user makes payment
+     */
+    public function addPaymentMonths(int $months): void
+    {
+        $this->increment('payment_count', $months);
+        $this->updatePaymentStatus();
+    }
+
+    /**
+     * Update the payment up to date status
+     */
+    public function updatePaymentStatus(): void
+    {
+        $this->update([
+            'is_payment_up_to_date' => $this->isPaymentUpToDate(),
+            'last_payment_check' => now()
+        ]);
+    }
+
+    /**
+     * Check if user can access paid features
+     */
+    public function canAccessPaidFeatures(): bool
+    {
+        return $this->isPaymentUpToDate();
+    }
+
+    /**
+     * Get detailed payment status information
+     */
+    public function getPaymentStatus(): array
+    {
+        $monthsSince = $this->getMonthsSinceRegistration();
+        $required = $this->getRequiredPayments();
+        $paid = $this->payment_count;
+        $isUpToDate = $this->isPaymentUpToDate();
+
+        return [
+            'payment_ratio' => "{$paid}/{$required}", // Format like "2/3" or "6/4"
+            'months_since_registration' => $monthsSince,
+            'required_payments' => $required,
+            'payment_count' => $paid,
+            'is_up_to_date' => $isUpToDate,
+            'months_behind' => $this->getMonthsBehind(),
+            'months_ahead' => $this->getMonthsAhead(),
+            'can_access_paid_features' => $this->canAccessPaidFeatures(),
+            'registration_date' => $this->created_at->toDateString(),
+            'last_payment_check' => $this->last_payment_check,
+            'status_message' => $this->getPaymentStatusMessage()
+        ];
+    }
+
+    /**
+     * Get human-readable payment status message
+     */
+    public function getPaymentStatusMessage(): string
+    {
+        $paid = $this->payment_count;
+        $required = $this->getRequiredPayments();
+        
+        if ($paid >= $required) {
+            if ($paid > $required) {
+                return "Ahead by " . ($paid - $required) . " month(s)";
+            } else {
+                return "Up to date";
+            }
+        } else {
+            return "Behind by " . ($required - $paid) . " month(s) - Payment required";
         }
     }
 }

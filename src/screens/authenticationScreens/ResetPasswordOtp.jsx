@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTheme } from "../../../context/useTheme";
+import { API_BASE_URL } from "../../config/apiConfig";
 import ThemeToggle from "../../../components/GeneralComponents/ThemeToggle";
 import AnimatedSecurityBackground from "../../../components/GeneralComponents/AnimatedSecurityBackground";
+import PoweredByDriftTech from "../../../components/GeneralComponents/PoweredByDriftTech";
 import { Icon } from "@iconify/react";
 
 const ResetPasswordOtp = () => {
@@ -97,7 +99,7 @@ const ResetPasswordOtp = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:8000/api/resend-reset-password-otp",
+        `${API_BASE_URL}/api/resend-reset-password-otp`,
         {
           method: "POST",
           headers: {
@@ -142,7 +144,7 @@ const ResetPasswordOtp = () => {
     try {
       // API call to verify reset password OTP
       const response = await fetch(
-        "http://localhost:8000/api/verify-reset-password-otp",
+        `${API_BASE_URL}/api/verify-reset-password-otp`,
         {
           method: "POST",
           headers: {
@@ -338,6 +340,11 @@ const ResetPasswordOtp = () => {
               </form>
             </div>
           </div>
+        </div>
+
+        {/* Powered by DriftTech */}
+        <div className="relative z-10 flex items-center justify-center px-4 pb-10">
+          <PoweredByDriftTech />
         </div>
       </div>
     </>

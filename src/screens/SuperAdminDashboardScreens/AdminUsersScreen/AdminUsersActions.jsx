@@ -2,6 +2,22 @@ import { useState, useRef, useEffect } from "react";
 import { Icon } from "@iconify/react";
 import { useUser } from "../../../../context/useUser";
 import UserDetailsModal from "../../../../components/AdminComponents/UserDetailsModal";
+import { API_BASE_URL } from "../../../config/apiConfig";
+
+// DetailItem component for displaying admin details
+const DetailItem = ({ icon, label, value, theme }) => (
+  <div className="flex items-start gap-3">
+    <Icon icon={icon} className={`text-lg ${theme.text.tertiary} mt-0.5`} />
+    <div className="flex-1 min-w-0">
+      <p className={`text-xs ${theme.text.tertiary} uppercase tracking-wide`}>
+        {label}
+      </p>
+      <p className={`text-sm ${theme.text.primary} font-medium break-words`}>
+        {value}
+      </p>
+    </div>
+  </div>
+);
 
 const AdminUsersActions = ({
   theme,
@@ -25,7 +41,7 @@ const AdminUsersActions = ({
     try {
       setIsLoadingUsers(true);
       const response = await fetch(
-        `http://localhost:8000/api/super-admin/landlord-users/${admin.id}`,
+        `${API_BASE_URL}/api/super-admin/landlord-users/${admin.id}`,
         {
           method: "GET",
           headers: {
@@ -56,7 +72,7 @@ const AdminUsersActions = ({
     try {
       const token = authToken || localStorage.getItem("authToken");
       const response = await fetch(
-        `http://localhost:8000/api/super-admin/users/${userId}/${action}`,
+        `${API_BASE_URL}/api/super-admin/users/${userId}/${action}`,
         {
           method: "PATCH",
           headers: {
@@ -90,7 +106,7 @@ const AdminUsersActions = ({
     try {
       const token = authToken || localStorage.getItem("authToken");
       const response = await fetch(
-        `http://localhost:8000/api/super-admin/users/${userId}`,
+        `${API_BASE_URL}/api/super-admin/users/${userId}`,
         {
           method: "DELETE",
           headers: {
@@ -212,7 +228,7 @@ const AdminUsersActions = ({
 
       // API call to generate OTP
       const response = await fetch(
-        `http://localhost:8000/api/admin/generate-user-otp`,
+        `${API_BASE_URL}/api/admin/generate-user-otp`,
         {
           method: "POST",
           headers: {
@@ -229,7 +245,6 @@ const AdminUsersActions = ({
       const result = await response.json();
 
       if (response.ok && result.success) {
-        console.log("OTP Generated:", result.otp);
         alert(`OTP Generated Successfully!\nOTP: ${result.otp}`);
       } else {
         alert("Failed to generate OTP. Please try again.");
@@ -244,7 +259,6 @@ const AdminUsersActions = ({
   };
 
   const confirmAction = (action) => {
-    console.log(`${action} confirmed for admin: ${admin.name}`);
     setActiveModal(null);
     setIsMenuOpen(false);
   };
@@ -622,6 +636,7 @@ const AdminUsersActions = ({
                             {user.email}
                           </p>
                           <div className="flex items-center gap-2 mt-1">
+                            {/* Status Badge */}
                             <span
                               className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${
                                 user.status === "active"
@@ -639,6 +654,28 @@ const AdminUsersActions = ({
                               />
                               {user.status?.charAt(0).toUpperCase() +
                                 user.status?.slice(1) || "Unknown"}
+                            </span>
+
+                            {/* Payment Status */}
+                            <span
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${
+                                user.payment_count >=
+                                user.months_since_registration
+                                  ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                                  : user.payment_count >=
+                                    Math.ceil(
+                                      user.months_since_registration * 0.6
+                                    )
+                                  ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                                  : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                              }`}
+                            >
+                              <Icon
+                                icon="mdi:credit-card"
+                                className="text-xs"
+                              />
+                              {user.payment_count || 0}/
+                              {user.months_since_registration || 0}
                             </span>
                           </div>
                         </div>
@@ -799,6 +836,90 @@ const AdminUsersActions = ({
                   }
                   theme={theme}
                 />
+                <DetailItem
+                  icon="mdi:credit-card"
+                  label="Payments Made"
+                  value={`${admin.payment_count || 0} payments`}
+                  theme={theme}
+                />
+                <DetailItem
+                  icon="mdi:clock-outline"
+                  label="Months Active"
+                  value={`${admin.months_since_registration || 0} months`}
+                  theme={theme}
+                />
+              </div>
+
+              {/* Payment Status Bar */}
+              <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <span
+                    className={`text-sm font-medium ${theme.text.secondary}`}
+                  >
+                    Payment Progress
+                  </span>
+                  <span
+                    className={`text-lg font-bold ${
+                      admin.payment_count >= admin.months_since_registration
+                        ? "text-green-600 dark:text-green-400"
+                        : admin.payment_count >=
+                          Math.ceil(admin.months_since_registration * 0.6)
+                        ? "text-yellow-600 dark:text-yellow-400"
+                        : "text-red-600 dark:text-red-400"
+                    }`}
+                  >
+                    {admin.payment_count || 0}/
+                    {admin.months_since_registration || 0}
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <div
+                    className={`h-2 rounded-full transition-all ${
+                      admin.payment_count >= admin.months_since_registration
+                        ? "bg-green-500"
+                        : admin.payment_count >=
+                          Math.ceil(admin.months_since_registration * 0.6)
+                        ? "bg-yellow-500"
+                        : "bg-red-500"
+                    }`}
+                    style={{
+                      width: `${Math.min(
+                        100,
+                        ((admin.payment_count || 0) /
+                          (admin.months_since_registration || 1)) *
+                          100
+                      )}%`,
+                    }}
+                  />
+                </div>
+                <div className="mt-2 flex items-center gap-2">
+                  <Icon
+                    icon={
+                      admin.is_payment_up_to_date
+                        ? "mdi:check-circle"
+                        : "mdi:alert-circle"
+                    }
+                    className={`text-sm ${
+                      admin.is_payment_up_to_date
+                        ? "text-green-600 dark:text-green-400"
+                        : "text-red-600 dark:text-red-400"
+                    }`}
+                  />
+                  <span
+                    className={`text-xs ${
+                      admin.is_payment_up_to_date
+                        ? "text-green-600 dark:text-green-400"
+                        : "text-red-600 dark:text-red-400"
+                    }`}
+                  >
+                    {admin.is_payment_up_to_date
+                      ? "Payments are up to date"
+                      : `${
+                          (admin.months_since_registration || 0) -
+                          (admin.payment_count || 0)
+                        } payment(s) behind`}
+                  </span>
+                </div>
               </div>
 
               {/* Status */}

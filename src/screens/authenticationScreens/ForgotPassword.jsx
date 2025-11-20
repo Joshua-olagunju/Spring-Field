@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../../context/useTheme";
+import { API_BASE_URL } from "../../config/apiConfig";
 import ThemeToggle from "../../../components/GeneralComponents/ThemeToggle";
 import AnimatedSecurityBackground from "../../../components/GeneralComponents/AnimatedSecurityBackground";
+import PoweredByDriftTech from "../../../components/GeneralComponents/PoweredByDriftTech";
 import { Icon } from "@iconify/react";
 
 const ForgotPassword = () => {
@@ -35,16 +37,13 @@ const ForgotPassword = () => {
 
     try {
       // API call to request password reset
-      const response = await fetch(
-        "http://localhost:8000/api/forgot-password",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email }),
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/api/forgot-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
 
       const result = await response.json();
 
@@ -186,6 +185,11 @@ const ForgotPassword = () => {
               </form>
             </div>
           </div>
+        </div>
+
+        {/* Powered by DriftTech */}
+        <div className="relative z-10 flex items-center justify-center px-4 pb-10">
+          <PoweredByDriftTech />
         </div>
       </div>
     </>

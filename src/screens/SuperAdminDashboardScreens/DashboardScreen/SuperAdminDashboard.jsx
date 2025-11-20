@@ -8,6 +8,7 @@ import {
 } from "./TokenGenerationModals";
 import { GenerateVisitorTokenModal } from "../../GeneralScreens/VisitorsTokenGenerationModal/VisitorsGenerationToken";
 import RecentVisitors from "../../../../components/GeneralComponents/RecentVisitors";
+import { API_BASE_URL } from "../../../config/apiConfig";
 
 const SuperAdminDashboard = () => {
   const { theme, isDarkMode } = useTheme();
@@ -36,7 +37,7 @@ const SuperAdminDashboard = () => {
       try {
         // Fetch dashboard stats
         const statsResponse = await fetch(
-          "http://localhost:8000/api/visitor-tokens/super-admin-dashboard-stats",
+          `${API_BASE_URL}/api/visitor-tokens/super-admin-dashboard-stats`,
           {
             method: "GET",
             headers: {
@@ -60,7 +61,7 @@ const SuperAdminDashboard = () => {
 
         // Fetch landlords list for accurate count
         const landlordsResponse = await fetch(
-          "http://localhost:8000/api/super-admin/landlords",
+          `${API_BASE_URL}/api/super-admin/landlords`,
           {
             method: "GET",
             headers: {
@@ -98,9 +99,7 @@ const SuperAdminDashboard = () => {
     fetchData();
   }, [authToken]);
 
-  const handleVisitorClick = (visitor) => {
-    console.log("Visitor clicked:", visitor);
-  };
+  const handleVisitorClick = (visitor) => {};
 
   const handleGenerateAccountToken = () => {
     setShowAccountTokenModal(true);
@@ -120,7 +119,7 @@ const SuperAdminDashboard = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:8000/api/visitor-tokens/my-tokens",
+        `${API_BASE_URL}/api/visitor-tokens/my-tokens`,
         {
           method: "GET",
           headers: {
@@ -154,7 +153,6 @@ const SuperAdminDashboard = () => {
     try {
       await navigator.clipboard.writeText(text);
       setCopiedTokenId(tokenId);
-      console.log("Token copied to clipboard!");
       setTimeout(() => setCopiedTokenId(null), 2000);
     } catch (err) {
       console.error("Failed to copy: ", err);

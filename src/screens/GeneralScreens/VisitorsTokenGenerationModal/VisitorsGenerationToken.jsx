@@ -1,11 +1,14 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { QRCodeSVG as QRCode } from "qrcode.react";
 import { ShareTokenImage } from "./ShareTokenImage";
 import { useUser } from "../../../../context/useUser";
+import { API_BASE_URL } from "../../../config/apiConfig";
 
 export const GenerateVisitorTokenModal = ({ theme, isOpen, onClose }) => {
-  const { authToken, isAuthenticated } = useUser();
+  const { authToken, isAuthenticated, user } = useUser();
+  const navigate = useNavigate();
   const qrRef = useRef();
   const [visitorName, setVisitorName] = useState("");
   const [visitorPhone, setVisitorPhone] = useState("");
@@ -17,6 +20,53 @@ export const GenerateVisitorTokenModal = ({ theme, isOpen, onClose }) => {
   const [generatedToken, setGeneratedToken] = useState(null);
   const [copied, setCopied] = useState(false);
   const [messageCopied, setMessageCopied] = useState(false);
+  const [subscriptionStatus, setSubscriptionStatus] = useState(null);
+  const [isCheckingSubscription, setIsCheckingSubscription] = useState(true);
+
+  // Get the correct subscription path based on user role
+  const getSubscriptionPath = () => {
+    if (user?.role === "landlord") {
+      return "/admin/subscription";
+    }
+    return "/subscription"; // Default for regular users
+  };
+
+  // Check subscription status when modal opens
+  const checkSubscriptionStatus = useCallback(async () => {
+    try {
+      setIsCheckingSubscription(true);
+      const response = await fetch(
+        `${API_BASE_URL}/api/payments/subscription-status`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authToken}`,
+          },
+        }
+      );
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        setSubscriptionStatus(result.data);
+      } else {
+        console.error("Failed to check subscription status:", result.message);
+        setError("Failed to check subscription status");
+      }
+    } catch (error) {
+      console.error("Error checking subscription:", error);
+      setError("Error checking subscription status");
+    } finally {
+      setIsCheckingSubscription(false);
+    }
+  }, [authToken, setError, setSubscriptionStatus]);
+
+  useEffect(() => {
+    if (isOpen && isAuthenticated && authToken) {
+      checkSubscriptionStatus();
+    }
+  }, [isOpen, isAuthenticated, authToken, checkSubscriptionStatus]);
 
   const handleGenerateToken = async () => {
     if (!visitorName.trim()) {
@@ -29,20 +79,20 @@ export const GenerateVisitorTokenModal = ({ theme, isOpen, onClose }) => {
       return;
     }
 
+    // Check if user has active subscription
+    if (!subscriptionStatus?.has_active_subscription) {
+      setError(
+        "Active subscription required to generate visitor tokens. Please subscribe to a plan."
+      );
+      return;
+    }
+
     setIsLoading(true);
     setError("");
 
     try {
-      console.log("Sending token generation request with:", {
-        issued_for_name: visitorName,
-        issued_for_phone: visitorPhone,
-        visit_type: stayType,
-        duration: parseInt(duration),
-        note: note,
-      });
-
       const response = await fetch(
-        "http://localhost:8000/api/visitor-tokens/generate",
+        `${API_BASE_URL}/api/visitor-tokens/generate`,
         {
           method: "POST",
           headers: {
@@ -60,15 +110,16 @@ export const GenerateVisitorTokenModal = ({ theme, isOpen, onClose }) => {
         }
       );
 
-      console.log("Response status:", response.status);
       const result = await response.json();
-      console.log("Response data:", result);
 
       if (response.ok && result.success) {
         setGeneratedToken(result.data);
         setVisitorName("");
         setVisitorPhone("");
         setNote("");
+      } else if (result.requires_subscription) {
+        setError(result.message || "Subscription required to generate tokens");
+        // You might want to show a payment modal here
       } else {
         setError(
           result.message ||
@@ -150,10 +201,24 @@ Springfield Estate Security System`;
     setDuration("1");
     setNote("");
     setError("");
+    setSubscriptionStatus(null);
+    setIsCheckingSubscription(true);
+    // Re-check subscription status
+    if (isAuthenticated && authToken) {
+      checkSubscriptionStatus();
+    }
   };
 
   const handleClose = () => {
-    handleReset();
+    setGeneratedToken(null);
+    setVisitorName("");
+    setVisitorPhone("");
+    setStayType("short");
+    setDuration("1");
+    setNote("");
+    setError("");
+    setSubscriptionStatus(null);
+    setIsCheckingSubscription(true);
     onClose();
   };
 
@@ -194,7 +259,72 @@ Springfield Estate Security System`;
           </p>
 
           {/* Content */}
-          {generatedToken ? (
+          {isCheckingSubscription ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-center py-8">
+                <div className="text-center">
+                  <div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                  <p className={`${theme.text.secondary} text-sm`}>
+                    Checking subscription status...
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : subscriptionStatus &&
+            !subscriptionStatus.has_active_subscription ? (
+            <div className="space-y-4">
+              {/* Subscription Required Warning */}
+              <div className="p-4 rounded-lg bg-orange-100 border border-orange-300">
+                <div className="flex items-start gap-3">
+                  <Icon
+                    icon="mdi:alert-circle"
+                    className="text-orange-600 text-xl mt-0.5 flex-shrink-0"
+                  />
+                  <div>
+                    <h4 className="font-medium text-orange-800 text-sm">
+                      Payment Required
+                    </h4>
+                    <p className="text-orange-700 text-xs mt-1">
+                      {subscriptionStatus?.payment_status?.payment_ratio && (
+                        <>
+                          Payment status:{" "}
+                          {subscriptionStatus.payment_status.payment_ratio} -{" "}
+                        </>
+                      )}
+                      {subscriptionStatus?.payment_status?.status_message ||
+                        "You must make payment to generate visitor tokens. Monthly payment required from registration date."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Call to Action */}
+              <div className="text-center py-4">
+                <button
+                  onClick={() => navigate(getSubscriptionPath())}
+                  className="px-6 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-medium transition-colors flex items-center justify-center gap-2 mx-auto"
+                >
+                  <Icon icon="mdi:credit-card" />
+                  View Subscription Plans
+                </button>
+                <p className="text-xs text-gray-500 mt-2">
+                  {subscriptionStatus?.payment_status?.payment_ratio
+                    ? `Current status: ${subscriptionStatus.payment_status.payment_ratio} (${subscriptionStatus.payment_status.status_message})`
+                    : "Choose from our affordable monthly, 6-month, or yearly plans"}
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4 border-t border-gray-300 dark:border-gray-600">
+                <button
+                  onClick={handleClose}
+                  className={`flex-1 px-4 py-2 rounded-lg ${theme.background.input} ${theme.text.primary} font-medium hover:${theme.background.card} transition-colors`}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          ) : generatedToken ? (
             <div className="space-y-4">
               {/* QR Code Display */}
               <div

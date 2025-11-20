@@ -3,6 +3,7 @@ import { useTheme } from "../../../../context/useTheme";
 import { useUser } from "../../../../context/useUser";
 import { Icon } from "@iconify/react";
 import { format } from "date-fns";
+import { API_BASE_URL } from "../../../config/apiConfig";
 
 const VisitorsScreen = () => {
   const { theme, isDarkMode } = useTheme();
@@ -19,20 +20,20 @@ const VisitorsScreen = () => {
         setIsLoading(true);
         // For admin users, fetch all entries; for regular users, fetch their entries
         const user = JSON.parse(localStorage.getItem("user") || "{}");
-        const endpoint = user.role === "admin" || user.role === "super_admin" 
-          ? "http://localhost:8000/api/visitor-tokens/all-entries"
-          : "http://localhost:8000/api/visitor-tokens/my-entries";
-          
+        const endpoint =
+          user.role === "admin" || user.role === "super_admin"
+            ? `${API_BASE_URL}/api/visitor-tokens/all-entries`
+            : `${API_BASE_URL}/api/visitor-tokens/my-entries`;
+
         const response = await fetch(endpoint, {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${
-                authToken || localStorage.getItem("authToken")
-              }`,
-            },
-          }
-        );
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${
+              authToken || localStorage.getItem("authToken")
+            }`,
+          },
+        });
 
         const result = await response.json();
 
@@ -178,7 +179,7 @@ const VisitorsScreen = () => {
 
       {/* Details Modal */}
       {isModalOpen && selectedVisitor && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-9999 flex items-center justify-center p-4">
           {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/50"

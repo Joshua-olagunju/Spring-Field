@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useTheme } from "../../../../context/useTheme";
 import { useUser } from "../../../../context/useUser";
 import { Icon } from "@iconify/react";
+import { API_BASE_URL } from "../../../config/apiConfig";
 import LandlordUsersActions from "./LandlordUsersActions";
 
 const LandlordUsers = () => {
@@ -19,7 +20,7 @@ const LandlordUsers = () => {
 
         // Fetch users
         const usersResponse = await fetch(
-          "http://localhost:8000/api/landlord/users",
+          `${API_BASE_URL}/api/landlord/users`,
           {
             method: "GET",
             headers: {
@@ -49,7 +50,7 @@ const LandlordUsers = () => {
   // Refresh users list (for use by child components)
   const refreshUsers = async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/landlord/users", {
+      const response = await fetch(`${API_BASE_URL}/api/landlord/users`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -258,26 +259,29 @@ const LandlordUsers = () => {
                         </span>
 
                         {/* Payment Count */}
-                        {user.payment_count !== undefined && (
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`text-xs sm:text-sm font-medium ${theme.text.secondary}`}
-                            >
-                              Payments:
-                            </span>
-                            <span
-                              className={`text-sm font-bold ${
-                                user.payment_count >= 10
-                                  ? "text-green-600 dark:text-green-400"
-                                  : user.payment_count >= 6
-                                  ? "text-yellow-600 dark:text-yellow-400"
-                                  : "text-red-600 dark:text-red-400"
-                              }`}
-                            >
-                              {user.payment_count}/12
-                            </span>
-                          </div>
-                        )}
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`text-xs sm:text-sm font-medium ${theme.text.secondary}`}
+                          >
+                            Payments:
+                          </span>
+                          <span
+                            className={`text-sm font-bold ${
+                              user.payment_count >=
+                              user.months_since_registration
+                                ? "text-green-600 dark:text-green-400"
+                                : user.payment_count >=
+                                  Math.ceil(
+                                    user.months_since_registration * 0.6
+                                  )
+                                ? "text-yellow-600 dark:text-yellow-400"
+                                : "text-red-600 dark:text-red-400"
+                            }`}
+                          >
+                            {user.payment_count || 0}/
+                            {user.months_since_registration || 0}
+                          </span>
+                        </div>
                       </div>
                     </div>
 

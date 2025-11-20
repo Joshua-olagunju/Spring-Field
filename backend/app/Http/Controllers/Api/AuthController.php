@@ -516,8 +516,9 @@ class AuthController extends Controller
                         ->where('role', User::ROLE_RESIDENT)
                         ->count();
                         
-                    // Calculate payment stats for the year
-                    $paymentCount = 0; // Placeholder - implement actual payment counting logic
+                    // Get actual payment count and required payments
+                    $paymentCount = $landlord->payment_count ?? 0;
+                    $monthsSinceRegistration = $landlord->getMonthsSinceRegistration();
                     
                     return [
                         'id' => $landlord->id,
@@ -531,6 +532,9 @@ class AuthController extends Controller
                         'email_verified_at' => $landlord->email_verified_at,
                         'residents_count' => $residentsCount,
                         'payment_count' => $paymentCount,
+                        'months_since_registration' => $monthsSinceRegistration,
+                        'required_payments' => $monthsSinceRegistration,
+                        'is_payment_up_to_date' => $landlord->isPaymentUpToDate(),
                     ];
                 });
 
@@ -582,8 +586,9 @@ class AuthController extends Controller
                 ->orderBy('created_at', 'desc')
                 ->get()
                 ->map(function ($resident) {
-                    // Calculate payment stats for the year (placeholder)
-                    $paymentCount = 0; // Placeholder - implement actual payment counting logic
+                    // Get actual payment count and required payments
+                    $paymentCount = $resident->payment_count ?? 0;
+                    $monthsSinceRegistration = $resident->getMonthsSinceRegistration();
                     
                     return [
                         'id' => $resident->id,
@@ -596,6 +601,9 @@ class AuthController extends Controller
                         'status' => $resident->status,
                         'created_at' => $resident->created_at,
                         'payment_count' => $paymentCount,
+                        'months_since_registration' => $monthsSinceRegistration,
+                        'required_payments' => $monthsSinceRegistration,
+                        'is_payment_up_to_date' => $resident->isPaymentUpToDate(),
                     ];
                 });
 

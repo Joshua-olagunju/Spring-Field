@@ -2,8 +2,10 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTheme } from "../../../context/useTheme";
 import { useUser } from "../../../context/useUser";
+import { API_BASE_URL } from "../../config/apiConfig";
 import ThemeToggle from "../../../components/GeneralComponents/ThemeToggle";
 import AnimatedSecurityBackground from "../../../components/GeneralComponents/AnimatedSecurityBackground";
+import PoweredByDriftTech from "../../../components/GeneralComponents/PoweredByDriftTech";
 import { Icon } from "@iconify/react";
 
 const EmailVerificationOtp = () => {
@@ -134,7 +136,7 @@ const EmailVerificationOtp = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:8000/api/email-verification/resend-otp",
+        `${API_BASE_URL}/api/email-verification/resend-otp`,
         {
           method: "POST",
           headers: {
@@ -182,7 +184,7 @@ const EmailVerificationOtp = () => {
     try {
       // API call to verify email OTP
       const response = await fetch(
-        "http://localhost:8000/api/email-verification/verify",
+        `${API_BASE_URL}/api/email-verification/verify`,
         {
           method: "POST",
           headers: {
@@ -380,48 +382,75 @@ const EmailVerificationOtp = () => {
           </div>
         </div>
 
+        {/* Powered by DriftTech */}
+        <div className="relative z-10 flex items-center justify-center px-4 pb-10">
+          <PoweredByDriftTech />
+        </div>
+
         {/* Modal */}
         {showModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-6">
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
             <div
-              className={`${theme.background.modal} rounded-3xl p-8 max-w-sm w-full ${theme.shadow.xl} transform transition-all animate-fadeIn`}
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+              onClick={() => setShowModal(false)}
+            />
+            <div
+              className={`${theme.background.card} w-full max-w-sm rounded-2xl ${theme.shadow.large} relative p-6`}
             >
-              <div className="flex flex-col items-center justify-center text-center">
-                {modalContent.type === "success" ? (
-                  <div
-                    className={`w-20 h-20 ${theme.status.success} rounded-full flex items-center justify-center mb-5`}
-                  >
-                    <Icon
-                      icon="mdi:check-circle"
-                      className={`text-5xl ${theme.text.success}`}
-                    />
-                  </div>
-                ) : modalContent.type === "warning" ? (
-                  <div className="w-20 h-20 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center mb-5">
-                    <Icon
-                      icon="mdi:alert-circle"
-                      className="text-5xl text-yellow-600 dark:text-yellow-400"
-                    />
-                  </div>
-                ) : (
-                  <div
-                    className={`w-20 h-20 ${theme.status.error} rounded-full flex items-center justify-center mb-5`}
-                  >
-                    <Icon
-                      icon="mdi:alert-circle"
-                      className={`text-5xl ${theme.text.error}`}
-                    />
-                  </div>
-                )}
-                <h3 className={`text-2xl font-bold ${theme.text.primary} mb-2`}>
-                  {modalContent.message}
-                </h3>
-                {modalContent.details && (
-                  <p className={`text-sm ${theme.text.secondary} mb-8`}>
-                    {modalContent.details}
-                  </p>
-                )}
+              <div
+                className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center ${
+                  modalContent.type === "success"
+                    ? "bg-green-100"
+                    : modalContent.type === "warning"
+                    ? "bg-yellow-100"
+                    : "bg-red-100"
+                }`}
+              >
+                <Icon
+                  icon={
+                    modalContent.type === "success"
+                      ? "mdi:check-circle"
+                      : "mdi:alert-circle"
+                  }
+                  className={`text-3xl ${
+                    modalContent.type === "success"
+                      ? "text-green-600"
+                      : modalContent.type === "warning"
+                      ? "text-yellow-600"
+                      : "text-red-600"
+                  }`}
+                />
               </div>
+
+              <h2
+                className={`text-xl font-bold ${theme.text.primary} mb-2 text-center`}
+              >
+                {modalContent.type === "success"
+                  ? "Success!"
+                  : modalContent.type === "warning"
+                  ? "Warning!"
+                  : "Error!"}
+              </h2>
+
+              <p className={`text-sm ${theme.text.secondary} mb-6 text-center`}>
+                {modalContent.message}
+              </p>
+
+              {modalContent.details && (
+                <p
+                  className={`text-xs ${theme.text.secondary} mb-4 text-center opacity-80`}
+                >
+                  {modalContent.details}
+                </p>
+              )}
+
+              <button
+                onClick={() => setShowModal(false)}
+                className="w-full px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors flex items-center justify-center gap-2"
+              >
+                <Icon icon="mdi:check" />
+                OK
+              </button>
             </div>
           </div>
         )}

@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\VisitorToken;
 use App\Models\VisitorEntry;
 use App\Models\User;
+use App\Models\Payment;
+use App\Services\PaymentTrackingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -44,7 +46,30 @@ class VisitorTokenController extends Controller
                 ], 401);
             }
 
-            Log::info('Generating token for user', ['user_id' => $user->id, 'user_name' => $user->full_name]);
+            // Check if user has active subscription using new payment tracking system
+            $paymentTrackingService = new PaymentTrackingService();
+            $eligibilityCheck = $paymentTrackingService->checkTokenGenerationEligibility($user);
+
+            if (!$eligibilityCheck['can_generate']) {
+                Log::warning('User attempted to generate visitor token without being up to date on payments', [
+                    'user_id' => $user->id,
+                    'user_email' => $user->email,
+                    'payment_status' => $eligibilityCheck['payment_status']
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => $eligibilityCheck['message'],
+                    'requires_subscription' => true,
+                    'payment_status' => $eligibilityCheck['payment_status']
+                ], 403);
+            }
+
+            Log::info('Generating token for user with up-to-date payments', [
+                'user_id' => $user->id, 
+                'user_name' => $user->full_name,
+                'payment_status' => $eligibilityCheck['payment_status']
+            ]);
             
             // Generate unique token
             do {

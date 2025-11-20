@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useTheme } from "../../../../context/useTheme";
 import { useUser } from "../../../../context/useUser";
 import { Icon } from "@iconify/react";
+import { API_BASE_URL } from "../../../config/apiConfig";
 
 const UsersScreen = () => {
   const { theme, isDarkMode } = useTheme();
@@ -19,7 +20,7 @@ const UsersScreen = () => {
     total: 0,
     total_pages: 0,
     has_next: false,
-    has_prev: false
+    has_prev: false,
   });
 
   // Fetch users from API
@@ -27,16 +28,18 @@ const UsersScreen = () => {
     try {
       setLoading(true);
       setError("");
-      
+
       const token = localStorage.getItem("token");
       if (!token) {
         setError("Authentication required");
         return;
       }
 
-      const searchParam = search.trim() ? `&search=${encodeURIComponent(search.trim())}` : "";
+      const searchParam = search.trim()
+        ? `&search=${encodeURIComponent(search.trim())}`
+        : "";
       const response = await fetch(
-        `http://localhost:8000/api/test-security-users?page=${page}${searchParam}`,
+        `${API_BASE_URL}/api/test-security-users?page=${page}${searchParam}`,
         {
           method: "GET",
           headers: {
@@ -317,9 +320,11 @@ const UsersScreen = () => {
                             className={`text-xs px-2 py-0.5 rounded-full bg-opacity-20 truncate`}
                             style={{
                               backgroundColor:
-                                user.role.toLowerCase() === "super_admin" || user.role.toLowerCase() === "super admin"
+                                user.role.toLowerCase() === "super_admin" ||
+                                user.role.toLowerCase() === "super admin"
                                   ? "rgb(168, 85, 247)"
-                                  : user.role.toLowerCase() === "admin" || user.role.toLowerCase() === "administrator"
+                                  : user.role.toLowerCase() === "admin" ||
+                                    user.role.toLowerCase() === "administrator"
                                   ? "rgb(59, 130, 246)"
                                   : user.role.toLowerCase() === "security"
                                   ? "rgb(239, 68, 68)"
@@ -327,9 +332,11 @@ const UsersScreen = () => {
                                   ? "rgb(34, 197, 94)"
                                   : "rgb(107, 114, 128)",
                               color:
-                                user.role.toLowerCase() === "super_admin" || user.role.toLowerCase() === "super admin"
+                                user.role.toLowerCase() === "super_admin" ||
+                                user.role.toLowerCase() === "super admin"
                                   ? "rgb(216, 180, 254)"
-                                  : user.role.toLowerCase() === "admin" || user.role.toLowerCase() === "administrator"
+                                  : user.role.toLowerCase() === "admin" ||
+                                    user.role.toLowerCase() === "administrator"
                                   ? "rgb(191, 219, 254)"
                                   : user.role.toLowerCase() === "security"
                                   ? "rgb(254, 205, 211)"
@@ -386,7 +393,7 @@ const UsersScreen = () => {
                   ({pagination.total} total users)
                 </span>
               </div>
-              
+
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => handlePageChange(currentPage - 1)}
@@ -399,37 +406,40 @@ const UsersScreen = () => {
                 >
                   <Icon icon="mdi:chevron-left" className="text-lg" />
                 </button>
-                
+
                 {/* Page numbers */}
                 <div className="flex items-center gap-1">
-                  {Array.from({ length: Math.min(5, pagination.total_pages) }, (_, i) => {
-                    let pageNum;
-                    if (pagination.total_pages <= 5) {
-                      pageNum = i + 1;
-                    } else if (currentPage <= 3) {
-                      pageNum = i + 1;
-                    } else if (currentPage >= pagination.total_pages - 2) {
-                      pageNum = pagination.total_pages - 4 + i;
-                    } else {
-                      pageNum = currentPage - 2 + i;
+                  {Array.from(
+                    { length: Math.min(5, pagination.total_pages) },
+                    (_, i) => {
+                      let pageNum;
+                      if (pagination.total_pages <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= pagination.total_pages - 2) {
+                        pageNum = pagination.total_pages - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => handlePageChange(pageNum)}
+                          className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                            pageNum === currentPage
+                              ? `${theme.brand.primary} text-white`
+                              : `${theme.background.input} hover:${theme.background.card} ${theme.text.primary}`
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
                     }
-                    
-                    return (
-                      <button
-                        key={pageNum}
-                        onClick={() => handlePageChange(pageNum)}
-                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                          pageNum === currentPage
-                            ? `${theme.brand.primary} text-white`
-                            : `${theme.background.input} hover:${theme.background.card} ${theme.text.primary}`
-                        }`}
-                      >
-                        {pageNum}
-                      </button>
-                    );
-                  })}
+                  )}
                 </div>
-                
+
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={!pagination.has_next}
@@ -519,7 +529,7 @@ const UsersScreen = () => {
                   <div>
                     <p className={`${theme.text.tertiary} mb-1`}>Phone</p>
                     <p className={`${theme.text.primary}`}>
-                      {selectedUser.phone || 'Not provided'}
+                      {selectedUser.phone || "Not provided"}
                     </p>
                   </div>
                   <div>
@@ -549,8 +559,6 @@ const UsersScreen = () => {
                     </p>
                   </div>
                 </div>
-
-
               </div>
 
               {/* Actions */}

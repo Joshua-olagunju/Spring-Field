@@ -35,7 +35,9 @@ const LandlordDashboard = () => {
       try {
         // Fetch dashboard stats
         const statsResponse = await fetch(
-          "http://localhost:8000/api/visitor-tokens/admin-dashboard-stats",
+          `${
+            import.meta.env.VITE_API_BASE_URL
+          }/api/visitor-tokens/admin-dashboard-stats`,
           {
             method: "GET",
             headers: {
@@ -58,7 +60,7 @@ const LandlordDashboard = () => {
 
         // Fetch residents list for accurate count
         const residentsResponse = await fetch(
-          "http://localhost:8000/api/landlord/users",
+          `${import.meta.env.VITE_API_BASE_URL}/api/landlord/users`,
           {
             method: "GET",
             headers: {
@@ -81,9 +83,7 @@ const LandlordDashboard = () => {
     fetchData();
   }, [authToken]);
 
-  const handleVisitorClick = (visitor) => {
-    console.log("Visitor clicked:", visitor);
-  };
+  const handleVisitorClick = (visitor) => {};
 
   const handleGenerateUserToken = () => {
     setShowGenerateUserTokenModal(true);
@@ -99,7 +99,7 @@ const LandlordDashboard = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:8000/api/visitor-tokens/my-tokens",
+        `${API_BASE_URL}/api/visitor-tokens/my-tokens`,
         {
           method: "GET",
           headers: {
@@ -135,7 +135,7 @@ const LandlordDashboard = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:8000/api/visitor-tokens/my-tokens",
+        `${API_BASE_URL}/api/visitor-tokens/my-tokens`,
         {
           method: "GET",
           headers: {
@@ -169,7 +169,6 @@ const LandlordDashboard = () => {
     try {
       await navigator.clipboard.writeText(text);
       setCopiedTokenId(tokenId);
-      console.log("Token copied to clipboard!");
       // Reset the copied state after 2 seconds
       setTimeout(() => setCopiedTokenId(null), 2000);
     } catch (err) {

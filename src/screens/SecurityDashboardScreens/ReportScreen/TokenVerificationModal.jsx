@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Icon } from "@iconify/react";
 import { Html5Qrcode } from "html5-qrcode";
+import { API_BASE_URL } from "../../../config/apiConfig";
 
 const TokenVerificationModal = ({ theme, isOpen, onClose }) => {
   const [verificationMode, setVerificationMode] = useState(null); // 'input' or 'scan'
@@ -40,7 +41,7 @@ const TokenVerificationModal = ({ theme, isOpen, onClose }) => {
       }
 
       const response = await fetch(
-        "http://localhost:8000/api/visitor-tokens/verify",
+        `${API_BASE_URL}/api/visitor-tokens/verify`,
         {
           method: "POST",
           headers: {
@@ -110,14 +111,11 @@ const TokenVerificationModal = ({ theme, isOpen, onClose }) => {
       setIsScanning(true);
       setErrorMessage("");
 
-      console.log("Starting QR scanner...");
-
       // First, get available cameras using the correct API
       let cameras = [];
       try {
         // This method will trigger user permissions according to docs
         cameras = await Html5Qrcode.getCameras();
-        console.log("Available cameras:", cameras);
 
         if (!cameras || cameras.length === 0) {
           throw new Error("No cameras found on this device");
@@ -146,9 +144,8 @@ const TokenVerificationModal = ({ theme, isOpen, onClose }) => {
 
       if (backCamera) {
         selectedCamera = backCamera;
-        console.log("Using back camera:", selectedCamera);
       } else {
-        console.log("Using default camera:", selectedCamera);
+        // Using default camera
       }
 
       // Start scanning with the selected camera
@@ -160,17 +157,13 @@ const TokenVerificationModal = ({ theme, isOpen, onClose }) => {
         },
         (decodedText, decodedResult) => {
           // Success callback - code is read
-          console.log(`QR Code scanned: ${decodedText}`, decodedResult);
           handleTokenVerification(decodedText);
           stopScanner();
         },
         (errorMessage) => {
           // Error callback - parse error, ignore it as per docs
-          console.log("QR scan error (ignored):", errorMessage);
         }
       );
-
-      console.log("QR Scanner started successfully");
     } catch (err) {
       console.error("Error starting scanner:", err);
 
@@ -181,7 +174,6 @@ const TokenVerificationModal = ({ theme, isOpen, onClose }) => {
         err.message.includes("NotAllowedError")
       ) {
         // Close modal on camera permission denial
-        console.log("Camera permission denied, closing modal");
         handleClose();
         return;
       } else if (err.message.includes("No cameras found")) {
@@ -222,7 +214,7 @@ const TokenVerificationModal = ({ theme, isOpen, onClose }) => {
       }
 
       const response = await fetch(
-        "http://localhost:8000/api/visitor-tokens/grant-entry",
+        `${API_BASE_URL}/api/visitor-tokens/grant-entry`,
         {
           method: "POST",
           headers: {
@@ -243,7 +235,6 @@ const TokenVerificationModal = ({ theme, isOpen, onClose }) => {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        console.log("Entry granted successfully:", result.data);
         // TODO: Show success notification
         handleClose();
       } else {
@@ -266,7 +257,7 @@ const TokenVerificationModal = ({ theme, isOpen, onClose }) => {
       }
 
       const response = await fetch(
-        "http://localhost:8000/api/visitor-tokens/checkout",
+        `${API_BASE_URL}/api/visitor-tokens/checkout`,
         {
           method: "POST",
           headers: {
@@ -285,7 +276,6 @@ const TokenVerificationModal = ({ theme, isOpen, onClose }) => {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        console.log("Visitor checked out successfully:", result.data);
         // TODO: Show success notification
         handleClose();
       } else {

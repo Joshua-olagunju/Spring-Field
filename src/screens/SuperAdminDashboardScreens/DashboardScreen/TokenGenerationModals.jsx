@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Icon } from "@iconify/react";
 import { useUser } from "../../../../context/useUser";
+import { API_BASE_URL } from "../../../config/apiConfig";
 
 export const GenerateAccountTokenModal = ({ theme, isOpen, onClose }) => {
   const { authToken, isAuthenticated } = useUser();
@@ -34,7 +35,7 @@ export const GenerateAccountTokenModal = ({ theme, isOpen, onClose }) => {
       setError("");
 
       const response = await fetch(
-        "http://localhost:8000/api/otp/generate-landlord",
+        `${API_BASE_URL}/api/otp/generate-landlord`,
         {
           method: "POST",
           headers: {
@@ -391,7 +392,7 @@ export const GenerateSecurityTokenModal = ({ theme, isOpen, onClose }) => {
       setError("");
 
       const response = await fetch(
-        "http://localhost:8000/api/otp/generate-security",
+        `${API_BASE_URL}/api/otp/generate-security`,
         {
           method: "POST",
           headers: {
@@ -408,9 +409,7 @@ export const GenerateSecurityTokenModal = ({ theme, isOpen, onClose }) => {
         }
       );
 
-      console.log("Security OTP Response status:", response.status);
       const result = await response.json();
-      console.log("Security OTP Response data:", result);
 
       if (response.ok && result.success) {
         setGeneratedOtp(result.data);

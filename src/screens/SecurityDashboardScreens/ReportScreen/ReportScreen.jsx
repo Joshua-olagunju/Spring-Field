@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useTheme } from "../../../../context/useTheme";
 import { useUser } from "../../../../context/useUser";
 import { Icon } from "@iconify/react";
+import { API_BASE_URL } from "../../../config/apiConfig";
 
 const ReportScreen = () => {
   const { theme, isDarkMode } = useTheme();
@@ -17,7 +18,7 @@ const ReportScreen = () => {
       try {
         setIsLoading(true);
         const response = await fetch(
-          "http://localhost:8000/api/visitor-tokens/all-entries",
+          `${API_BASE_URL}/api/visitor-tokens/all-entries`,
           {
             method: "GET",
             headers: {
@@ -73,7 +74,6 @@ const ReportScreen = () => {
   });
 
   const handleTokenClick = (token) => {
-    console.log("Token clicked:", token);
     // TODO: Show modal or navigate to detail view
   };
 
