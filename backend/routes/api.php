@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\RegistrationOtpController;
 use App\Http\Controllers\Api\EmailVerificationController;
 use App\Http\Controllers\Api\VisitorTokenController;
+use App\Http\Controllers\Api\ReportsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -56,6 +57,13 @@ Route::middleware('auth:sanctum')->group(function () {
     // Admin Dashboard routes
     Route::prefix('admin')->group(function () {
         Route::post('/generate-user-token', [RegistrationOtpController::class, 'generateUserOtp']);
+    });
+    
+    // Reports routes (Super Admin only)
+    Route::prefix('reports')->middleware('superadmin')->group(function () {
+        Route::get('/statistics', [ReportsController::class, 'getStatistics']);
+        Route::get('/user-analytics', [ReportsController::class, 'getUserAnalytics']);
+        Route::get('/visitor-analytics', [ReportsController::class, 'getVisitorAnalytics']);
     });
     
     // Super Admin Dashboard routes
@@ -139,6 +147,15 @@ Route::middleware('auth:sanctum')->group(function () {
         
         // Get admin dashboard statistics
         Route::get('/admin-dashboard-stats', [VisitorTokenController::class, 'getAdminDashboardStats']);
+        
+        // Get user/resident dashboard statistics
+        Route::get('/user-dashboard-stats', [VisitorTokenController::class, 'getUserDashboardStats']);
+        
+        // Get super admin dashboard statistics
+        Route::get('/super-admin-dashboard-stats', [VisitorTokenController::class, 'getSuperAdminDashboardStats']);
+        
+        // Get recent visitors (role-based)
+        Route::get('/recent-visitors', [VisitorTokenController::class, 'getRecentVisitors']);
     });
     
     // Security Dashboard routes
@@ -188,6 +205,9 @@ Route::get('/test-user-fields', function() {
         ]);
     }
 });
+
+// Test reports API (no auth required for testing) - REMOVE IN PRODUCTION
+Route::get('/test-reports-statistics', [ReportsController::class, 'getStatistics']);
 
 // Test settings API (no auth required for testing)
 Route::get('/test-settings-profile', function() {

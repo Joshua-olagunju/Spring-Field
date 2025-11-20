@@ -75,7 +75,14 @@ const SignUpOtpScreen = () => {
           // If less than 3 super admins, redirect directly to signup
           if (result.data.super_admin_count < 3) {
             displayModal("info", "Welcome!", "Redirecting to registration...");
-            setTimeout(() => navigate("/signup"), 1500);
+            setTimeout(() => {
+              navigate("/signup", {
+                state: {
+                  target_role: "super",
+                  is_super_admin_registration: true,
+                },
+              });
+            }, 1500);
           }
         }
       } catch (error) {

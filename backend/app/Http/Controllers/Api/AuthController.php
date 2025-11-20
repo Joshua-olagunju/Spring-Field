@@ -21,9 +21,9 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         try {
-            // Check total user count to determine if this is one of the first 3 users (auto super admin)
-            $totalUsers = User::count();
-            $isFirstThreeUsers = $totalUsers < 3;
+            // Check super admin count to determine if this user can become a super admin
+            $superAdminCount = User::where('role', User::ROLE_SUPER)->count();
+            $canBeSuperAdmin = $superAdminCount < 3;
 
             // Validation rules differ based on whether this is first 3 users or needs OTP
             $validationRules = [
@@ -41,11 +41,11 @@ class AuthController extends Controller
                 'password_confirmation' => 'required|string'
             ];
 
-            // If not first 3 users, require OTP
-            if (!$isFirstThreeUsers) {
+            // If can't be super admin (already have 3), require OTP
+            if (!$canBeSuperAdmin) {
                 $validationRules['otp_code'] = 'required|string|size:6|exists:registration_otps,otp_code';
             } else {
-                // First 3 users don't need address fields as they become super admins
+                // Users who can be super admin don't need address fields
                 $validationRules['description'] = 'nullable|string';
             }
 
@@ -62,8 +62,8 @@ class AuthController extends Controller
                     $validationRules['house_type'] = 'required|string|in:room_self,room_and_parlor,2_bedroom,3_bedroom,duplex';
                     $validationRules['address'] = 'nullable|string|max:255'; // Optional for OTP
                 }
-            } else if (!$isFirstThreeUsers) {
-                // Non-first-3 users without OTP need house info
+            } else if (!$canBeSuperAdmin) {
+                // Users who can't be super admin without OTP need house info
                 $validationRules['house_number'] = 'required|string|max:50';
                 $validationRules['address'] = 'required|string|max:255';
                 $validationRules['house_type'] = 'nullable|string|in:room_self,room_and_parlor,2_bedroom,3_bedroom,duplex';
@@ -96,8 +96,8 @@ class AuthController extends Controller
                 $houseType = $request->house_type ?? 'room_self';
                 $houseId = null;
 
-                // Handle OTP-based registration for non-first-3 users
-                if (!$isFirstThreeUsers && $request->has('otp_code')) {
+                // Handle OTP-based registration for users when we already have 3 super admins
+                if (!$canBeSuperAdmin && $request->has('otp_code')) {
                     // Find and validate the OTP
                     $otp = RegistrationOtp::where('otp_code', $request->otp_code)
                                          ->valid()
@@ -125,9 +125,14 @@ class AuthController extends Controller
                         $address = $otp->address;
                         $houseId = $otp->house_id;
                     }
-                } else if ($isFirstThreeUsers) {
-                    // First 3 users become super admins
-                    $userRole = User::ROLE_SUPER;
+                } else if ($canBeSuperAdmin) {
+                    // Handle direct super admin registration when we have less than 3 super admins
+                    if ($request->has('target_role') && $request->target_role === 'super') {
+                        $userRole = User::ROLE_SUPER;
+                    } else {
+                        // Default to super admin for first 3 users if no specific role requested
+                        $userRole = User::ROLE_SUPER;
+                    }
                 }
 
                 $house = null;
@@ -173,7 +178,7 @@ class AuthController extends Controller
                     'email' => $request->email,
                     'password_hash' => Hash::make($request->password),
                     'role' => $userRole,
-                    'status_active' => $isFirstThreeUsers || $userRole === User::ROLE_RESIDENT, // First 3 users and residents are auto-active
+                    'status_active' => $canBeSuperAdmin || $userRole === User::ROLE_RESIDENT, // Super admin candidates and residents are auto-active
                 ];
 
                 // Add house_id and house_type for users who need houses (not super admins or security)
@@ -219,7 +224,7 @@ class AuthController extends Controller
                     $user->id,
                     [
                         'user_role' => $user->role,
-                        'is_first_three' => $isFirstThreeUsers,
+                        'can_be_super_admin' => $canBeSuperAdmin,
                         'used_otp' => $otp ? $otp->otp_code : null,
                         'otp_generated_by' => $otp ? $otp->generated_by : null,
                         'house_number' => $house ? $house->house_number : null,
