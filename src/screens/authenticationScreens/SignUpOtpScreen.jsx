@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../../context/useTheme";
 import ThemeToggle from "../../../components/GeneralComponents/ThemeToggle";
 import AnimatedSecurityBackground from "../../../components/GeneralComponents/AnimatedSecurityBackground";
+import PoweredByDriftTech from "../../../components/GeneralComponents/PoweredByDriftTech";
 import { Icon } from "@iconify/react";
+import { API_BASE_URL } from "../../config/apiConfig";
 
 const SignUpOtpScreen = () => {
   const navigate = useNavigate();
@@ -60,13 +62,10 @@ const SignUpOtpScreen = () => {
   useEffect(() => {
     const checkSuperAdminCount = async () => {
       try {
-        const response = await fetch(
-          "http://localhost:8000/api/super-admin-count",
-          {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-          }
-        );
+        const response = await fetch(`${API_BASE_URL}/api/super-admin-count`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
 
         const result = await response.json();
         if (response.ok && result.success) {
@@ -161,16 +160,13 @@ const SignUpOtpScreen = () => {
 
     try {
       // Validate and get OTP details from API
-      const validateResponse = await fetch(
-        "http://localhost:8000/api/validate-otp",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ otp_code: otpCode }),
-        }
-      );
+      const validateResponse = await fetch(`${API_BASE_URL}/api/validate-otp`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ otp_code: otpCode }),
+      });
 
       const validateResult = await validateResponse.json();
 
@@ -354,41 +350,67 @@ const SignUpOtpScreen = () => {
           ) : null}
         </div>
 
+        {/* Powered by DriftTech */}
+        <div className="relative z-10 flex items-center justify-center px-4 pb-10">
+          <PoweredByDriftTech />
+        </div>
+
         {/* Modal */}
         {showModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-6">
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
             <div
-              className={`${theme.background.modal} rounded-3xl p-8 max-w-sm w-full ${theme.shadow.xl} transform transition-all animate-fadeIn`}
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+              onClick={() => setShowModal(false)}
+            />
+            <div
+              className={`${theme.background.card} w-full max-w-sm rounded-2xl ${theme.shadow.large} relative p-6`}
             >
-              <div className="flex flex-col items-center justify-center text-center">
-                {modalContent.type === "success" ? (
-                  <div
-                    className={`w-20 h-20 ${theme.status.success} rounded-full flex items-center justify-center mb-5`}
-                  >
-                    <Icon
-                      icon="mdi:check-circle"
-                      className={`text-5xl ${theme.text.success}`}
-                    />
-                  </div>
-                ) : (
-                  <div
-                    className={`w-20 h-20 ${theme.status.error} rounded-full flex items-center justify-center mb-5`}
-                  >
-                    <Icon
-                      icon="mdi:alert-circle"
-                      className={`text-5xl ${theme.text.error}`}
-                    />
-                  </div>
-                )}
-                <h3 className={`text-2xl font-bold ${theme.text.primary} mb-2`}>
-                  {modalContent.message}
-                </h3>
-                {modalContent.details && (
-                  <p className={`text-sm ${theme.text.secondary} mb-8`}>
-                    {modalContent.details}
-                  </p>
-                )}
+              <div
+                className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center ${
+                  modalContent.type === "success"
+                    ? "bg-green-100"
+                    : "bg-red-100"
+                }`}
+              >
+                <Icon
+                  icon={
+                    modalContent.type === "success"
+                      ? "mdi:check-circle"
+                      : "mdi:alert-circle"
+                  }
+                  className={`text-3xl ${
+                    modalContent.type === "success"
+                      ? "text-green-600"
+                      : "text-red-600"
+                  }`}
+                />
               </div>
+
+              <h2
+                className={`text-xl font-bold ${theme.text.primary} mb-2 text-center`}
+              >
+                {modalContent.type === "success" ? "Success!" : "Error!"}
+              </h2>
+
+              <p className={`text-sm ${theme.text.secondary} mb-6 text-center`}>
+                {modalContent.message}
+              </p>
+
+              {modalContent.details && (
+                <p
+                  className={`text-xs ${theme.text.secondary} mb-4 text-center opacity-80`}
+                >
+                  {modalContent.details}
+                </p>
+              )}
+
+              <button
+                onClick={() => setShowModal(false)}
+                className="w-full px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors flex items-center justify-center gap-2"
+              >
+                <Icon icon="mdi:check" />
+                OK
+              </button>
             </div>
           </div>
         )}

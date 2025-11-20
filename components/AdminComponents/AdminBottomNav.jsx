@@ -41,7 +41,7 @@ const SuperAdminBottomNav = () => {
       iconFilled: "mdi:account-multiple",
     },
     {
-      name: "Subscription",
+      name: "Payment",
       path: "/admin/subscription",
       icon: "mdi:credit-card-outline",
       iconFilled: "mdi:credit-card",

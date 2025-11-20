@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useUser } from "../../context/useUser";
 import { Icon } from "@iconify/react";
+import { API_BASE_URL } from "../../src/config/apiConfig";
 
 const RecentVisitors = ({
   theme,
@@ -22,7 +23,7 @@ const RecentVisitors = ({
       try {
         // Use user dashboard stats endpoint which returns user-specific recent visitors
         const response = await fetch(
-          "http://localhost:8000/api/visitor-tokens/user-dashboard-stats",
+          `${API_BASE_URL}/api/visitor-tokens/user-dashboard-stats`,
           {
             method: "GET",
             headers: {

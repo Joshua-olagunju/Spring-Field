@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useTheme } from "../../../../context/useTheme";
 import { useUser } from "../../../../context/useUser";
 import { Icon } from "@iconify/react";
+import { API_BASE_URL } from "../../../config/apiConfig";
 
 const ReportScreen = () => {
   const { theme, isDarkMode } = useTheme();
@@ -20,16 +21,13 @@ const ReportScreen = () => {
       setIsLoading(true);
       setError(null);
 
-      const response = await fetch(
-        "http://localhost:8000/api/reports/statistics",
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/api/reports/statistics`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
 
       const result = await response.json();
 

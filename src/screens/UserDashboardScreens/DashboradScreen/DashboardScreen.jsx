@@ -4,6 +4,7 @@ import { useUser } from "../../../../context/useUser";
 import { Icon } from "@iconify/react";
 import { GenerateVisitorTokenModal } from "../../GeneralScreens/VisitorsTokenGenerationModal/VisitorsGenerationToken";
 import RecentVisitors from "../../../../components/GeneralComponents/RecentVisitors";
+import { API_BASE_URL } from "../../../config/apiConfig";
 
 const DashboardScreen = () => {
   const { theme, isDarkMode } = useTheme();
@@ -26,7 +27,7 @@ const DashboardScreen = () => {
 
       try {
         const response = await fetch(
-          "http://localhost:8000/api/visitor-tokens/user-dashboard-stats",
+          `${API_BASE_URL}/api/visitor-tokens/user-dashboard-stats`,
           {
             method: "GET",
             headers: {
@@ -57,7 +58,6 @@ const DashboardScreen = () => {
 
   const handleVisitorClick = (visitor) => {
     // Navigation to generate access token screen will be implemented later
-    console.log("Visitor clicked:", visitor);
   };
 
   const handleGenerateVisitorToken = () => {
@@ -70,7 +70,7 @@ const DashboardScreen = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:8000/api/visitor-tokens/my-tokens",
+        `${API_BASE_URL}/api/visitor-tokens/my-tokens`,
         {
           method: "GET",
           headers: {
@@ -104,7 +104,6 @@ const DashboardScreen = () => {
     try {
       await navigator.clipboard.writeText(text);
       setCopiedTokenId(tokenId);
-      console.log("Token copied to clipboard!");
       setTimeout(() => setCopiedTokenId(null), 2000);
     } catch (err) {
       console.error("Failed to copy: ", err);

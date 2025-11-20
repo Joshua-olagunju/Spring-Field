@@ -1,4 +1,5 @@
 import { createContext, useState, useEffect } from "react";
+import { API_BASE_URL } from "../src/config/apiConfig";
 
 const UserContext = createContext();
 
@@ -38,16 +39,13 @@ export const UserProvider = ({ children }) => {
 
         // Optional: Verify token in background (don't block UI or clear auth on failure)
         try {
-          const response = await fetch(
-            "http://localhost:8000/api/user/profile",
-            {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
+          const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          });
 
           if (response.ok) {
             const result = await response.json();
@@ -76,7 +74,7 @@ export const UserProvider = ({ children }) => {
   // Login function
   const login = async (email, password) => {
     try {
-      const response = await fetch("http://localhost:8000/api/login", {
+      const response = await fetch(`${API_BASE_URL}/api/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -145,7 +143,7 @@ export const UserProvider = ({ children }) => {
     try {
       // Optional: Call logout endpoint to invalidate token on server
       if (authToken) {
-        await fetch("http://localhost:8000/api/logout", {
+        await fetch(`${API_BASE_URL}/api/logout`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -197,7 +195,7 @@ export const UserProvider = ({ children }) => {
     try {
       if (!authToken) return;
 
-      const response = await fetch("http://localhost:8000/api/user/profile", {
+      const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",

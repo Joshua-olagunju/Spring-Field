@@ -173,7 +173,18 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/summary', [App\Http\Controllers\Api\SettingsController::class, 'getSettings']);
         Route::post('/last-login', [App\Http\Controllers\Api\SettingsController::class, 'updateLastLogin']);
     });
+    
+    // Payment routes - Available to all authenticated users
+    Route::prefix('payments')->group(function () {
+        Route::get('/packages', [App\Http\Controllers\Api\PaymentController::class, 'getPackages']);
+        Route::post('/initialize', [App\Http\Controllers\Api\PaymentController::class, 'initializePayment']);
+        Route::get('/history', [App\Http\Controllers\Api\PaymentController::class, 'getPaymentHistory']);
+        Route::get('/subscription-status', [App\Http\Controllers\Api\PaymentController::class, 'subscriptionStatus']);
+    });
 });
+
+// Flutterwave webhook (public, no auth required)
+Route::post('/flutterwave/webhook', [App\Http\Controllers\Api\PaymentController::class, 'handleWebhook']);
 
 // Test endpoint (no auth required)
 Route::get('/test-dashboard-stats', [VisitorTokenController::class, 'getTestDashboardStats']);

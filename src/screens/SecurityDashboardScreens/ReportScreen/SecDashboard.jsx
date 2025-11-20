@@ -4,6 +4,7 @@ import { useUser } from "../../../../context/useUser";
 import { Icon } from "@iconify/react";
 import TokenVerificationModal from "./TokenVerificationModal";
 import ActiveTokensModal from "./ActiveTokensModal";
+import { API_BASE_URL } from "../../../config/apiConfig";
 
 const SecDashboard = () => {
   const { theme, isDarkMode } = useTheme();
@@ -19,7 +20,7 @@ const SecDashboard = () => {
       try {
         // Fetch all entries for total count
         const allEntriesResponse = await fetch(
-          "http://localhost:8000/api/visitor-tokens/all-entries",
+          `${API_BASE_URL}/api/visitor-tokens/all-entries`,
           {
             method: "GET",
             headers: {
@@ -33,7 +34,7 @@ const SecDashboard = () => {
 
         // Fetch active entries
         const activeEntriesResponse = await fetch(
-          "http://localhost:8000/api/visitor-tokens/active-entries",
+          `${API_BASE_URL}/api/visitor-tokens/active-entries`,
           {
             method: "GET",
             headers: {
@@ -69,7 +70,6 @@ const SecDashboard = () => {
 
   const handleViewAllTokens = () => {
     // This would navigate to ReportScreen - implement with router when needed
-    console.log("View All Tokens clicked");
   };
 
   const handleViewActiveTokens = () => {

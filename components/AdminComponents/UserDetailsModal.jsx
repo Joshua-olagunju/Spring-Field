@@ -4,16 +4,19 @@ const UserDetailsModal = ({ user, theme, isOpen, onClose }) => {
   if (!isOpen || !user) return null;
 
   // Calculate payment status color and icon
-  const getPaymentStatusInfo = (paymentCount) => {
-    if (paymentCount >= 10) {
+  const getPaymentStatusInfo = (paymentCount, monthsSinceRegistration) => {
+    const requiredPayments = monthsSinceRegistration || 1;
+    const paymentRatio = paymentCount / requiredPayments;
+
+    if (paymentCount >= requiredPayments) {
       return {
         color: "text-green-600 dark:text-green-400",
         bgColor: "bg-green-100 dark:bg-green-900",
         textColor: "text-green-800 dark:text-green-200",
         icon: "mdi:check-circle",
-        label: "On Track",
+        label: "Up to Date",
       };
-    } else if (paymentCount >= 6) {
+    } else if (paymentRatio >= 0.6) {
       return {
         color: "text-yellow-600 dark:text-yellow-400",
         bgColor: "bg-yellow-100 dark:bg-yellow-900",
@@ -32,7 +35,11 @@ const UserDetailsModal = ({ user, theme, isOpen, onClose }) => {
     }
   };
 
-  const paymentInfo = getPaymentStatusInfo(user.payment_count || 0);
+  const monthsSinceRegistration = user.months_since_registration || 0;
+  const paymentInfo = getPaymentStatusInfo(
+    user.payment_count || 0,
+    monthsSinceRegistration
+  );
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
@@ -128,9 +135,9 @@ const UserDetailsModal = ({ user, theme, isOpen, onClose }) => {
                       Payment Progress
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 mb-2">
                     <span className={`text-xl font-bold ${paymentInfo.color}`}>
-                      {user.payment_count || 0}/12
+                      {user.payment_count || 0}/{monthsSinceRegistration}
                     </span>
                     <span
                       className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${paymentInfo.bgColor} ${paymentInfo.textColor}`}
@@ -138,6 +145,47 @@ const UserDetailsModal = ({ user, theme, isOpen, onClose }) => {
                       <Icon icon={paymentInfo.icon} className="text-sm" />
                       {paymentInfo.label}
                     </span>
+                  </div>
+
+                  {/* Payment Progress Bar */}
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div
+                      className={`h-2 rounded-full transition-all ${
+                        user.payment_count >= monthsSinceRegistration
+                          ? "bg-green-500"
+                          : (user.payment_count || 0) /
+                              monthsSinceRegistration >=
+                            0.6
+                          ? "bg-yellow-500"
+                          : "bg-red-500"
+                      }`}
+                      style={{
+                        width: `${Math.min(
+                          100,
+                          ((user.payment_count || 0) /
+                            Math.max(1, monthsSinceRegistration)) *
+                            100
+                        )}%`,
+                      }}
+                    />
+                  </div>
+
+                  {/* Additional Payment Info */}
+                  <div className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                    {monthsSinceRegistration > (user.payment_count || 0) ? (
+                      <span>
+                        {monthsSinceRegistration - (user.payment_count || 0)}{" "}
+                        month(s) behind
+                      </span>
+                    ) : (
+                      <span>All payments up to date</span>
+                    )}
+                    {user.created_at && (
+                      <span className="block mt-1">
+                        Account created:{" "}
+                        {new Date(user.created_at).toLocaleDateString()}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

@@ -1,5 +1,7 @@
 import { Navigate, useLocation } from "react-router-dom";
+import { Icon } from "@iconify/react";
 import { useUser } from "../../context/useUser";
+import { useTheme } from "../../context/useTheme";
 
 /**
  * EmailVerificationProtectedRoute Component
@@ -12,6 +14,7 @@ import { useUser } from "../../context/useUser";
  */
 const EmailVerificationProtectedRoute = ({ children }) => {
   const { isAuthenticated, isLoading, user } = useUser();
+  const { theme, isDarkMode } = useTheme();
   const location = useLocation();
 
   // Get email verification state from navigation (from signup/login)
@@ -22,10 +25,24 @@ const EmailVerificationProtectedRoute = ({ children }) => {
   // Show loading spinner while checking auth
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{
+          background: isDarkMode
+            ? "linear-gradient(to bottom right, rgb(17, 24, 39), rgb(31, 41, 55), rgb(17, 24, 39))"
+            : "linear-gradient(to bottom right, rgb(249, 250, 251), rgb(243, 244, 246), rgb(249, 250, 251))",
+        }}
+      >
+        <div
+          className={`${theme.background.card} rounded-2xl ${theme.shadow.large} p-8 text-center`}
+        >
+          <Icon
+            icon="mdi:loading"
+            className="text-4xl text-blue-600 animate-spin mx-auto mb-4"
+          />
+          <p className={`${theme.text.primary} font-medium`}>
+            Verifying email status...
+          </p>
         </div>
       </div>
     );

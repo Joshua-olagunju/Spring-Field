@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Icon } from "@iconify/react";
 import { useTheme } from "../../../../context/useTheme";
+import { API_BASE_URL } from "../../../config/apiConfig";
 
 const ChangePasswordModal = ({ isOpen, onClose }) => {
   const { theme } = useTheme();
@@ -28,11 +29,14 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
       setError("New password must be at least 8 characters");
       return;
     }
-    
+
     // Check password complexity
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&\-_])[A-Za-z\d@$!%*?&\-_]*$/;
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&\-_])[A-Za-z\d@$!%*?&\-_]*$/;
     if (!passwordRegex.test(newPassword)) {
-      setError("Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character");
+      setError(
+        "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
+      );
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -50,7 +54,7 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
 
     try {
       const response = await fetch(
-        "http://localhost:8000/api/settings/change-password",
+        `${API_BASE_URL}/api/settings/change-password`,
         {
           method: "POST",
           headers: {

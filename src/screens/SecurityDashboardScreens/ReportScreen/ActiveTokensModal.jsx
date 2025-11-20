@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useUser } from "../../../../context/useUser";
 import { Icon } from "@iconify/react";
 import { format } from "date-fns";
+import { API_BASE_URL } from "../../../config/apiConfig";
 
 const ActiveTokensModal = ({ theme, isOpen, onClose }) => {
   const { authToken } = useUser();
@@ -17,7 +18,7 @@ const ActiveTokensModal = ({ theme, isOpen, onClose }) => {
     try {
       setIsLoading(true);
       const response = await fetch(
-        "http://localhost:8000/api/visitor-tokens/active-entries",
+        `${API_BASE_URL}/api/visitor-tokens/active-entries`,
         {
           method: "GET",
           headers: {
@@ -72,7 +73,7 @@ const ActiveTokensModal = ({ theme, isOpen, onClose }) => {
 
       // We need to get the token string - for now we'll use the exit-visitor endpoint with entry_id
       const response = await fetch(
-        "http://localhost:8000/api/visitor-tokens/exit-visitor",
+        `${API_BASE_URL}/api/visitor-tokens/exit-visitor`,
         {
           method: "POST",
           headers: {

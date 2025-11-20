@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Icon } from "@iconify/react";
 import { useUser } from "../../../context/useUser";
+import { API_BASE_URL } from "../../config/apiConfig";
 
 export const GenerateUserTokenModal = ({
   theme,
@@ -35,8 +36,8 @@ export const GenerateUserTokenModal = ({
     try {
       // Choose API endpoint based on context
       const endpoint = adminContext
-        ? "http://localhost:8000/api/super-admin/generate-user-token-for-landlord"
-        : "http://localhost:8000/api/admin/generate-user-token";
+        ? `${API_BASE_URL}/api/super-admin/generate-user-token-for-landlord`
+        : `${API_BASE_URL}/api/admin/generate-user-token`;
 
       const payload = adminContext
         ? {

@@ -15,7 +15,18 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')->hourly();
+        // Run monthly payment check on the 1st of every month at 2 AM
+        $schedule->command('payments:check-monthly')
+                 ->monthlyOn(1, '02:00')
+                 ->withoutOverlapping()
+                 ->runInBackground();
+        
+        // Optional: Run a daily check to catch users who fall behind mid-month
+        $schedule->command('payments:check-monthly')
+                 ->daily()
+                 ->at('03:00')
+                 ->withoutOverlapping()
+                 ->runInBackground();
     }
 
     /**

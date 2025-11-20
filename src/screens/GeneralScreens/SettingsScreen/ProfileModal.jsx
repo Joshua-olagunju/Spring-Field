@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Icon } from "@iconify/react";
 import { useTheme } from "../../../../context/useTheme";
+import { API_BASE_URL } from "../../../config/apiConfig";
 
 const ProfileModal = ({ isOpen, onClose }) => {
   const { theme } = useTheme();
@@ -38,7 +39,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:8000/api/settings/profile", {
+      const response = await fetch(`${API_BASE_URL}/api/settings/profile`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -94,7 +95,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
     setSuccess("");
 
     try {
-      const response = await fetch("http://localhost:8000/api/settings/profile", {
+      const response = await fetch(`${API_BASE_URL}/api/settings/profile`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -38,6 +38,7 @@ import LogoutConfirmModal from "../components/GeneralComponents/LogoutConfirmMod
 import ProtectedRoute from "../components/GeneralComponents/ProtectedRoute";
 import SignupProtectedRoute from "../components/GeneralComponents/SignupProtectedRoute";
 import EmailVerificationProtectedRoute from "../components/GeneralComponents/EmailVerificationProtectedRoute";
+import PaymentScreen from "./screens/GeneralScreens/PaymentScreen/PaymentScreen";
 
 // Auto-redirect component for root path
 const AutoRedirect = () => {
@@ -182,9 +183,7 @@ function AppContent() {
             path="/subscription"
             element={
               <ProtectedRoute>
-                <div className="min-h-screen flex items-center justify-center">
-                  <h2 className="text-2xl">Subscription - Coming Soon</h2>
-                </div>
+                <PaymentScreen />
               </ProtectedRoute>
             }
           />
@@ -236,9 +235,7 @@ function AppContent() {
             path="/admin/subscription"
             element={
               <ProtectedRoute requiredRole="landlord">
-                <div className="min-h-screen flex items-center justify-center">
-                  <h2 className="text-2xl">Subscription - Coming Soon</h2>
-                </div>
+                <PaymentScreen />
               </ProtectedRoute>
             }
           />

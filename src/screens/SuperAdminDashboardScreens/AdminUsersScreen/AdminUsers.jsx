@@ -4,6 +4,7 @@ import { useUser } from "../../../../context/useUser";
 import { Icon } from "@iconify/react";
 import AdminUsersActions from "./AdminUsersActions";
 import { GenerateUserTokenModal } from "../../AdminDashboardScreens/TokenGenerationModals";
+import { API_BASE_URL } from "../../../config/apiConfig";
 
 const AdminUsers = () => {
   const { theme, isDarkMode } = useTheme();
@@ -20,7 +21,7 @@ const AdminUsers = () => {
       try {
         setIsLoading(true);
         const response = await fetch(
-          "http://localhost:8000/api/super-admin/landlords",
+          `${API_BASE_URL}/api/super-admin/landlords`,
           {
             method: "GET",
             headers: {
@@ -64,7 +65,7 @@ const AdminUsers = () => {
   const refreshAdmins = async () => {
     try {
       const response = await fetch(
-        "http://localhost:8000/api/super-admin/landlords",
+        `${API_BASE_URL}/api/super-admin/landlords`,
         {
           method: "GET",
           headers: {
@@ -290,26 +291,29 @@ const AdminUsers = () => {
                         </div>
 
                         {/* Payment Count */}
-                        {admin.payment_count !== undefined && (
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`text-xs sm:text-sm font-medium ${theme.text.secondary}`}
-                            >
-                              Payments:
-                            </span>
-                            <span
-                              className={`text-sm font-bold ${
-                                admin.payment_count >= 10
-                                  ? "text-green-600 dark:text-green-400"
-                                  : admin.payment_count >= 6
-                                  ? "text-yellow-600 dark:text-yellow-400"
-                                  : "text-red-600 dark:text-red-400"
-                              }`}
-                            >
-                              {admin.payment_count}/12
-                            </span>
-                          </div>
-                        )}
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`text-xs sm:text-sm font-medium ${theme.text.secondary}`}
+                          >
+                            Payments:
+                          </span>
+                          <span
+                            className={`text-sm font-bold ${
+                              admin.payment_count >=
+                              admin.months_since_registration
+                                ? "text-green-600 dark:text-green-400"
+                                : admin.payment_count >=
+                                  Math.ceil(
+                                    admin.months_since_registration * 0.6
+                                  )
+                                ? "text-yellow-600 dark:text-yellow-400"
+                                : "text-red-600 dark:text-red-400"
+                            }`}
+                          >
+                            {admin.payment_count || 0}/
+                            {admin.months_since_registration || 0}
+                          </span>
+                        </div>
                       </div>
                     </div>
 

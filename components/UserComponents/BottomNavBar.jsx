@@ -36,7 +36,7 @@ const BottomNavBar = () => {
       iconFilled: "mdi:account-group",
     },
     {
-      name: "Subscription",
+      name: "Payment",
       path: "/subscription",
       icon: "mdi:credit-card-outline",
       iconFilled: "mdi:credit-card",
