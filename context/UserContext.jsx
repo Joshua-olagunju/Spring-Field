@@ -26,32 +26,49 @@ export const UserProvider = ({ children }) => {
         // CRITICAL: If email is not verified, do not authenticate user
         if (!user.email_verified_at) {
           clearAuth();
+          setIsLoading(false);
           return;
         }
 
-        // Verify token is still valid by making a request to backend
-        const response = await fetch("http://localhost:8000/api/verify-token", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        // Trust the localStorage data - set auth immediately
+        setAuthToken(token);
+        setUser(user);
+        setIsAuthenticated(true);
+        setIsLoading(false);
 
-        if (response.ok) {
-          await response.json();
-          setAuthToken(token);
-          setUser(user);
-          setIsAuthenticated(true);
-        } else {
-          // Token is invalid, clear everything
-          clearAuth();
+        // Optional: Verify token in background (don't block UI or clear auth on failure)
+        try {
+          const response = await fetch(
+            "http://localhost:8000/api/user/profile",
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          if (response.ok) {
+            const result = await response.json();
+            if (result.success && result.user) {
+              // Update with fresh data from server
+              setUser(result.user);
+              localStorage.setItem("userData", JSON.stringify(result.user));
+            }
+          } else if (response.status === 401) {
+            // Only clear auth if we get explicit 401 Unauthorized
+            clearAuth();
+          }
+        } catch (error) {
+          // Network errors shouldn't log user out - just log the error
+          console.error("Background token verification failed:", error);
         }
+      } else {
+        setIsLoading(false);
       }
     } catch (error) {
       console.error("Auth check failed:", error);
-      clearAuth();
-    } finally {
       setIsLoading(false);
     }
   };

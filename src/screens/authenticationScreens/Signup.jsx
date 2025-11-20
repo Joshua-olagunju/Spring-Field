@@ -148,8 +148,8 @@ const SignUp = () => {
       (req) => req === true
     );
 
-    // Security personnel don't need house information
-    const needsHouseInfo = targetRole !== "security";
+    // Security personnel and super admins don't need house information
+    const needsHouseInfo = targetRole !== "security" && targetRole !== "super";
 
     const isValid =
       formData.firstName.trim() !== "" &&
@@ -184,7 +184,13 @@ const SignUp = () => {
       setShowModal(false);
       if (type === "success") {
         navigate("/email-verification", {
-          state: { email: userEmail, user_id: userId, role: userRole },
+          state: {
+            email: userEmail,
+            user_id: userId,
+            role: userRole,
+            fromRegistration: true,
+            tempToken: localStorage.getItem("authToken"), // Include auth token for verification
+          },
         });
       }
     }, 3000);
@@ -224,7 +230,10 @@ const SignUp = () => {
           requestBody.address = formData.address || "";
         }
       } else {
-        // If no OTP, include house information (for direct registration)
+        // If no OTP, include house information and target role (for direct registration)
+        if (targetRole) {
+          requestBody.target_role = targetRole;
+        }
         requestBody.house_number = formData.houseNumber;
         requestBody.address = formData.address;
         requestBody.house_type = formData.houseType;
@@ -323,10 +332,14 @@ const SignUp = () => {
               {/* Welcome Text */}
               <div className="mb-8 flex flex-col items-center gap-2">
                 <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 bg-clip-text text-transparent">
-                  Create Account
+                  {targetRole === "super"
+                    ? "Create Super Admin Account"
+                    : "Create Account"}
                 </h2>
                 <p className={`${theme.text.secondary} text-sm`}>
-                  Fill in your details to register
+                  {targetRole === "super"
+                    ? "Fill in your details to register as a super administrator"
+                    : "Fill in your details to register"}
                 </p>
               </div>
 
@@ -654,61 +667,63 @@ const SignUp = () => {
                   </>
                 )}
 
-                {/* House Fields for Direct Registration (non-OTP, first 3 super admins) */}
-                {!otpCode && targetRole !== "landlord" && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {/* House Number */}
-                    <div>
-                      <label
-                        htmlFor="houseNumber"
-                        className={`block text-sm text-start font-semibold ${theme.text.primary} mb-3 flex items-center gap-2`}
-                      >
-                        <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-1 rounded">
-                          <Icon
-                            icon="mdi:home"
-                            className="text-white text-sm"
-                          />
-                        </div>
-                        House Number *
-                      </label>
-                      <input
-                        type="text"
-                        id="houseNumber"
-                        value={formData.houseNumber}
-                        onChange={handleInputChange}
-                        className={`w-full px-4 py-3 placeholder:text-[0.8rem] ${theme.background.input} ${theme.text.primary} border rounded-[0.3rem] focus:outline-none transition-all focus:${theme.brand.primaryRing}`}
-                        placeholder="e.g., 123"
-                      />
-                    </div>
+                {/* House Fields for Direct Registration (non-OTP, excludes super admins and landlords) */}
+                {!otpCode &&
+                  targetRole !== "landlord" &&
+                  targetRole !== "super" && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* House Number */}
+                      <div>
+                        <label
+                          htmlFor="houseNumber"
+                          className={`block text-sm text-start font-semibold ${theme.text.primary} mb-3 flex items-center gap-2`}
+                        >
+                          <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-1 rounded">
+                            <Icon
+                              icon="mdi:home"
+                              className="text-white text-sm"
+                            />
+                          </div>
+                          House Number *
+                        </label>
+                        <input
+                          type="text"
+                          id="houseNumber"
+                          value={formData.houseNumber}
+                          onChange={handleInputChange}
+                          className={`w-full px-4 py-3 placeholder:text-[0.8rem] ${theme.background.input} ${theme.text.primary} border rounded-[0.3rem] focus:outline-none transition-all focus:${theme.brand.primaryRing}`}
+                          placeholder="e.g., 123"
+                        />
+                      </div>
 
-                    {/* Address */}
-                    <div>
-                      <label
-                        htmlFor="address"
-                        className={`block text-sm text-start font-semibold ${theme.text.primary} mb-3 flex items-center gap-2`}
-                      >
-                        <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-1 rounded">
-                          <Icon
-                            icon="mdi:map-marker"
-                            className="text-white text-sm"
-                          />
-                        </div>
-                        Address *
-                      </label>
-                      <input
-                        type="text"
-                        id="address"
-                        value={formData.address}
-                        onChange={handleInputChange}
-                        className={`w-full px-4 py-3 placeholder:text-[0.8rem] ${theme.background.input} ${theme.text.primary} border rounded-[0.3rem] focus:outline-none transition-all focus:${theme.brand.primaryRing}`}
-                        placeholder="Enter address"
-                      />
+                      {/* Address */}
+                      <div>
+                        <label
+                          htmlFor="address"
+                          className={`block text-sm text-start font-semibold ${theme.text.primary} mb-3 flex items-center gap-2`}
+                        >
+                          <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-1 rounded">
+                            <Icon
+                              icon="mdi:map-marker"
+                              className="text-white text-sm"
+                            />
+                          </div>
+                          Address *
+                        </label>
+                        <input
+                          type="text"
+                          id="address"
+                          value={formData.address}
+                          onChange={handleInputChange}
+                          className={`w-full px-4 py-3 placeholder:text-[0.8rem] ${theme.background.input} ${theme.text.primary} border rounded-[0.3rem] focus:outline-none transition-all focus:${theme.brand.primaryRing}`}
+                          placeholder="Enter address"
+                        />
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* Description Field - Only for direct registration (non-OTP) */}
-                {!otpCode && (
+                {/* Description Field - Only for direct registration (non-OTP, excludes super admins) */}
+                {!otpCode && targetRole !== "super" && (
                   <div>
                     <label
                       htmlFor="description"
