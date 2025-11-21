@@ -14,11 +14,9 @@ class FlutterwaveService
 
     public function __construct()
     {
-        $this->secretKey = config('services.flutterwave.secret_key');
-        $this->publicKey = config('services.flutterwave.public_key');
-        $this->baseUrl = config('services.flutterwave.environment') === 'live' 
-            ? 'https://api.flutterwave.com/v3' 
-            : 'https://api.flutterwave.com/v3';
+        $this->secretKey = config('flutterwave.secret_key');
+        $this->publicKey = config('flutterwave.public_key');
+        $this->baseUrl = config('flutterwave.base_url');
     }
 
     public function initializePayment($data)
@@ -103,9 +101,53 @@ class FlutterwaveService
         }
     }
 
+    public function verifyPayment($txRef)
+    {
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $this->secretKey,
+                'Content-Type' => 'application/json',
+            ])->get($this->baseUrl . '/transactions/verify_by_reference', [
+                'tx_ref' => $txRef
+            ]);
+
+            $responseData = $response->json();
+            
+            Log::info('Flutterwave payment verification response', [
+                'tx_ref' => $txRef,
+                'status' => $response->status(),
+                'data' => $responseData
+            ]);
+
+            if ($response->successful() && isset($responseData['status']) && $responseData['status'] === 'success') {
+                return [
+                    'success' => true,
+                    'data' => $responseData['data']
+                ];
+            }
+
+            return [
+                'success' => false,
+                'message' => $responseData['message'] ?? 'Payment verification failed'
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('Flutterwave payment verification error', [
+                'tx_ref' => $txRef,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Verification service error: ' . $e->getMessage()
+            ];
+        }
+    }
+
     public function validateWebhookSignature($payload, $signature)
     {
-        $webhookSecret = config('services.flutterwave.webhook_secret_hash');
+        $webhookSecret = config('flutterwave.webhook_secret_hash');
         $expectedSignature = hash_hmac('sha256', $payload, $webhookSecret);
         
         return hash_equals($expectedSignature, $signature);

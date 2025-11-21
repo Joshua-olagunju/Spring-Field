@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Real Payment Flow Test</title>
+    <script src="https://checkout.flutterwave.com/v3.js"></script>
+</head>
+<body>
+    <h1>Real Payment Flow Test - User: yungtee5333@gmail.com</h1>
+    
+    <button onclick="testRealPayment()">Test Real Payment (Monthly ₦5,000)</button>
+    <button onclick="checkUserStatus()">Check User Status</button>
+    
+    <div id="results"></div>
+    
+    <script>
+        const API_BASE_URL = 'http://localhost:8000';
+        const REAL_USER_EMAIL = 'yungtee5333@gmail.com';
+        const REAL_USER_PASSWORD = 'Jackson5$';
+        
+        let authToken = null;
+        let userData = null;
+        
+        function log(message) {
+            const results = document.getElementById('results');
+            results.innerHTML += '<p>' + new Date().toLocaleTimeString() + ': ' + message + '</p>';
+            console.log(message);
+        }
+        
+        async function loginUser() {
+            if (authToken) {
+                log('✅ Already logged in');
+                return true;
+            }
+            
+            try {
+                log('🔐 Logging in user...');
+                const response = await fetch(`${API_BASE_URL}/api/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: REAL_USER_EMAIL,
+                        password: REAL_USER_PASSWORD
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    authToken = data.access_token;
+                    userData = data.user;
+                    log(`✅ Login successful! User ID: ${userData.id}, Role: ${userData.role}`);
+                    return true;
+                } else {
+                    log(`❌ Login failed: ${data.message}`);
+                    return false;
+                }
+            } catch (error) {
+                log(`❌ Login error: ${error.message}`);
+                return false;
+            }
+        }
+        
+        async function checkUserStatus() {
+            if (!await loginUser()) return;
+            
+            try {
+                log('📊 Checking user payment status...');
+                const response = await fetch(`${API_BASE_URL}/api/user/payments`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                log(`📊 User Payment Status: ${JSON.stringify(data, null, 2)}`);
+            } catch (error) {
+                log(`❌ Error checking status: ${error.message}`);
+            }
+        }
+        
+        async function testRealPayment() {
+            if (!await loginUser()) return;
+            
+            try {
+                // Step 1: Initialize payment
+                log('💳 Initializing payment...');
+                const initResponse = await fetch(`${API_BASE_URL}/api/payments/initialize`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        plan_id: '227503', // Monthly plan
+                        amount: 5000
+                    })
+                });
+                
+                const initData = await initResponse.json();
+                log(`📤 Payment initialization: ${JSON.stringify(initData, null, 2)}`);
+                
+                if (!initData.success) {
+                    log(`❌ Payment initialization failed: ${initData.message}`);
+                    return;
+                }
+                
+                // Step 2: Launch Flutterwave
+                log('🚀 Launching Flutterwave payment...');
+                FlutterwaveCheckout({
+                    public_key: "FLWPUBK_TEST-b9b60c73b22d92aa87d2d5a3be4a4f1e-X",
+                    tx_ref: initData.data.tx_ref,
+                    amount: 5000,
+                    currency: "NGN",
+                    payment_options: "card,mobilemoney,ussd",
+                    customer: {
+                        email: userData.email,
+                        phone_number: userData.phone || "08012345678",
+                        name: userData.name
+                    },
+                    customizations: {
+                        title: "Spring-Field Monthly Subscription",
+                        description: "Monthly subscription payment",
+                        logo: ""
+                    },
+                    callback: async function (response) {
+                        log(`🎉 Flutterwave callback received: ${JSON.stringify(response, null, 2)}`);
+                        
+                        if (response.status === "successful" || response.tx_ref.includes('SF_')) {
+                            log('✅ Payment successful, calling verification...');
+                            
+                            try {
+                                const verifyResponse = await fetch(`${API_BASE_URL}/api/payments/verify/${response.tx_ref}`, {
+                                    method: "GET",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                        Authorization: `Bearer ${authToken}`,
+                                        "Accept": "application/json",
+                                    },
+                                });
+                                
+                                const verifyData = await verifyResponse.json();
+                                log(`📥 Verification response: ${JSON.stringify(verifyData, null, 2)}`);
+                                
+                                if (verifyData.success) {
+                                    log('🎉 PAYMENT FULLY SUCCESSFUL! Database updated.');
+                                    await checkUserStatus(); // Check updated status
+                                } else {
+                                    log(`❌ Verification failed: ${verifyData.message}`);
+                                }
+                            } catch (error) {
+                                log(`❌ Verification error: ${error.message}`);
+                            }
+                        } else {
+                            log(`❌ Payment failed: ${response.status}`);
+                        }
+                    },
+                    onclose: function () {
+                        log('🔒 Payment modal closed');
+                    },
+                });
+                
+            } catch (error) {
+                log(`❌ Test error: ${error.message}`);
+            }
+        }
+    </script>
+</body>
+</html>
