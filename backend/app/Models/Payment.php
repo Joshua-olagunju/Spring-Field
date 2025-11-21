@@ -19,6 +19,8 @@ class Payment extends Model
         'period_start',
         'period_end',
         'flutterwave_txn_id',
+        'flutterwave_response',
+        'flutterwave_plan_id',
         'status',
         'paid_at',
     ];
@@ -32,6 +34,7 @@ class Payment extends Model
         'period_end' => 'date',
         'paid_at' => 'datetime',
         'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     /**
@@ -47,6 +50,7 @@ class Payment extends Model
      */
     const STATUS_PENDING = 'pending';
     const STATUS_PAID = 'paid';
+    const STATUS_COMPLETED = 'completed';
     const STATUS_FAILED = 'failed';
 
     /**

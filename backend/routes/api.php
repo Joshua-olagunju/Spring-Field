@@ -178,6 +178,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('payments')->group(function () {
         Route::get('/packages', [App\Http\Controllers\Api\PaymentController::class, 'getPackages']);
         Route::post('/initialize', [App\Http\Controllers\Api\PaymentController::class, 'initializePayment']);
+        Route::get('/verify/{txRef}', [App\Http\Controllers\Api\PaymentController::class, 'verifyPayment']);
         Route::get('/history', [App\Http\Controllers\Api\PaymentController::class, 'getPaymentHistory']);
         Route::get('/subscription-status', [App\Http\Controllers\Api\PaymentController::class, 'subscriptionStatus']);
     });

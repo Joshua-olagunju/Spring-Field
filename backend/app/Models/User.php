@@ -123,6 +123,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the subscriptions for this user.
+     */
+    public function subscriptions()
+    {
+        return $this->hasMany(Subscription::class);
+    }
+
+    /**
      * Get the visitor tokens issued by this resident.
      */
     public function visitorTokens()
