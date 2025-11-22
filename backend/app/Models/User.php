@@ -38,6 +38,7 @@ class User extends Authenticatable
         'payment_count',
         'is_payment_up_to_date',
         'last_payment_check',
+        'fcm_token',
     ];
 
     /**

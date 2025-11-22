@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\NotificationController;
 use App\Models\VisitorToken;
 use App\Models\VisitorEntry;
 use App\Models\User;
@@ -341,6 +342,41 @@ class VisitorTokenController extends Controller
                 'note' => $request->note,
             ]);
 
+            // Send push notification to the token generator (resident)
+            try {
+                $resident = $visitorToken->resident;
+                if ($resident && $resident->fcm_token) {
+                    $notificationController = new NotificationController();
+                    $visitorName = $visitorEntry->visitor_name ?? 'Your visitor';
+                    
+                    $notificationController->sendPushNotification(
+                        $resident->fcm_token,
+                        '🚪 Visitor Arrived',
+                        "{$visitorName} has arrived at the gate and been granted access to the premises.",
+                        [
+                            'type' => 'visitor_arrival',
+                            'visitor_name' => $visitorEntry->visitor_name,
+                            'entered_at' => $visitorEntry->entered_at->toISOString(),
+                            'entry_id' => $visitorEntry->id,
+                            'guard_name' => $guard->full_name
+                        ]
+                    );
+                    
+                    Log::info('Visitor arrival notification sent', [
+                        'resident_id' => $resident->id,
+                        'visitor_name' => $visitorEntry->visitor_name,
+                        'entry_id' => $visitorEntry->id
+                    ]);
+                }
+            } catch (\Exception $notificationError) {
+                // Log the error but don't fail the entry process
+                Log::error('Failed to send visitor arrival notification', [
+                    'error' => $notificationError->getMessage(),
+                    'resident_id' => $visitorToken->resident_id,
+                    'entry_id' => $visitorEntry->id
+                ]);
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Entry granted successfully',
@@ -389,6 +425,49 @@ class VisitorTokenController extends Controller
                 'duration_minutes' => $durationMinutes,
                 'note' => $request->note ? $visitorEntry->note . ' | Exit: ' . $request->note : $visitorEntry->note,
             ]);
+
+            // Send push notification to the token generator (resident)
+            try {
+                $resident = $visitorEntry->token->resident;
+                if ($resident && $resident->fcm_token) {
+                    $notificationController = new NotificationController();
+                    $visitorName = $visitorEntry->visitor_name ?? 'Your visitor';
+                    
+                    // Format duration for display
+                    $hours = floor($durationMinutes / 60);
+                    $minutes = $durationMinutes % 60;
+                    $durationText = $hours > 0 
+                        ? "{$hours}h {$minutes}m" 
+                        : "{$minutes} minutes";
+                    
+                    $notificationController->sendPushNotification(
+                        $resident->fcm_token,
+                        '👋 Visitor Departed',
+                        "{$visitorName} has left the premises after staying for {$durationText}.",
+                        [
+                            'type' => 'visitor_departure',
+                            'visitor_name' => $visitorEntry->visitor_name,
+                            'entered_at' => $visitorEntry->entered_at->toISOString(),
+                            'exited_at' => $visitorEntry->exited_at->toISOString(),
+                            'duration_minutes' => $visitorEntry->duration_minutes,
+                            'entry_id' => $visitorEntry->id
+                        ]
+                    );
+                    
+                    Log::info('Visitor departure notification sent', [
+                        'resident_id' => $resident->id,
+                        'visitor_name' => $visitorEntry->visitor_name,
+                        'entry_id' => $visitorEntry->id,
+                        'duration_minutes' => $durationMinutes
+                    ]);
+                }
+            } catch (\Exception $notificationError) {
+                // Log the error but don't fail the exit process
+                Log::error('Failed to send visitor departure notification', [
+                    'error' => $notificationError->getMessage(),
+                    'entry_id' => $visitorEntry->id
+                ]);
+            }
 
             return response()->json([
                 'success' => true,

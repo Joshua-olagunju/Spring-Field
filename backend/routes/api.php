@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\EmailVerificationController;
 use App\Http\Controllers\Api\VisitorTokenController;
 use App\Http\Controllers\Api\ReportsController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\NotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -55,6 +56,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // User routes
     Route::get('/user', [AuthController::class, 'me']);
     
+    // Push Notification routes
+    Route::post('/save-fcm-token', [NotificationController::class, 'saveFcmToken']);
+    Route::post('/test-notification', [NotificationController::class, 'testNotification']);
+    
     // Admin Dashboard routes
     Route::prefix('admin')->group(function () {
         Route::post('/generate-user-token', [RegistrationOtpController::class, 'generateUserOtp']);
@@ -76,6 +81,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch('/users/{userId}/activate', [AuthController::class, 'activateUser']);
         Route::delete('/users/{userId}', [AuthController::class, 'deleteUser']);
         Route::get('/transactions', [PaymentController::class, 'getAllUserTransactions']);
+        
+        // Notification management (Super Admin only)
+        Route::post('/send-notification', [NotificationController::class, 'sendNotification']);
+        Route::post('/send-bulk-notification', [NotificationController::class, 'sendBulkNotification']);
     });
     
     // Landlord Dashboard routes
