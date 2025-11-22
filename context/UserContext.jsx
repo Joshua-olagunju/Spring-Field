@@ -39,7 +39,7 @@ export const UserProvider = ({ children }) => {
 
         // Optional: Verify token in background (don't block UI or clear auth on failure)
         try {
-          const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
+          const response = await fetch(`${API_BASE_URL}/api/user`, {
             method: "GET",
             headers: {
               "Content-Type": "application/json",

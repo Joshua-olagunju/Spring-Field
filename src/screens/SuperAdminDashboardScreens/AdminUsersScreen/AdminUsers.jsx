@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTheme } from "../../../../context/useTheme";
 import { useUser } from "../../../../context/useUser";
 import { Icon } from "@iconify/react";
@@ -14,14 +14,16 @@ const AdminUsers = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showTokenModal, setShowTokenModal] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState(null);
+  const [pagination, setPagination] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Fetch admins/landlords from API
-  useEffect(() => {
-    const fetchAdmins = async () => {
+  const fetchAdmins = useCallback(
+    async (page = currentPage) => {
       try {
         setIsLoading(true);
         const response = await fetch(
-          `${API_BASE_URL}/api/super-admin/landlords`,
+          `${API_BASE_URL}/api/super-admin/landlords?page=${page}&per_page=20`,
           {
             method: "GET",
             headers: {
@@ -36,7 +38,19 @@ const AdminUsers = () => {
         const result = await response.json();
 
         if (response.ok && result.success) {
-          setAdmins(result.data || []);
+          // Check if data is paginated
+          if (result.data.data) {
+            setAdmins(result.data.data || []);
+            setPagination({
+              current_page: result.data.current_page,
+              last_page: result.data.last_page,
+              total: result.data.total,
+              per_page: result.data.per_page,
+            });
+          } else {
+            setAdmins(result.data || []);
+            setPagination(null);
+          }
         } else {
           console.error("Failed to fetch admins:", result.message);
         }
@@ -45,10 +59,13 @@ const AdminUsers = () => {
       } finally {
         setIsLoading(false);
       }
-    };
+    },
+    [authToken, currentPage]
+  );
 
+  useEffect(() => {
     fetchAdmins();
-  }, [authToken]);
+  }, [fetchAdmins]);
 
   // Handle token generation for specific admin
   const handleGenerateTokenForAdmin = (admin) => {
@@ -63,28 +80,7 @@ const AdminUsers = () => {
 
   // Refresh admins list (for use by child components)
   const refreshAdmins = async () => {
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/super-admin/landlords`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${
-              authToken || localStorage.getItem("authToken")
-            }`,
-          },
-        }
-      );
-
-      const result = await response.json();
-
-      if (response.ok && result.success) {
-        setAdmins(result.data || []);
-      }
-    } catch (error) {
-      console.error("Error refreshing admins:", error);
-    }
+    await fetchAdmins(currentPage);
   };
 
   // Filter admins based on search query
@@ -123,55 +119,62 @@ const AdminUsers = () => {
               View and manage all administrator accounts
             </p>
           </div>
-          {/* Sticky Search Bar */}
-          <div
-            className="sticky top-16 z-999 pb-6 mb-6"
-            style={{
-              background: isDarkMode
-                ? "linear-gradient(to bottom right, rgb(17, 24, 39), rgb(31, 41, 55), rgb(17, 24, 39))"
-                : "linear-gradient(to bottom right, rgb(249, 250, 251), rgb(243, 244, 246), rgb(249, 250, 251))",
-            }}
-          >
-            <div className="pt-4">
-              <div
-                className={`relative max-w-md flex items-center gap-1 px-3 py-2 rounded-lg ${theme.background.card} ${theme.shadow.small} border ${theme.border.secondary}`}
-              >
-                <Icon
-                  icon="mdi:magnify"
-                  className={`text-lg ${theme.text.tertiary}`}
-                />
+          {/* Search Bar */}
+          <div className="mb-6">
+            <div
+              className={`relative max-w-md flex items-center gap-1 px-3 py-2 rounded-lg ${theme.background.card} ${theme.shadow.small} border ${theme.border.secondary}`}
+            >
+              <Icon
+                icon="mdi:magnify"
+                className={`text-lg ${theme.text.tertiary}`}
+              />
 
-                <input
-                  type="text"
-                  placeholder="Search admins…"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className={`flex-1 bg-transparent text-sm ${theme.text.primary} placeholder-current placeholder-opacity-40 outline-none`}
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className={`p-1 rounded-full hover:${theme.background.secondary} transition-colors`}
-                  >
-                    <Icon
-                      icon="mdi:close"
-                      className={`text-sm ${theme.text.tertiary}`}
-                    />
-                  </button>
-                )}
-              </div>
-
-              {/* Search Results Count */}
+              <input
+                type="text"
+                placeholder="Search admins…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={`flex-1 bg-transparent text-sm ${theme.text.primary} placeholder-current placeholder-opacity-40 outline-none`}
+              />
               {searchQuery && (
-                <div className="mt-2 px-1">
-                  <span className={`text-sm ${theme.text.secondary}`}>
-                    Found {filteredAdmins.length} of {admins.length}{" "}
-                    administrators
-                  </span>
-                </div>
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className={`p-1 rounded-full hover:${theme.background.secondary} transition-colors`}
+                >
+                  <Icon
+                    icon="mdi:close"
+                    className={`text-sm ${theme.text.tertiary}`}
+                  />
+                </button>
               )}
             </div>
-          </div>{" "}
+
+            {/* Search Results Count */}
+            {searchQuery && (
+              <div className="mt-2 px-1">
+                <span className={`text-sm ${theme.text.secondary}`}>
+                  Found {filteredAdmins.length} of {admins.length}{" "}
+                  administrators
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Pagination Info */}
+          {pagination && (
+            <div
+              className={`${theme.background.card} rounded-lg p-3 ${theme.shadow.small} border ${theme.border.secondary} mb-6`}
+            >
+              <div className="flex items-center justify-between">
+                <span className={`text-sm ${theme.text.secondary}`}>
+                  Total Administrators: {pagination.total}
+                </span>
+                <span className={`text-sm ${theme.text.secondary}`}>
+                  Page {pagination.current_page} of {pagination.last_page}
+                </span>
+              </div>
+            </div>
+          )}
           {/* Total Admins Stat Card */}
           <div
             className={`${theme.background.card} rounded-2xl ${theme.shadow.medium} p-6 sm:p-8 mb-8`}
@@ -334,6 +337,50 @@ const AdminUsers = () => {
               ))
             )}
           </div>
+          {/* Pagination Controls */}
+          {!isLoading && pagination && pagination.last_page > 1 && (
+            <div className="mt-8 flex items-center justify-center gap-3">
+              <button
+                onClick={() => {
+                  setCurrentPage(pagination.current_page - 1);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                disabled={pagination.current_page === 1}
+                className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+                  pagination.current_page === 1
+                    ? `${theme.background.input} ${theme.text.tertiary} cursor-not-allowed opacity-50`
+                    : `bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md hover:shadow-lg`
+                }`}
+              >
+                <Icon icon="mdi:chevron-left" className="text-lg" />
+                Previous
+              </button>
+
+              <div
+                className={`px-4 py-2 ${theme.background.card} rounded-lg border ${theme.border.secondary} ${theme.shadow.small}`}
+              >
+                <span className={`text-sm font-medium ${theme.text.primary}`}>
+                  {pagination.current_page} / {pagination.last_page}
+                </span>
+              </div>
+
+              <button
+                onClick={() => {
+                  setCurrentPage(pagination.current_page + 1);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                disabled={pagination.current_page === pagination.last_page}
+                className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+                  pagination.current_page === pagination.last_page
+                    ? `${theme.background.input} ${theme.text.tertiary} cursor-not-allowed opacity-50`
+                    : `bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md hover:shadow-lg`
+                }`}
+              >
+                Next
+                <Icon icon="mdi:chevron-right" className="text-lg" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

@@ -7,8 +7,8 @@ const SuperAdminBottomNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Hide bottom nav on auth pages
-  const authPages = [
+  // Hide bottom nav on auth pages and transactions page
+  const hiddenPages = [
     "/login",
     "/signup-otp",
     "/signup",
@@ -16,8 +16,10 @@ const SuperAdminBottomNav = () => {
     "/forgot-password",
     "/reset-password-otp",
     "/settings",
+    "/transactions",
+    "/admin/transactions",
   ];
-  if (authPages.includes(location.pathname)) {
+  if (hiddenPages.includes(location.pathname)) {
     return null;
   }
 

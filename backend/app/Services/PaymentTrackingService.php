@@ -64,6 +64,19 @@ class PaymentTrackingService
      */
     public function checkTokenGenerationEligibility(User $user): array
     {
+        // Super admin users can always generate tokens
+        if ($user->role === 'super') {
+            return [
+                'can_generate' => true,
+                'message' => 'Super admin access - unlimited token generation.',
+                'payment_status' => [
+                    'is_up_to_date' => true,
+                    'is_super_admin' => true,
+                    'status_message' => 'Super admin - no payment required'
+                ]
+            ];
+        }
+        
         // Update the user's payment status first
         $user->updatePaymentStatus();
         
@@ -95,6 +108,20 @@ class PaymentTrackingService
      */
     public function getSubscriptionStatus(User $user): array
     {
+        // Super admin users have unlimited access
+        if ($user->role === 'super') {
+            return [
+                'has_active_subscription' => true,
+                'subscription_type' => 'super_admin',
+                'payment_status' => [
+                    'is_up_to_date' => true,
+                    'is_super_admin' => true,
+                    'status_message' => 'Super admin - no payment required'
+                ],
+                'can_generate_tokens' => true
+            ];
+        }
+        
         $paymentStatus = $user->getPaymentStatus();
         
         return [

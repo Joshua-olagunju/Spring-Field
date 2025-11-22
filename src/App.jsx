@@ -23,6 +23,7 @@ import SettingsScreen from "./screens/GeneralScreens/SettingsScreen/SettingsScre
 import SuperAdminDashboard from "./screens/SuperAdminDashboardScreens/DashboardScreen/SuperAdminDashboard";
 import AdminUsers from "./screens/SuperAdminDashboardScreens/AdminUsersScreen/AdminUsers";
 import SuperAdminReportScreen from "./screens/SuperAdminDashboardScreens/ReportScreen/ReportScreen";
+import SuperAdminTransactions from "./screens/SuperAdminDashboardScreens/Transactions/Transactions";
 import StatusBar from "../components/GeneralComponents/StatusBar";
 import LandlordDashboard from "./screens/AdminDashboardScreens/DashboardScreen/LandlordDashboard";
 import LandlordUsers from "./screens/AdminDashboardScreens/DashboardScreen/LandlordUsers";
@@ -39,6 +40,8 @@ import ProtectedRoute from "../components/GeneralComponents/ProtectedRoute";
 import SignupProtectedRoute from "../components/GeneralComponents/SignupProtectedRoute";
 import EmailVerificationProtectedRoute from "../components/GeneralComponents/EmailVerificationProtectedRoute";
 import PaymentScreen from "./screens/GeneralScreens/PaymentScreen/PaymentScreen";
+import Transactions from "./screens/GeneralScreens/PaymentScreen/Transactions";
+import SplashScreen from "../components/GeneralComponents/SplashScreen";
 
 // Auto-redirect component for root path
 const AutoRedirect = () => {
@@ -80,10 +83,21 @@ const AutoRedirect = () => {
 };
 
 function AppContent() {
-  const { logout } = useUser();
+  const { logout, isLoading } = useUser();
   const location = useLocation();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
+
+  // Handle splash screen - show for minimum 3 seconds
+  useEffect(() => {
+    if (!isLoading) {
+      const timer = setTimeout(() => {
+        setShowSplash(false);
+      }, 3300); // Show splash for minimum 3 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading]);
 
   // Listen for logout event from TopNavBar
   useEffect(() => {
@@ -126,6 +140,11 @@ function AppContent() {
 
   const showNavigation =
     isAuthenticated && !publicRoutes.includes(location.pathname);
+
+  // Show splash screen while loading
+  if (showSplash) {
+    return <SplashScreen />;
+  }
 
   return (
     <>
@@ -188,6 +207,14 @@ function AppContent() {
             }
           />
           <Route
+            path="/transactions"
+            element={
+              <ProtectedRoute>
+                <Transactions />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/profile"
             element={
               <ProtectedRoute>
@@ -239,6 +266,14 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/admin/transactions"
+            element={
+              <ProtectedRoute requiredRole="landlord">
+                <Transactions />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Super Admin Routes */}
           <Route
@@ -270,6 +305,14 @@ function AppContent() {
             element={
               <ProtectedRoute requiredRole="super">
                 <SuperAdminReportScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/super-admin/transactions"
+            element={
+              <ProtectedRoute requiredRole="super">
+                <SuperAdminTransactions />
               </ProtectedRoute>
             }
           />

@@ -7,19 +7,20 @@ const SuperAdminBottomNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Hide bottom nav on auth pages
-  const authPages = [
+  // Hide bottom nav on auth pages and transactions page
+  const hiddenPages = [
     "/login",
     "/signup-otp",
-
     "/signup",
     "/email-verification",
     "/forgot-password",
     "/reset-password-otp",
     "/reset-password",
     "/settings",
+    "/transactions",
+    "/admin/transactions",
   ];
-  if (authPages.includes(location.pathname)) {
+  if (hiddenPages.includes(location.pathname)) {
     return null;
   }
 
@@ -36,6 +37,7 @@ const SuperAdminBottomNav = () => {
       icon: "mdi:account-group-outline",
       iconFilled: "mdi:account-group",
     },
+
     {
       name: "Admins",
       path: "/super-admin/admins",
@@ -47,6 +49,12 @@ const SuperAdminBottomNav = () => {
       path: "/super-admin/reports",
       icon: "mdi:file-chart-outline",
       iconFilled: "mdi:file-chart",
+    },
+    {
+      name: "Transactions",
+      path: "/super-admin/transactions",
+      icon: "mdi:credit-card-outline",
+      iconFilled: "mdi:credit-card",
     },
   ];
 
@@ -61,7 +69,7 @@ const SuperAdminBottomNav = () => {
             <button
               key={item.path}
               onClick={() => navigate(item.path)}
-              className={`flex flex-col items-center justify-center gap-1 flex-1 sm:flex-none py-2 rounded-xl transition-all ${
+              className={`flex flex-col items-center justify-center gap-1 flex-1 sm:flex-none py-2 px-1 rounded-xl transition-all ${
                 isActive ? theme.bottomBar.active : theme.bottomBar.inactive
               }`}
             >

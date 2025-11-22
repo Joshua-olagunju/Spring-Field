@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../../context/useTheme";
 import { API_BASE_URL } from "../../config/apiConfig";
-import ThemeToggle from "../../../components/GeneralComponents/ThemeToggle";
 import AnimatedSecurityBackground from "../../../components/GeneralComponents/AnimatedSecurityBackground";
 import PoweredByDriftTech from "../../../components/GeneralComponents/PoweredByDriftTech";
 import { Icon } from "@iconify/react";
@@ -65,7 +64,6 @@ const ForgotPassword = () => {
 
   return (
     <>
-      <ThemeToggle />
       {/* Page Background */}
       <div
         className="fixed inset-0 min-h-screen w-screen overflow-y-auto overflow-x-hidden"

@@ -269,10 +269,16 @@ class User extends Authenticatable
     }
 
     /**
-     * Get address from related house
+     * Get address - prioritize user's personal address, fall back to house address
      */
-    public function getAddressAttribute()
+    public function getAddressAttribute($value)
     {
+        // If user has a personal address set, use it
+        if (!empty($value)) {
+            return $value;
+        }
+        
+        // Otherwise, fall back to house address
         return $this->house ? $this->house->address : null;
     }
 

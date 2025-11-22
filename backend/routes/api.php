@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\RegistrationOtpController;
 use App\Http\Controllers\Api\EmailVerificationController;
 use App\Http\Controllers\Api\VisitorTokenController;
 use App\Http\Controllers\Api\ReportsController;
+use App\Http\Controllers\Api\PaymentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -74,6 +75,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch('/users/{userId}/deactivate', [AuthController::class, 'deactivateUser']);
         Route::patch('/users/{userId}/activate', [AuthController::class, 'activateUser']);
         Route::delete('/users/{userId}', [AuthController::class, 'deleteUser']);
+        Route::get('/transactions', [PaymentController::class, 'getAllUserTransactions']);
     });
     
     // Landlord Dashboard routes

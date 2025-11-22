@@ -35,6 +35,14 @@ export const GenerateVisitorTokenModal = ({ theme, isOpen, onClose }) => {
   const checkSubscriptionStatus = useCallback(async () => {
     try {
       setIsCheckingSubscription(true);
+
+      // If user is super admin, bypass subscription check
+      if (user?.role === "super") {
+        setSubscriptionStatus({ has_active_subscription: true });
+        setIsCheckingSubscription(false);
+        return;
+      }
+
       const response = await fetch(
         `${API_BASE_URL}/api/payments/subscription-status`,
         {
@@ -60,7 +68,7 @@ export const GenerateVisitorTokenModal = ({ theme, isOpen, onClose }) => {
     } finally {
       setIsCheckingSubscription(false);
     }
-  }, [authToken, setError, setSubscriptionStatus]);
+  }, [authToken, user?.role, setError, setSubscriptionStatus]);
 
   useEffect(() => {
     if (isOpen && isAuthenticated && authToken) {
@@ -79,8 +87,11 @@ export const GenerateVisitorTokenModal = ({ theme, isOpen, onClose }) => {
       return;
     }
 
-    // Check if user has active subscription
-    if (!subscriptionStatus?.has_active_subscription) {
+    // Check if user has active subscription (skip for super admin)
+    if (
+      user?.role !== "super" &&
+      !subscriptionStatus?.has_active_subscription
+    ) {
       setError(
         "Active subscription required to generate visitor tokens. Please subscribe to a plan."
       );
@@ -271,7 +282,8 @@ Springfield Estate Security System`;
               </div>
             </div>
           ) : subscriptionStatus &&
-            !subscriptionStatus.has_active_subscription ? (
+            !subscriptionStatus.has_active_subscription &&
+            user?.role !== "super" ? (
             <div className="space-y-4">
               {/* Subscription Required Warning */}
               <div className="p-4 rounded-lg bg-orange-100 border border-orange-300">

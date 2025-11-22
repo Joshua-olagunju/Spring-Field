@@ -773,6 +773,19 @@ class PaymentController extends Controller
                 ], 401);
             }
 
+            // Super admin users have unlimited access, no subscription required
+            if ($user->role === 'super') {
+                return response()->json([
+                    'success' => true,
+                    'data' => [
+                        'has_active_subscription' => true,
+                        'subscription_type' => 'super_admin',
+                        'is_super_admin' => true,
+                        'message' => 'Super admin access - no subscription required'
+                    ]
+                ]);
+            }
+
             $paymentTrackingService = new PaymentTrackingService();
             $subscriptionStatus = $paymentTrackingService->getSubscriptionStatus($user);
 
@@ -791,6 +804,80 @@ class PaymentController extends Controller
                 'success' => false,
                 'message' => 'Failed to get subscription status',
                 'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get all user transactions for super admin (only successful payments)
+     */
+    public function getAllUserTransactions(Request $request)
+    {
+        try {
+            $user = Auth::user();
+
+            // Only super admin can access this endpoint
+            if (!$user || $user->role !== 'super') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized access'
+                ], 403);
+            }
+
+            $perPage = $request->input('per_page', 20);
+            $status = $request->input('status', 'paid'); // Default to successful payments only
+
+            // Fetch payments with user information
+            $payments = Payment::with(['user:id,full_name,first_name,last_name,email,role,house_type'])
+                ->where('status', $status)
+                ->orderBy('created_at', 'desc')
+                ->paginate($perPage);
+
+            // Transform the data to include user information
+            $transformedPayments = collect($payments->items())->map(function ($payment) {
+                return [
+                    'id' => $payment->id,
+                    'user' => [
+                        'id' => $payment->user->id,
+                        'full_name' => $payment->user->full_name ?? 
+                                     ($payment->user->first_name . ' ' . $payment->user->last_name),
+                        'email' => $payment->user->email,
+                        'role' => $payment->user->role,
+                        'house_type' => $payment->user->house_type,
+                    ],
+                    'amount' => $payment->amount,
+                    'period_type' => $payment->period_type,
+                    'period_start' => $payment->period_start,
+                    'period_end' => $payment->period_end,
+                    'status' => $payment->status,
+                    'flutterwave_txn_id' => $payment->flutterwave_txn_id,
+                    'flutterwave_plan_id' => $payment->flutterwave_plan_id,
+                    'created_at' => $payment->created_at,
+                    'paid_at' => $payment->paid_at ?? $payment->updated_at,
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Transactions retrieved successfully',
+                'data' => [
+                    'data' => $transformedPayments,
+                    'current_page' => $payments->currentPage(),
+                    'last_page' => $payments->lastPage(),
+                    'per_page' => $payments->perPage(),
+                    'total' => $payments->total(),
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error fetching all user transactions', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching transactions',
+                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
             ], 500);
         }
     }

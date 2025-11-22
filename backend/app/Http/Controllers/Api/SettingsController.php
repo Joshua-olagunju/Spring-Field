@@ -103,7 +103,28 @@ class SettingsController extends Controller
                 'updated_at' => now()
             ];
 
-            $user->update($updateData);
+            // Log what we're trying to update
+            \Log::info('Attempting to update user profile', [
+                'user_id' => $user->id,
+                'update_data' => $updateData,
+                'old_address' => $user->address
+            ]);
+
+            $updated = $user->update($updateData);
+            
+            // Log the result
+            \Log::info('Update result', [
+                'success' => $updated,
+                'new_address_before_refresh' => $user->address
+            ]);
+            
+            // Refresh the user model to get the latest data from database
+            $user->refresh();
+            
+            // Log after refresh
+            \Log::info('After refresh', [
+                'address_after_refresh' => $user->address
+            ]);
 
             return response()->json([
                 'success' => true,

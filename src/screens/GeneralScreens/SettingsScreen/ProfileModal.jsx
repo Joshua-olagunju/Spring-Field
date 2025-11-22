@@ -10,6 +10,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [userRole, setUserRole] = useState("");
 
   // Profile data
   const [profileData, setProfileData] = useState({
@@ -58,6 +59,12 @@ const ProfileModal = ({ isOpen, onClose }) => {
           phone: data.phone || "",
           address: data.address || "",
         });
+        // Get user role from response or localStorage
+        const role =
+          data.role ||
+          JSON.parse(localStorage.getItem("user") || "{}").role ||
+          "";
+        setUserRole(role);
       } else {
         setError(result.message || "Failed to load profile");
       }
@@ -70,12 +77,13 @@ const ProfileModal = ({ isOpen, onClose }) => {
   };
 
   const handleEditMode = () => {
-    setEditData({
+    const editableData = {
       first_name: profileData.first_name,
       last_name: profileData.last_name,
       phone: profileData.phone,
       address: profileData.address,
-    });
+    };
+    setEditData(editableData);
     setIsEditMode(true);
   };
 
@@ -95,18 +103,21 @@ const ProfileModal = ({ isOpen, onClose }) => {
     setSuccess("");
 
     try {
+      // Prepare the data to send
+      const dataToSend = {
+        first_name: editData.first_name,
+        last_name: editData.last_name,
+        phone: editData.phone,
+        address: editData.address,
+      };
+
       const response = await fetch(`${API_BASE_URL}/api/settings/profile`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        body: JSON.stringify({
-          first_name: editData.first_name,
-          last_name: editData.last_name,
-          phone: editData.phone,
-          address: editData.address,
-        }),
+        body: JSON.stringify(dataToSend),
       });
 
       const result = await response.json();
@@ -267,7 +278,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
                     <label
                       className={`block text-sm font-medium ${theme.text.primary} mb-2`}
                     >
-                      Address
+                      Address {userRole !== "landlord" && "(View Only)"}
                     </label>
                     <textarea
                       value={editData.address}
@@ -276,10 +287,24 @@ const ProfileModal = ({ isOpen, onClose }) => {
                         setError("");
                       }}
                       placeholder="Enter address"
-                      className={`w-full px-4 py-2 rounded-lg ${theme.background.input} ${theme.text.primary} border ${theme.border.secondary} focus:outline-none focus:border-blue-500 transition-colors resize-none`}
+                      className={`w-full px-4 py-2 rounded-lg ${
+                        theme.background.input
+                      } ${theme.text.primary} border ${
+                        theme.border.secondary
+                      } ${
+                        userRole === "landlord"
+                          ? "focus:outline-none focus:border-blue-500"
+                          : "opacity-75 cursor-not-allowed"
+                      } transition-colors resize-none`}
                       rows="3"
-                      disabled={isSaving}
+                      disabled={isSaving || userRole !== "landlord"}
+                      readOnly={userRole !== "landlord"}
                     />
+                    {userRole !== "landlord" && (
+                      <p className={`text-xs ${theme.text.tertiary} mt-1`}>
+                        Only landlords can edit the address field
+                      </p>
+                    )}
                   </div>
 
                   {/* Error Message */}

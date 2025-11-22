@@ -161,16 +161,6 @@ const SettingsScreen = () => {
               </div>
             </div>
           </div>
-
-          {/* Info Section */}
-          <div
-            className={`${theme.background.card} rounded-xl ${theme.shadow.small} p-4 sm:p-6 mt-8 border ${theme.border.secondary}`}
-          >
-            <p className={`text-xs sm:text-sm ${theme.text.secondary}`}>
-              💡 <strong>Tip:</strong> You can also toggle the theme using the
-              button in the top-right corner of the screen.
-            </p>
-          </div>
         </div>
       </div>
 

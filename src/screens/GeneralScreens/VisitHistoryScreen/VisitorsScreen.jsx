@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTheme } from "../../../../context/useTheme";
 import { useUser } from "../../../../context/useUser";
 import { Icon } from "@iconify/react";
@@ -12,10 +12,17 @@ const VisitorsScreen = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [visitors, setVisitors] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    last_page: 1,
+    total: 0,
+    per_page: 20,
+  });
 
-  // Fetch visitor entries from API
-  useEffect(() => {
-    const fetchVisitorEntries = async () => {
+  // Fetch visitor entries from API with pagination
+  const fetchVisitorEntries = useCallback(
+    async (page = 1, search = "") => {
       try {
         setIsLoading(true);
         // For admin users, fetch all entries; for regular users, fetch their entries
@@ -38,7 +45,35 @@ const VisitorsScreen = () => {
         const result = await response.json();
 
         if (response.ok && result.success) {
-          setVisitors(result.data.entries || []);
+          const allEntries = result.data.entries || [];
+
+          // Filter by search query
+          let filteredEntries = allEntries;
+          if (search.trim()) {
+            const searchLower = search.toLowerCase();
+            filteredEntries = allEntries.filter(
+              (entry) =>
+                entry.visitor_name?.toLowerCase().includes(searchLower) ||
+                entry.resident_name?.toLowerCase().includes(searchLower) ||
+                entry.house_number?.toLowerCase().includes(searchLower) ||
+                entry.visitor_phone?.toLowerCase().includes(searchLower)
+            );
+          }
+
+          // Paginate
+          const perPage = 20;
+          const totalPages = Math.ceil(filteredEntries.length / perPage);
+          const startIndex = (page - 1) * perPage;
+          const endIndex = startIndex + perPage;
+          const paginatedEntries = filteredEntries.slice(startIndex, endIndex);
+
+          setVisitors(paginatedEntries);
+          setPagination({
+            current_page: page,
+            last_page: totalPages,
+            total: filteredEntries.length,
+            per_page: perPage,
+          });
         } else {
           console.error("Failed to fetch visitor entries:", result.message);
         }
@@ -47,10 +82,13 @@ const VisitorsScreen = () => {
       } finally {
         setIsLoading(false);
       }
-    };
+    },
+    [authToken]
+  );
 
-    fetchVisitorEntries();
-  }, [authToken]);
+  useEffect(() => {
+    fetchVisitorEntries(1, searchQuery);
+  }, [fetchVisitorEntries, searchQuery]);
 
   const handleCardClick = (visitor) => {
     setSelectedVisitor(visitor);
@@ -86,6 +124,34 @@ const VisitorsScreen = () => {
             <p className={`text-sm sm:text-base ${theme.text.secondary}`}>
               Complete history of all visitor entries and token usage
             </p>
+          </div>
+
+          {/* Search Bar */}
+          <div className="mb-6 px-4 md:px-0">
+            <div className="relative">
+              <Icon
+                icon="mdi:magnify"
+                className={`absolute left-4 top-1/2 -translate-y-1/2 text-xl ${theme.text.tertiary}`}
+              />
+              <input
+                type="text"
+                placeholder="Search by visitor name, host, house number, or phone..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={`w-full pl-12 pr-4 py-3 rounded-xl ${theme.background.card} ${theme.text.primary} border ${theme.border.secondary} focus:outline-none focus:border-blue-500 transition-colors ${theme.shadow.small}`}
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className={`absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-full hover:${theme.background.input} transition-colors`}
+                >
+                  <Icon
+                    icon="mdi:close"
+                    className={`text-lg ${theme.text.tertiary}`}
+                  />
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Visitor Cards */}
@@ -174,6 +240,92 @@ const VisitorsScreen = () => {
               ))
             )}
           </div>
+
+          {/* Pagination */}
+          {!isLoading && visitors.length > 0 && pagination.last_page > 1 && (
+            <div className="mt-6 flex items-center justify-center gap-2 px-4 md:px-0">
+              {/* Previous Button */}
+              <button
+                onClick={() =>
+                  fetchVisitorEntries(pagination.current_page - 1, searchQuery)
+                }
+                disabled={pagination.current_page === 1}
+                className={`p-2 rounded-lg ${theme.background.card} ${theme.shadow.small} border ${theme.border.secondary} disabled:opacity-50 disabled:cursor-not-allowed hover:${theme.shadow.medium} transition-all`}
+              >
+                <Icon
+                  icon="mdi:chevron-left"
+                  className={`text-xl ${theme.text.primary}`}
+                />
+              </button>
+
+              {/* Page Numbers */}
+              <div className="flex items-center gap-2">
+                {Array.from({ length: pagination.last_page }, (_, i) => i + 1)
+                  .filter((page) => {
+                    // Show first, last, current, and adjacent pages
+                    return (
+                      page === 1 ||
+                      page === pagination.last_page ||
+                      Math.abs(page - pagination.current_page) <= 1
+                    );
+                  })
+                  .map((page, index, array) => {
+                    // Add ellipsis
+                    const prevPage = array[index - 1];
+                    const showEllipsis = prevPage && page - prevPage > 1;
+
+                    return (
+                      <div key={page} className="flex items-center gap-2">
+                        {showEllipsis && (
+                          <span className={`${theme.text.tertiary} px-2`}>
+                            ...
+                          </span>
+                        )}
+                        <button
+                          onClick={() => fetchVisitorEntries(page, searchQuery)}
+                          className={`min-w-[40px] h-10 rounded-lg font-medium transition-all ${
+                            page === pagination.current_page
+                              ? "bg-blue-600 text-white shadow-md"
+                              : `${theme.background.card} ${theme.text.primary} ${theme.shadow.small} border ${theme.border.secondary} hover:${theme.shadow.medium}`
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      </div>
+                    );
+                  })}
+              </div>
+
+              {/* Next Button */}
+              <button
+                onClick={() =>
+                  fetchVisitorEntries(pagination.current_page + 1, searchQuery)
+                }
+                disabled={pagination.current_page === pagination.last_page}
+                className={`p-2 rounded-lg ${theme.background.card} ${theme.shadow.small} border ${theme.border.secondary} disabled:opacity-50 disabled:cursor-not-allowed hover:${theme.shadow.medium} transition-all`}
+              >
+                <Icon
+                  icon="mdi:chevron-right"
+                  className={`text-xl ${theme.text.primary}`}
+                />
+              </button>
+            </div>
+          )}
+
+          {/* Results Info */}
+          {!isLoading && visitors.length > 0 && (
+            <div
+              className={`mt-4 text-center ${theme.text.secondary} text-sm px-4 md:px-0`}
+            >
+              Showing {(pagination.current_page - 1) * pagination.per_page + 1}{" "}
+              -{" "}
+              {Math.min(
+                pagination.current_page * pagination.per_page,
+                pagination.total
+              )}{" "}
+              of {pagination.total} visitors
+            </div>
+          )}
         </div>
       </div>
 
