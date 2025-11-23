@@ -56,7 +56,7 @@ const DashboardScreen = () => {
     fetchDashboardStats();
   }, [authToken]);
 
-  const handleVisitorClick = (visitor) => {
+  const handleVisitorClick = () => {
     // Navigation to generate access token screen will be implemented later
   };
 

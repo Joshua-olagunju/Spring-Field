@@ -10,6 +10,8 @@ import { useState, useEffect } from "react";
 import { ThemeProvider } from "../context/ThemeContext";
 import { UserProvider } from "../context/UserContext";
 import { useUser } from "../context/useUser";
+import { useNotifications } from "./hooks/useNotifications";
+import { onForegroundMessage } from "./firebase"; // Add this import
 import Login from "./screens/authenticationScreens/Login";
 import SignUp from "./screens/authenticationScreens/Signup";
 import SignUpOtpScreen from "./screens/authenticationScreens/SignUpOtpScreen";
@@ -83,11 +85,28 @@ const AutoRedirect = () => {
 };
 
 function AppContent() {
-  const { logout, isLoading } = useUser();
+  const { logout, isLoading, isAuthenticated } = useUser();
+  const { initializeNotifications } = useNotifications();
   const location = useLocation();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
+
+  // Auto-initialize notifications for authenticated users
+  useEffect(() => {
+    if (isAuthenticated) {
+      // Automatically request notification permission after login
+      initializeNotifications()
+        .then((token) => {
+          if (token) {
+            console.log("🔔 Notifications auto-enabled for authenticated user");
+          }
+        })
+        .catch((error) => {
+          console.log("⚠️ Notification permission not granted:", error);
+        });
+    }
+  }, [isAuthenticated, initializeNotifications]);
 
   // Handle splash screen - show for minimum 3 seconds
   useEffect(() => {
@@ -110,6 +129,68 @@ function AppContent() {
       window.removeEventListener("openLogoutModal", handleOpenLogoutModal);
   }, []);
 
+  // Listen for foreground push notifications
+  useEffect(() => {
+    const unsubscribe = onForegroundMessage((payload) => {
+      console.log("🔔 Foreground notification received:", payload);
+
+      // Show browser notification
+      if (payload.notification) {
+        const { title, body } = payload.notification;
+        const notificationData = payload.data || {};
+
+        // Create and show browser notification
+        if (Notification.permission === "granted") {
+          // Always use app logo for all notifications
+          const appIcon = "/icons/icon-192x192.png";
+
+          const notification = new Notification(title || "SpringField Estate", {
+            body: body || "You have a new notification",
+            icon: appIcon, // Always use your app logo
+            badge: "/icons/icon-72x72.png",
+            tag: "springfield-notification", // Prevents duplicate notifications
+            requireInteraction: true, // Keeps notification visible until user interacts
+            data: notificationData,
+          });
+
+          // Handle notification click
+          notification.onclick = function (event) {
+            event.preventDefault();
+            window.focus(); // Focus the app window
+            notification.close();
+
+            // Handle navigation based on notification type
+            console.log("📱 Notification clicked, data:", notificationData);
+
+            // You can add navigation logic here for different notification types
+            if (
+              notificationData.type === "visitor_arrival" ||
+              notificationData.type === "visitor_departure"
+            ) {
+              // Could navigate to visitors page or show visitor details
+              console.log(
+                "🚪 Visitor notification clicked:",
+                notificationData.visitor_name
+              );
+            }
+          };
+
+          // Auto-close after 10 seconds if not interacted with
+          setTimeout(() => {
+            notification.close();
+          }, 10000);
+        }
+      }
+    });
+
+    // Cleanup function
+    return () => {
+      if (typeof unsubscribe === "function") {
+        unsubscribe();
+      }
+    };
+  }, []);
+
   const handleConfirmLogout = async () => {
     setIsLoggingOut(true);
     try {
@@ -124,8 +205,6 @@ function AppContent() {
       setIsLoggingOut(false);
     }
   };
-
-  const { isAuthenticated } = useUser();
 
   // Routes that don't require authentication
   const publicRoutes = [

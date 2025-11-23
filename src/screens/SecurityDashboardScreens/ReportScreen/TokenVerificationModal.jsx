@@ -9,7 +9,10 @@ const TokenVerificationModal = ({ theme, isOpen, onClose }) => {
   const [currentToken, setCurrentToken] = useState(""); // Track the current token being verified
   const [isScanning, setIsScanning] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isGrantingEntry, setIsGrantingEntry] = useState(false);
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [verificationResult, setVerificationResult] = useState(null);
+  const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const html5QrCodeRef = useRef(null);
 
@@ -101,8 +104,11 @@ const TokenVerificationModal = ({ theme, isOpen, onClose }) => {
     setTokenInput("");
     setCurrentToken("");
     setVerificationResult(null);
+    setSuccessMessage("");
     setErrorMessage("");
     setIsVerifying(false);
+    setIsGrantingEntry(false);
+    setIsCheckingOut(false);
     onClose();
   }, [isScanning, stopScanner, onClose]);
 
@@ -155,12 +161,12 @@ const TokenVerificationModal = ({ theme, isOpen, onClose }) => {
           fps: 10, // Frame per seconds for QR code scanning
           qrbox: { width: 250, height: 320 }, // Bounded box UI
         },
-        (decodedText, decodedResult) => {
+        (decodedText) => {
           // Success callback - code is read
           handleTokenVerification(decodedText);
           stopScanner();
         },
-        (errorMessage) => {
+        () => {
           // Error callback - parse error, ignore it as per docs
         }
       );
@@ -204,6 +210,10 @@ const TokenVerificationModal = ({ theme, isOpen, onClose }) => {
   }, [handleTokenVerification, stopScanner, handleClose]);
 
   const handleGrantEntry = async () => {
+    setIsGrantingEntry(true);
+    setErrorMessage("");
+    setSuccessMessage("");
+
     try {
       const authToken =
         localStorage.getItem("authToken") || localStorage.getItem("token");
@@ -235,18 +245,29 @@ const TokenVerificationModal = ({ theme, isOpen, onClose }) => {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        // TODO: Show success notification
-        handleClose();
+        setSuccessMessage(
+          `✅ Entry granted successfully! ${verificationResult.visitorInfo.name} has been allowed access to the premises.`
+        );
+        // Auto-close modal after 2 seconds
+        setTimeout(() => {
+          handleClose();
+        }, 2000);
       } else {
         setErrorMessage(result.message || "Failed to grant entry");
       }
     } catch (error) {
       console.error("Grant entry error:", error);
       setErrorMessage("Failed to grant entry. Please try again.");
+    } finally {
+      setIsGrantingEntry(false);
     }
   };
 
   const handleCheckout = async () => {
+    setIsCheckingOut(true);
+    setErrorMessage("");
+    setSuccessMessage("");
+
     try {
       const authToken =
         localStorage.getItem("authToken") || localStorage.getItem("token");
@@ -257,7 +278,7 @@ const TokenVerificationModal = ({ theme, isOpen, onClose }) => {
       }
 
       const response = await fetch(
-        `${API_BASE_URL}/api/visitor-tokens/checkout`,
+        `${API_BASE_URL}/api/visitor-tokens/exit-visitor`,
         {
           method: "POST",
           headers: {
@@ -265,7 +286,7 @@ const TokenVerificationModal = ({ theme, isOpen, onClose }) => {
             Authorization: `Bearer ${authToken}`,
           },
           body: JSON.stringify({
-            token: currentToken,
+            entry_id: verificationResult.entryId, // Use entry_id for checkout
             note: `Checked out via ${
               verificationMode === "scan" ? "QR scan" : "manual input"
             }`,
@@ -276,14 +297,21 @@ const TokenVerificationModal = ({ theme, isOpen, onClose }) => {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        // TODO: Show success notification
-        handleClose();
+        setSuccessMessage(
+          `✅ Check out successful! ${verificationResult.visitorInfo.name} has been checked out of the premises.`
+        );
+        // Auto-close modal after 2 seconds
+        setTimeout(() => {
+          handleClose();
+        }, 2000);
       } else {
         setErrorMessage(result.message || "Failed to check out visitor");
       }
     } catch (error) {
       console.error("Checkout error:", error);
       setErrorMessage("Failed to check out visitor. Please try again.");
+    } finally {
+      setIsCheckingOut(false);
     }
   };
 
@@ -701,30 +729,74 @@ const TokenVerificationModal = ({ theme, isOpen, onClose }) => {
                       </div>
                     )}
 
+                  {/* Success/Error Messages */}
+                  {successMessage && (
+                    <div className="mb-4 p-4 rounded-lg bg-green-100 dark:bg-green-900 border border-green-300 dark:border-green-700">
+                      <p className="text-sm text-green-800 dark:text-green-200 flex items-center gap-2">
+                        <Icon icon="mdi:check-circle" />
+                        {successMessage}
+                      </p>
+                    </div>
+                  )}
+
+                  {errorMessage && (
+                    <div className="mb-4 p-3 rounded-lg bg-red-100 dark:bg-red-900 border border-red-300 dark:border-red-700">
+                      <p className="text-sm text-red-800 dark:text-red-200 flex items-center gap-2">
+                        <Icon icon="mdi:alert-circle" />
+                        {errorMessage}
+                      </p>
+                    </div>
+                  )}
+
                   <div className="flex gap-3 mt-6">
                     <button
                       onClick={handleClose}
-                      className={`flex-1 px-4 py-3 rounded-lg ${theme.background.input} ${theme.text.primary} font-medium hover:${theme.background.card} transition-colors`}
+                      disabled={isGrantingEntry || isCheckingOut}
+                      className={`flex-1 px-4 py-3 rounded-lg ${theme.background.input} ${theme.text.primary} font-medium hover:${theme.background.card} transition-colors disabled:opacity-50`}
                     >
-                      Cancel
+                      {successMessage ? "Close" : "Cancel"}
                     </button>
 
                     {/* Show Grant Entry or Check Out button based on isGranted */}
                     {verificationResult.isGranted ? (
                       <button
                         onClick={handleCheckout}
-                        className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+                        disabled={
+                          isCheckingOut || isGrantingEntry || successMessage
+                        }
+                        className="flex-1 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
                       >
-                        <Icon icon="mdi:logout" />
-                        Check Out Visitor
+                        {isCheckingOut ? (
+                          <>
+                            <Icon icon="mdi:loading" className="animate-spin" />
+                            Checking Out...
+                          </>
+                        ) : (
+                          <>
+                            <Icon icon="mdi:logout" />
+                            Check Out Visitor
+                          </>
+                        )}
                       </button>
                     ) : (
                       <button
                         onClick={handleGrantEntry}
-                        className="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+                        disabled={
+                          isGrantingEntry || isCheckingOut || successMessage
+                        }
+                        className="flex-1 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
                       >
-                        <Icon icon="mdi:check-circle" />
-                        Grant Entry
+                        {isGrantingEntry ? (
+                          <>
+                            <Icon icon="mdi:loading" className="animate-spin" />
+                            Granting Entry...
+                          </>
+                        ) : (
+                          <>
+                            <Icon icon="mdi:check-circle" />
+                            Grant Entry
+                          </>
+                        )}
                       </button>
                     )}
                   </div>
