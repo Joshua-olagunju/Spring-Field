@@ -4,14 +4,15 @@ import { getAnalytics } from "firebase/analytics";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
 // Your web app's Firebase configuration
+// Uses environment variables for production deployment
 const firebaseConfig = {
-  apiKey: "AIzaSyDhhXqDiOx_6QujQp4uPxY2poXzTMygulk",
-  authDomain: "notification-3e1ff.firebaseapp.com",
-  projectId: "notification-3e1ff",
-  storageBucket: "notification-3e1ff.firebasestorage.app",
-  messagingSenderId: "273002087588",
-  appId: "1:273002087588:web:89fe7bbc074671ce8c9231",
-  measurementId: "G-ZFPEBC7ECZ",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDhhXqDiOx_6QujQp4uPxY2poXzTMygulk",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "notification-3e1ff.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "notification-3e1ff",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "notification-3e1ff.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "273002087588",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:273002087588:web:89fe7bbc074671ce8c9231",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-ZFPEBC7ECZ",
 };
 
 // Initialize Firebase
@@ -39,6 +40,7 @@ export async function requestNotificationPermission() {
     // Get FCM token
     const token = await getToken(messaging, {
       vapidKey:
+        import.meta.env.VITE_FIREBASE_VAPID_KEY ||
         "BGDB_4SHiLJH1mOsYkUvZ3CNs5YxBFBe3fKGGYxkl7QW7PzKd4hy_zXO_4fcqydRIQDaZ4YW2kvqVV07na2SMkw",
     });
 
