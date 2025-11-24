@@ -35,6 +35,11 @@ const AdminUsersActions = ({
   const [adminUsers, setAdminUsers] = useState([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [userActionModal, setUserActionModal] = useState({
+    type: null,
+    userId: null,
+    userName: "",
+  });
 
   // Fetch admin's users from API
   const fetchAdminUsers = async () => {
@@ -85,9 +90,10 @@ const AdminUsersActions = ({
       const result = await response.json();
 
       if (response.ok) {
-        // Refresh admin list
-        if (onAdminUpdate) onAdminUpdate();
-        setActiveModal(null);
+        // Refresh the user list
+        await fetchAdminUsers();
+        // Close the confirmation modal
+        setUserActionModal({ type: null, userId: null, userName: "" });
       } else {
         console.error(
           `Failed to ${action} user:`,
@@ -119,8 +125,10 @@ const AdminUsersActions = ({
       const result = await response.json();
 
       if (response.ok) {
-        // Refresh users list
-        fetchAdminUsers();
+        // Refresh the user list
+        await fetchAdminUsers();
+        // Close the confirmation modal
+        setUserActionModal({ type: null, userId: null, userName: "" });
       } else {
         console.error(
           "Failed to delete user:",
@@ -256,11 +264,6 @@ const AdminUsersActions = ({
       setActiveModal(null);
       setIsMenuOpen(false);
     }
-  };
-
-  const confirmAction = (action) => {
-    setActiveModal(null);
-    setIsMenuOpen(false);
   };
 
   return (
@@ -549,7 +552,7 @@ const AdminUsersActions = ({
                   Cancel
                 </button>
                 <button
-                  onClick={() => confirmAction("Delete")}
+                  onClick={() => setActiveModal(null)}
                   className="flex-1 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium transition-colors"
                 >
                   Delete
@@ -699,7 +702,11 @@ const AdminUsersActions = ({
                         {user.status === "active" ? (
                           <button
                             onClick={() =>
-                              handleToggleUserStatus(user.id, "deactivate")
+                              setUserActionModal({
+                                type: "deactivate",
+                                userId: user.id,
+                                userName: user.full_name,
+                              })
                             }
                             className="p-1.5 rounded-full bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-900 dark:hover:bg-yellow-800 transition-colors"
                             title="Deactivate User"
@@ -712,7 +719,11 @@ const AdminUsersActions = ({
                         ) : (
                           <button
                             onClick={() =>
-                              handleToggleUserStatus(user.id, "activate")
+                              setUserActionModal({
+                                type: "activate",
+                                userId: user.id,
+                                userName: user.full_name,
+                              })
                             }
                             className="p-1.5 rounded-full bg-green-100 hover:bg-green-200 dark:bg-green-900 dark:hover:bg-green-800 transition-colors"
                             title="Activate User"
@@ -726,7 +737,13 @@ const AdminUsersActions = ({
 
                         {/* Delete */}
                         <button
-                          onClick={() => handleDeleteUser(user.id)}
+                          onClick={() =>
+                            setUserActionModal({
+                              type: "delete",
+                              userId: user.id,
+                              userName: user.full_name,
+                            })
+                          }
                           className="p-1.5 rounded-full bg-red-100 hover:bg-red-200 dark:bg-red-900 dark:hover:bg-red-800 transition-colors"
                           title="Delete User"
                         >
@@ -961,6 +978,162 @@ const AdminUsersActions = ({
         isOpen={selectedUser !== null}
         onClose={() => setSelectedUser(null)}
       />
+
+      {/* User Action Confirmation Modals */}
+      {/* Deactivate User Confirmation */}
+      {userActionModal.type === "deactivate" && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() =>
+              setUserActionModal({ type: null, userId: null, userName: "" })
+            }
+          />
+          <div
+            className={`${theme.background.card} w-full max-w-md rounded-2xl ${theme.shadow.large} relative`}
+          >
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Icon
+                  icon="mdi:account-off"
+                  className="text-3xl text-yellow-600 dark:text-yellow-400"
+                />
+              </div>
+              <h3 className={`text-lg font-bold ${theme.text.primary} mb-2`}>
+                Deactivate User
+              </h3>
+              <p className={`text-sm ${theme.text.secondary} mb-6`}>
+                Are you sure you want to deactivate {userActionModal.userName}?
+                They will not be able to access the system until reactivated.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() =>
+                    setUserActionModal({
+                      type: null,
+                      userId: null,
+                      userName: "",
+                    })
+                  }
+                  className={`flex-1 px-4 py-3 rounded-lg ${theme.background.input} ${theme.text.primary} font-medium hover:${theme.background.card} transition-colors`}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() =>
+                    handleToggleUserStatus(userActionModal.userId, "deactivate")
+                  }
+                  className="flex-1 px-4 py-3 rounded-lg bg-yellow-600 hover:bg-yellow-700 text-white font-medium transition-colors"
+                >
+                  Deactivate
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Activate User Confirmation */}
+      {userActionModal.type === "activate" && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() =>
+              setUserActionModal({ type: null, userId: null, userName: "" })
+            }
+          />
+          <div
+            className={`${theme.background.card} w-full max-w-md rounded-2xl ${theme.shadow.large} relative`}
+          >
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Icon
+                  icon="mdi:account-check"
+                  className="text-3xl text-green-600 dark:text-green-400"
+                />
+              </div>
+              <h3 className={`text-lg font-bold ${theme.text.primary} mb-2`}>
+                Activate User
+              </h3>
+              <p className={`text-sm ${theme.text.secondary} mb-6`}>
+                Are you sure you want to activate {userActionModal.userName}?
+                They will be able to access the system again.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() =>
+                    setUserActionModal({
+                      type: null,
+                      userId: null,
+                      userName: "",
+                    })
+                  }
+                  className={`flex-1 px-4 py-3 rounded-lg ${theme.background.input} ${theme.text.primary} font-medium hover:${theme.background.card} transition-colors`}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() =>
+                    handleToggleUserStatus(userActionModal.userId, "activate")
+                  }
+                  className="flex-1 px-4 py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium transition-colors"
+                >
+                  Activate
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete User Confirmation */}
+      {userActionModal.type === "delete" && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() =>
+              setUserActionModal({ type: null, userId: null, userName: "" })
+            }
+          />
+          <div
+            className={`${theme.background.card} w-full max-w-md rounded-2xl ${theme.shadow.large} relative`}
+          >
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Icon icon="mdi:delete" className="text-3xl text-red-600" />
+              </div>
+              <h3 className={`text-lg font-bold ${theme.text.primary} mb-2`}>
+                Delete User
+              </h3>
+              <p className={`text-sm ${theme.text.secondary} mb-6`}>
+                Are you sure you want to permanently delete{" "}
+                {userActionModal.userName}? This action cannot be undone and all
+                user data will be lost.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() =>
+                    setUserActionModal({
+                      type: null,
+                      userId: null,
+                      userName: "",
+                    })
+                  }
+                  className={`flex-1 px-4 py-3 rounded-lg ${theme.background.input} ${theme.text.primary} font-medium hover:${theme.background.card} transition-colors`}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDeleteUser(userActionModal.userId)}
+                  className="flex-1 px-4 py-3 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium transition-colors"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

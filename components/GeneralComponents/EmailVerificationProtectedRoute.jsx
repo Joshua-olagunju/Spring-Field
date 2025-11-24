@@ -59,8 +59,11 @@ const EmailVerificationProtectedRoute = ({ children }) => {
   }
 
   // Redirect to login if not authenticated and no verification state
-  if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+  if (!isAuthenticated && !hasVerificationState) {
+    // Don't redirect to login - just show the email verification page
+    // This prevents users from being kicked to login when switching apps
+    console.log("⚠️ Not authenticated but allowing email verification access");
+    return children;
   }
 
   // If email is already verified, redirect to appropriate dashboard

@@ -405,33 +405,67 @@ const SuperAdminTransactions = () => {
         setIsLoading(true);
         setError("");
 
+        const token = authToken || localStorage.getItem("authToken");
+        if (!token) {
+          setError("Authentication required. Please login again.");
+          setIsLoading(false);
+          return;
+        }
+
         const response = await fetch(
-          `${API_BASE_URL}/api/super-admin/transactions?page=${page}&per_page=20&status=paid`,
+          `${API_BASE_URL}/api/super-admin/transactions?page=${page}&per_page=20`,
           {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${authToken}`,
+              Authorization: `Bearer ${token}`,
+              Accept: "application/json",
             },
           }
         );
 
+        // Check if response is ok before parsing
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("API Error Response:", errorText);
+          let errorMessage = "Failed to fetch transactions";
+          try {
+            const errorJson = JSON.parse(errorText);
+            errorMessage = errorJson.message || errorJson.error || errorMessage;
+          } catch {
+            errorMessage = `Server error (${response.status})`;
+          }
+          setError(errorMessage);
+          setIsLoading(false);
+          return;
+        }
+
         const result = await response.json();
+        console.log("Transactions API Response:", result);
 
         if (response.ok && result.success) {
-          if (result.data.data) {
-            setTransactions(result.data.data || []);
+          // Handle paginated response
+          if (result.data && Array.isArray(result.data.data)) {
+            setTransactions(result.data.data);
             setPagination({
               current_page: result.data.current_page,
               last_page: result.data.last_page,
               total: result.data.total,
               per_page: result.data.per_page,
             });
-          } else {
-            setTransactions(result.data || []);
+          }
+          // Handle direct array response
+          else if (Array.isArray(result.data)) {
+            setTransactions(result.data);
+            setPagination(null);
+          }
+          // Handle no data
+          else {
+            setTransactions([]);
             setPagination(null);
           }
         } else {
+          console.error("API Error:", result);
           setError(result.message || "Failed to fetch transactions");
         }
       } catch (err) {
@@ -519,7 +553,7 @@ const SuperAdminTransactions = () => {
                 placeholder="Search by name, email, role, or house type..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className={`flex-1 bg-transparent text-sm ${theme.text.primary} placeholder-current placeholder-opacity-40 outline-none`}
+                className={`flex-1 min-w-0 bg-transparent text-sm ${theme.text.primary} placeholder-current placeholder-opacity-40 outline-none overflow-hidden text-ellipsis`}
               />
               {searchQuery && (
                 <button

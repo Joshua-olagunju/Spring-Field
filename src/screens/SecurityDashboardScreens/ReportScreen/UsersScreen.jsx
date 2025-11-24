@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTheme } from "../../../../context/useTheme";
 import { useUser } from "../../../../context/useUser";
 import { Icon } from "@iconify/react";
@@ -6,7 +6,7 @@ import { API_BASE_URL } from "../../../config/apiConfig";
 
 const UsersScreen = () => {
   const { theme, isDarkMode } = useTheme();
-  const { user } = useUser();
+  const { user, authToken } = useUser();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
   const [showUserModal, setShowUserModal] = useState(false);
@@ -16,53 +16,78 @@ const UsersScreen = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState({
     current_page: 1,
-    per_page: 20,
+    per_page: 50,
     total: 0,
-    total_pages: 0,
+    last_page: 0,
     has_next: false,
     has_prev: false,
   });
 
   // Fetch users from API
-  const fetchUsers = async (page = 1, search = "") => {
-    try {
-      setLoading(true);
-      setError("");
+  const fetchUsers = useCallback(
+    async (page = 1, search = "") => {
+      try {
+        setLoading(true);
+        setError("");
 
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setError("Authentication required");
-        return;
-      }
-
-      const searchParam = search.trim()
-        ? `&search=${encodeURIComponent(search.trim())}`
-        : "";
-      const response = await fetch(
-        `${API_BASE_URL}/api/test-security-users?page=${page}${searchParam}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
+        const token = authToken || localStorage.getItem("authToken");
+        if (!token) {
+          setError("Authentication required");
+          return;
         }
-      );
 
-      const data = await response.json();
+        const searchParam = search.trim()
+          ? `&search=${encodeURIComponent(search.trim())}`
+          : "";
+        const response = await fetch(
+          `${API_BASE_URL}/api/security/all-users?page=${page}&per_page=50${searchParam}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
-      if (data.success) {
-        setUsers(data.data.users);
-        setPagination(data.data.pagination);
-      } else {
-        setError(data.message || "Failed to fetch users");
+        const data = await response.json();
+
+        if (data.success) {
+          // Check if data is paginated like AdminUsers
+          if (data.data.data) {
+            setUsers(data.data.data || []);
+            setPagination({
+              current_page: data.data.current_page,
+              last_page: data.data.last_page,
+              total: data.data.total,
+              per_page: data.data.per_page,
+            });
+          } else if (data.data.users) {
+            setUsers(data.data.users || []);
+            setPagination({
+              current_page: data.data.pagination?.current_page || 1,
+              last_page: data.data.pagination?.last_page || 1,
+              total: data.data.pagination?.total || 0,
+              per_page: data.data.pagination?.per_page || 50,
+              has_next: data.data.pagination?.has_next || false,
+              has_prev: data.data.pagination?.has_prev || false,
+            });
+          } else {
+            setUsers(data.data || []);
+            setPagination(null);
+          }
+        } else {
+          setError(data.message || "Failed to fetch users");
+        }
+      } catch (error) {
+        console.error("Error fetching users:", error);
+        setError("Unable to connect to server");
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      setError("Unable to connect to server");
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [authToken]
+  );
 
   // Search with debounce
   useEffect(() => {
@@ -72,18 +97,19 @@ const UsersScreen = () => {
     }, 500);
 
     return () => clearTimeout(delayedSearch);
-  }, [searchQuery]);
+  }, [searchQuery, fetchUsers]);
 
   // Initial load
   useEffect(() => {
-    fetchUsers(1, searchQuery);
-  }, []);
+    fetchUsers(1, "");
+  }, [fetchUsers]);
 
   // Handle page change
   const handlePageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= pagination.total_pages) {
+    if (newPage >= 1 && newPage <= pagination.last_page) {
       setCurrentPage(newPage);
       fetchUsers(newPage, searchQuery);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
@@ -192,34 +218,61 @@ const UsersScreen = () => {
           </p>
         </div>
 
-        {/* Sticky Search Bar */}
-        <div
-          className="sticky top-16 z-30 pb-6 mb-6"
-          style={{
-            background: isDarkMode
-              ? "linear-gradient(to bottom right, rgb(17, 24, 39), rgb(31, 41, 55), rgb(17, 24, 39))"
-              : "linear-gradient(to bottom right, rgb(249, 250, 251), rgb(243, 244, 246), rgb(249, 250, 251))",
-          }}
-        >
-          <div className="pt-4">
-            <div
-              className={`relative max-w-md flex items-center gap-1 px-3 py-2 rounded-lg ${theme.background.card} ${theme.shadow.small} border ${theme.border.secondary}`}
-            >
-              <Icon
-                icon="mdi:magnify"
-                className={`text-lg ${theme.text.tertiary}`}
-              />
+        {/* Search Bar */}
+        <div className="mb-6">
+          <div
+            className={`relative max-w-md flex items-center gap-1 px-3 py-2 rounded-lg ${theme.background.card} ${theme.shadow.small} border ${theme.border.secondary}`}
+          >
+            <Icon
+              icon="mdi:magnify"
+              className={`text-lg ${theme.text.tertiary}`}
+            />
 
-              <input
-                type="text"
-                placeholder="Search users…"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className={`flex-1 bg-transparent text-sm ${theme.text.primary} placeholder-current placeholder-opacity-40 outline-none`}
-              />
+            <input
+              type="text"
+              placeholder="Search users…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className={`flex-1 bg-transparent text-sm ${theme.text.primary} placeholder-current placeholder-opacity-40 outline-none`}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className={`p-1 rounded-full hover:${theme.background.secondary} transition-colors`}
+              >
+                <Icon
+                  icon="mdi:close"
+                  className={`text-sm ${theme.text.tertiary}`}
+                />
+              </button>
+            )}
+          </div>
+
+          {/* Search Results Count */}
+          {searchQuery && (
+            <div className="mt-2 px-1">
+              <span className={`text-sm ${theme.text.secondary}`}>
+                Found {users.length} users
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Pagination Info */}
+        {pagination && (
+          <div
+            className={`${theme.background.card} rounded-lg p-3 ${theme.shadow.small} border ${theme.border.secondary} mb-6`}
+          >
+            <div className="flex items-center justify-between">
+              <span className={`text-sm ${theme.text.secondary}`}>
+                Total Users: {pagination.total}
+              </span>
+              <span className={`text-sm ${theme.text.secondary}`}>
+                Page {pagination.current_page} of {pagination.last_page}
+              </span>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Users Section */}
         <div
@@ -353,12 +406,40 @@ const UsersScreen = () => {
                         >
                           {user.email}
                         </p>
-                        <p className={`text-xs ${theme.text.tertiary} mt-1`}>
-                          Created: {user.created_at}
-                        </p>
-                        <p className={`text-xs ${theme.text.tertiary}`}>
-                          Last Active: {user.last_active}
-                        </p>
+                        <div className="flex items-center gap-4 flex-wrap mt-2">
+                          <p className={`text-xs ${theme.text.tertiary}`}>
+                            Created: {user.created_at}
+                          </p>
+                          <p className={`text-xs ${theme.text.tertiary}`}>
+                            Last Active:{" "}
+                            {user.last_login_at || user.last_active || "Never"}
+                          </p>
+                          {/* Payment Count */}
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`text-xs font-medium ${theme.text.secondary}`}
+                            >
+                              Payments:
+                            </span>
+                            <span
+                              className={`text-sm font-bold ${
+                                (user.payment_count || 0) >=
+                                (user.months_since_registration || 0)
+                                  ? "text-green-600 dark:text-green-400"
+                                  : (user.payment_count || 0) >=
+                                    Math.ceil(
+                                      (user.months_since_registration || 0) *
+                                        0.6
+                                    )
+                                  ? "text-yellow-600 dark:text-yellow-400"
+                                  : "text-red-600 dark:text-red-400"
+                              }`}
+                            >
+                              {user.payment_count || 0}/
+                              {user.months_since_registration || 0}
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -383,75 +464,45 @@ const UsersScreen = () => {
           </div>
 
           {/* Pagination Controls */}
-          {!loading && !error && pagination.total_pages > 1 && (
-            <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <div className="flex items-center gap-2">
-                <p className={`text-sm ${theme.text.secondary}`}>
-                  Page {pagination.current_page} of {pagination.total_pages}
-                </p>
-                <span className={`text-xs ${theme.text.tertiary}`}>
-                  ({pagination.total} total users)
+          {!loading && !error && pagination && pagination.last_page > 1 && (
+            <div className="mt-8 flex items-center justify-center gap-3">
+              <button
+                onClick={() => {
+                  handlePageChange(pagination.current_page - 1);
+                }}
+                disabled={pagination.current_page === 1}
+                className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+                  pagination.current_page === 1
+                    ? `${theme.background.input} ${theme.text.tertiary} cursor-not-allowed opacity-50`
+                    : `bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md hover:shadow-lg`
+                }`}
+              >
+                <Icon icon="mdi:chevron-left" className="text-lg" />
+                Previous
+              </button>
+
+              <div
+                className={`px-4 py-2 ${theme.background.card} rounded-lg border ${theme.border.secondary} ${theme.shadow.small}`}
+              >
+                <span className={`text-sm font-medium ${theme.text.primary}`}>
+                  {pagination.current_page} / {pagination.last_page}
                 </span>
               </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={!pagination.has_prev}
-                  className={`p-2 rounded-lg ${
-                    pagination.has_prev
-                      ? `${theme.background.input} hover:${theme.background.card} ${theme.text.primary}`
-                      : `${theme.background.secondary} ${theme.text.tertiary} cursor-not-allowed`
-                  } transition-colors`}
-                >
-                  <Icon icon="mdi:chevron-left" className="text-lg" />
-                </button>
-
-                {/* Page numbers */}
-                <div className="flex items-center gap-1">
-                  {Array.from(
-                    { length: Math.min(5, pagination.total_pages) },
-                    (_, i) => {
-                      let pageNum;
-                      if (pagination.total_pages <= 5) {
-                        pageNum = i + 1;
-                      } else if (currentPage <= 3) {
-                        pageNum = i + 1;
-                      } else if (currentPage >= pagination.total_pages - 2) {
-                        pageNum = pagination.total_pages - 4 + i;
-                      } else {
-                        pageNum = currentPage - 2 + i;
-                      }
-
-                      return (
-                        <button
-                          key={pageNum}
-                          onClick={() => handlePageChange(pageNum)}
-                          className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                            pageNum === currentPage
-                              ? `${theme.brand.primary} text-white`
-                              : `${theme.background.input} hover:${theme.background.card} ${theme.text.primary}`
-                          }`}
-                        >
-                          {pageNum}
-                        </button>
-                      );
-                    }
-                  )}
-                </div>
-
-                <button
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={!pagination.has_next}
-                  className={`p-2 rounded-lg ${
-                    pagination.has_next
-                      ? `${theme.background.input} hover:${theme.background.card} ${theme.text.primary}`
-                      : `${theme.background.secondary} ${theme.text.tertiary} cursor-not-allowed`
-                  } transition-colors`}
-                >
-                  <Icon icon="mdi:chevron-right" className="text-lg" />
-                </button>
-              </div>
+              <button
+                onClick={() => {
+                  handlePageChange(pagination.current_page + 1);
+                }}
+                disabled={pagination.current_page === pagination.last_page}
+                className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+                  pagination.current_page === pagination.last_page
+                    ? `${theme.background.input} ${theme.text.tertiary} cursor-not-allowed opacity-50`
+                    : `bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md hover:shadow-lg`
+                }`}
+              >
+                Next
+                <Icon icon="mdi:chevron-right" className="text-lg" />
+              </button>
             </div>
           )}
         </div>
@@ -555,8 +606,76 @@ const UsersScreen = () => {
                   <div>
                     <p className={`${theme.text.tertiary} mb-1`}>Last Login</p>
                     <p className={`${theme.text.primary}`}>
-                      {selectedUser.last_login_at}
+                      {selectedUser.last_login_at ||
+                        selectedUser.last_active ||
+                        "Never"}
                     </p>
+                  </div>
+                  <div>
+                    <p className={`${theme.text.tertiary} mb-1`}>Payments</p>
+                    <p className={`${theme.text.primary}`}>
+                      <span
+                        className={`font-bold ${
+                          (selectedUser.payment_count || 0) >=
+                          (selectedUser.months_since_registration || 0)
+                            ? "text-green-600 dark:text-green-400"
+                            : (selectedUser.payment_count || 0) >=
+                              Math.ceil(
+                                (selectedUser.months_since_registration || 0) *
+                                  0.6
+                              )
+                            ? "text-yellow-600 dark:text-yellow-400"
+                            : "text-red-600 dark:text-red-400"
+                        }`}
+                      >
+                        {selectedUser.payment_count || 0}/
+                        {selectedUser.months_since_registration || 0}
+                      </span>
+                    </p>
+                  </div>
+                  <div>
+                    <p className={`${theme.text.tertiary} mb-1`}>
+                      Payment Status
+                    </p>
+                    <span
+                      className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                        (selectedUser.payment_count || 0) >=
+                        (selectedUser.months_since_registration || 0)
+                          ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                          : (selectedUser.payment_count || 0) >=
+                            Math.ceil(
+                              (selectedUser.months_since_registration || 0) *
+                                0.6
+                            )
+                          ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                          : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                      }`}
+                    >
+                      <Icon
+                        icon={
+                          (selectedUser.payment_count || 0) >=
+                          (selectedUser.months_since_registration || 0)
+                            ? "mdi:check-circle"
+                            : (selectedUser.payment_count || 0) >=
+                              Math.ceil(
+                                (selectedUser.months_since_registration || 0) *
+                                  0.6
+                              )
+                            ? "mdi:alert-circle"
+                            : "mdi:close-circle"
+                        }
+                        className="text-sm"
+                      />
+                      {(selectedUser.payment_count || 0) >=
+                      (selectedUser.months_since_registration || 0)
+                        ? "Up to Date"
+                        : (selectedUser.payment_count || 0) >=
+                          Math.ceil(
+                            (selectedUser.months_since_registration || 0) * 0.6
+                          )
+                        ? "Behind"
+                        : "Overdue"}
+                    </span>
                   </div>
                 </div>
               </div>

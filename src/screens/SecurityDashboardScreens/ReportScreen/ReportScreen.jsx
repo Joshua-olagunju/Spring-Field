@@ -6,26 +6,37 @@ import { API_BASE_URL } from "../../../config/apiConfig";
 
 const ReportScreen = () => {
   const { theme, isDarkMode } = useTheme();
-  const { authToken } = useUser();
+  const { authToken, isAuthenticated } = useUser();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all"); // 'all', 'active', 'inactive'
   const [tokenHistory, setTokenHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Fetch token history from API
   useEffect(() => {
     const fetchTokenHistory = async () => {
       try {
         setIsLoading(true);
+        setError(null);
+        const token = authToken || localStorage.getItem("authToken");
+
+        if (!token || !isAuthenticated) {
+          setError(
+            "Authentication required. Please log in to view token history."
+          );
+          setTokenHistory([]);
+          setIsLoading(false);
+          return;
+        }
+
         const response = await fetch(
           `${API_BASE_URL}/api/visitor-tokens/all-entries`,
           {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${
-                authToken || localStorage.getItem("authToken")
-              }`,
+              Authorization: `Bearer ${token}`,
             },
           }
         );
@@ -45,17 +56,28 @@ const ReportScreen = () => {
           }));
           setTokenHistory(transformedData);
         } else {
-          console.error("Failed to fetch token history:", result.message);
+          const errorMessage =
+            result.message || "Failed to fetch token history";
+          console.error("Failed to fetch token history:", errorMessage);
+          setError(errorMessage);
+          if (response.status === 401) {
+            setError("Authentication failed. Please log in again.");
+          }
+          setTokenHistory([]);
         }
       } catch (error) {
+        const errorMessage =
+          "Network error. Please check your connection and try again.";
         console.error("Error fetching token history:", error);
+        setError(errorMessage);
+        setTokenHistory([]);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchTokenHistory();
-  }, [authToken]);
+  }, [authToken, isAuthenticated]);
 
   // Filter token history based on search query and status
   const filteredTokens = tokenHistory.filter((token) => {
@@ -75,6 +97,7 @@ const ReportScreen = () => {
 
   const handleTokenClick = (token) => {
     // TODO: Show modal or navigate to detail view
+    console.log("Token clicked:", token);
   };
 
   const getStatusBadgeColor = (status) => {
@@ -222,6 +245,24 @@ const ReportScreen = () => {
                   icon="mdi:loading"
                   className={`text-4xl ${theme.text.tertiary} animate-spin`}
                 />
+              </div>
+            ) : error ? (
+              <div className="flex items-center justify-center h-64">
+                <div className="text-center">
+                  <Icon
+                    icon="mdi:alert-circle"
+                    className={`text-5xl ${theme.text.tertiary} mb-3 mx-auto opacity-50`}
+                  />
+                  <p className={`text-sm ${theme.text.secondary} mb-2`}>
+                    {error}
+                  </p>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className={`px-4 py-2 rounded-lg text-sm ${theme.background.card} ${theme.text.primary} border ${theme.border.secondary} hover:${theme.background.secondary} transition-colors`}
+                  >
+                    Try Again
+                  </button>
+                </div>
               </div>
             ) : tokenHistory.length === 0 ? (
               <div className="flex items-center justify-center h-64">

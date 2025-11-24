@@ -4,7 +4,7 @@ import { useTheme } from "../../../context/useTheme";
 import { useUser } from "../../../context/useUser";
 import { API_BASE_URL } from "../../config/apiConfig";
 import AnimatedSecurityBackground from "../../../components/GeneralComponents/AnimatedSecurityBackground";
-import PoweredByDriftTech from "../../../components/GeneralComponents/PoweredByDriftTech";
+import PoweredByDriftTech from "../../../components/GeneralComponents/PoweredByDrifttech";
 import { Icon } from "@iconify/react";
 
 const EmailVerificationOtp = () => {
@@ -25,15 +25,78 @@ const EmailVerificationOtp = () => {
   const [resendTimer, setResendTimer] = useState(0);
   const [successMessage, setSuccessMessage] = useState("");
 
-  // Get email and user role from navigation state
-  const userEmail = location.state?.email || "your email";
-  const userRole = location.state?.role || "resident";
-  const userId = location.state?.user_id;
-  const shouldAutoResend = location.state?.autoResend || false;
-  const tempToken = location.state?.tempToken;
+  // State for email verification data - initialized from location.state or localStorage
+  const [userEmail, setUserEmail] = useState("");
+  const [userRole, setUserRole] = useState("resident");
+  const [userId, setUserId] = useState(null);
+  const [tempToken, setTempToken] = useState(null);
+  const [shouldAutoResend, setShouldAutoResend] = useState(false);
 
   // Refs for each OTP input
   const inputRefs = useRef([]);
+
+  // Initialize user data from navigation state or localStorage
+  useEffect(() => {
+    // First try to get from location.state
+    if (location.state?.email && location.state?.user_id) {
+      setUserEmail(location.state.email);
+      setUserId(location.state.user_id);
+      setUserRole(location.state.role || "resident");
+      setTempToken(location.state.tempToken);
+      setShouldAutoResend(location.state.autoResend || false);
+      console.log("✅ Loaded user data from navigation state:", {
+        email: location.state.email,
+        userId: location.state.user_id,
+        role: location.state.role,
+      });
+    } else {
+      // If not in location.state, try localStorage
+      try {
+        const storedData = localStorage.getItem("emailVerificationData");
+        if (storedData) {
+          const verificationData = JSON.parse(storedData);
+          setUserEmail(verificationData.email || "");
+          setUserId(verificationData.user_id || null);
+          setUserRole(verificationData.role || "resident");
+          setTempToken(verificationData.tempToken || null);
+          setShouldAutoResend(verificationData.source === "login");
+
+          // Restore partially entered OTP if available
+          if (
+            verificationData.currentOtp &&
+            verificationData.currentOtp.length <= 6
+          ) {
+            try {
+              const restoredOtp = verificationData.currentOtp
+                .split("")
+                .concat(["", "", "", "", "", ""])
+                .slice(0, 6);
+              setOtp(restoredOtp);
+              console.log(
+                "🔄 Restored partially entered OTP:",
+                verificationData.currentOtp
+              );
+            } catch (otpError) {
+              console.warn("Error restoring OTP:", otpError);
+            }
+          }
+
+          console.log(
+            "📧 Restored email verification data from localStorage:",
+            {
+              email: verificationData.email,
+              role: verificationData.role,
+              userId: verificationData.user_id,
+              source: verificationData.source,
+              hasPartialOtp: !!verificationData.currentOtp,
+            }
+          );
+        }
+      } catch (error) {
+        console.warn("Error parsing stored verification data:", error);
+      }
+    }
+  }, [location.state]);
 
   useEffect(() => {
     // Prevent back navigation to dashboard by replacing history
@@ -43,7 +106,66 @@ const EmailVerificationOtp = () => {
     if (inputRefs.current[0]) {
       inputRefs.current[0].focus();
     }
-  }, []);
+
+    // Save current verification state to localStorage periodically
+    const saveVerificationState = () => {
+      try {
+        if (userEmail && userId) {
+          const verificationData = {
+            email: userEmail,
+            user_id: userId,
+            role: userRole,
+            tempToken: tempToken,
+            source: location.state?.source || "unknown",
+            currentOtp: otp.join(""),
+            timestamp: Date.now(),
+          };
+          localStorage.setItem(
+            "emailVerificationData",
+            JSON.stringify(verificationData)
+          );
+          console.log("💾 Updated verification data in localStorage");
+        }
+      } catch (error) {
+        console.warn("Error saving verification state:", error);
+        // Don't crash the app if localStorage fails
+      }
+    };
+
+    // Save state when user switches apps or page becomes hidden
+    const handleVisibilityChange = () => {
+      try {
+        if (document.visibilityState === "hidden") {
+          saveVerificationState();
+          console.log("📱 App going to background - saving verification state");
+        } else {
+          console.log("📱 App became visible - verification state preserved");
+        }
+      } catch (error) {
+        console.warn("Error in visibility change handler:", error);
+        // Don't crash the app
+      }
+    };
+
+    try {
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+      window.addEventListener("beforeunload", saveVerificationState);
+    } catch (error) {
+      console.warn("Error adding event listeners:", error);
+    }
+
+    return () => {
+      try {
+        document.removeEventListener(
+          "visibilitychange",
+          handleVisibilityChange
+        );
+        window.removeEventListener("beforeunload", saveVerificationState);
+      } catch (error) {
+        console.warn("Error removing event listeners:", error);
+      }
+    };
+  }, [userEmail, userId, userRole, tempToken, otp, location.state]);
 
   // Auto-resend OTP if coming from login screen
   useEffect(() => {
@@ -69,6 +191,22 @@ const EmailVerificationOtp = () => {
     newOtp[index] = value;
     setOtp(newOtp);
     setError("");
+
+    // Save current OTP state to localStorage as user types
+    try {
+      const storedData = localStorage.getItem("emailVerificationData");
+      if (storedData) {
+        const verificationData = JSON.parse(storedData);
+        verificationData.currentOtp = newOtp.join("");
+        verificationData.timestamp = Date.now();
+        localStorage.setItem(
+          "emailVerificationData",
+          JSON.stringify(verificationData)
+        );
+      }
+    } catch (storageError) {
+      console.warn("Error saving OTP state:", storageError);
+    }
 
     // Move to next input if value is entered
     if (value && index < 5) {
@@ -129,11 +267,19 @@ const EmailVerificationOtp = () => {
   const handleResendOtp = async () => {
     if (resendTimer > 0) return;
 
+    // Validate that we have user data
+    if (!userId || !userEmail) {
+      setError("Session expired. Please sign up or login again.");
+      console.error("❌ Missing user data for resend:", { userId, userEmail });
+      return;
+    }
+
     setResendLoading(true);
     setError("");
     setSuccessMessage("");
 
     try {
+      console.log("🔄 Resending OTP with:", { userId, userEmail });
       const response = await fetch(
         `${API_BASE_URL}/api/email-verification/resend-otp`,
         {
@@ -142,8 +288,8 @@ const EmailVerificationOtp = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            user_id: location.state?.user_id,
-            email: location.state?.email,
+            user_id: userId,
+            email: userEmail,
           }),
         }
       );
@@ -176,11 +322,19 @@ const EmailVerificationOtp = () => {
       return;
     }
 
+    // Validate that we have user data
+    if (!userId || !userEmail) {
+      setError("Session expired. Please sign up or login again.");
+      console.error("❌ Missing user data:", { userId, userEmail });
+      return;
+    }
+
     setIsLoading(true);
     setError("");
     setSuccessMessage("");
 
     try {
+      console.log("✅ Verifying OTP with:", { userId, userEmail, otpCode });
       // API call to verify email OTP
       const response = await fetch(
         `${API_BASE_URL}/api/email-verification/verify`,
@@ -190,8 +344,8 @@ const EmailVerificationOtp = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            user_id: location.state?.user_id,
-            email: location.state?.email,
+            user_id: userId,
+            email: userEmail,
             otp_code: otpCode,
           }),
         }
@@ -265,7 +419,7 @@ const EmailVerificationOtp = () => {
                   We've sent a 6-digit verification code to
                 </p>
                 <p className={`${theme.text.primary} text-sm font-semibold`}>
-                  {userEmail}
+                  {userEmail || "your email"}
                 </p>
               </div>
 

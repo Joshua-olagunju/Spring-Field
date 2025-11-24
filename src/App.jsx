@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -6,12 +7,71 @@ import {
   useLocation,
 } from "react-router-dom";
 import "./App.css";
-import { useState, useEffect } from "react";
 import { ThemeProvider } from "../context/ThemeContext";
 import { UserProvider } from "../context/UserContext";
 import { useUser } from "../context/useUser";
-import { useNotifications } from "./hooks/useNotifications";
-import { onForegroundMessage } from "./firebase"; // Add this import
+import { useTheme } from "../context/useTheme";
+
+// Simple Error Boundary Component
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("App Error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div
+          style={{
+            padding: "20px",
+            textAlign: "center",
+            backgroundColor: "#f5f5f5",
+            minHeight: "100vh",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexDirection: "column",
+          }}
+        >
+          <h1 style={{ color: "#d32f2f", marginBottom: "16px" }}>
+            Oops! Something went wrong
+          </h1>
+          <p style={{ color: "#666", marginBottom: "20px" }}>
+            The app encountered an error.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            style={{
+              backgroundColor: "#1976d2",
+              color: "white",
+              border: "none",
+              padding: "12px 24px",
+              borderRadius: "6px",
+              cursor: "pointer",
+              fontSize: "16px",
+            }}
+          >
+            Reload App
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+// TEMPORARILY DISABLED FOR MOBILE TESTING
+// import { useNotifications } from "./hooks/useNotifications";
+// TEMPORARILY DISABLED FOR MOBILE TESTING\n// import { onForegroundMessage } from \"./firebase\"; // Add this import
 import Login from "./screens/authenticationScreens/Login";
 import SignUp from "./screens/authenticationScreens/Signup";
 import SignUpOtpScreen from "./screens/authenticationScreens/SignUpOtpScreen";
@@ -49,50 +109,132 @@ import SplashScreen from "../components/GeneralComponents/SplashScreen";
 const AutoRedirect = () => {
   const { isAuthenticated, isLoading, user } = useUser();
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+  try {
+    if (isLoading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading...</p>
+          </div>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  // Check if email is verified
-  if (!user?.email_verified_at) {
-    return <Navigate to="/email-verification" replace />;
-  }
-
-  // Route to appropriate dashboard based on role
-  switch (user?.role) {
-    case "super":
-      return <Navigate to="/super-admin/dashboard" replace />;
-    case "landlord":
-      return <Navigate to="/admin/dashboard" replace />;
-    case "resident":
-      return <Navigate to="/dashboard" replace />;
-    case "security":
-      return <Navigate to="/security/dashboard" replace />;
-    default:
+    if (!isAuthenticated) {
       return <Navigate to="/login" replace />;
+    }
+
+    // Check if email is verified
+    if (!user?.email_verified_at) {
+      // Check if there's stored verification data
+      try {
+        const storedData = localStorage.getItem("emailVerificationData");
+        if (storedData) {
+          console.log(
+            "📧 Found stored verification data, redirecting to email verification"
+          );
+        }
+      } catch (error) {
+        console.error("Error checking verification data:", error);
+      }
+      return <Navigate to="/email-verification" replace />;
+    }
+
+    // Route to appropriate dashboard based on role
+    switch (user?.role) {
+      case "super":
+        return <Navigate to="/super-admin/dashboard" replace />;
+      case "landlord":
+        return <Navigate to="/admin/dashboard" replace />;
+      case "resident":
+        return <Navigate to="/dashboard" replace />;
+      case "security":
+        return <Navigate to="/security/dashboard" replace />;
+      default:
+        return <Navigate to="/login" replace />;
+    }
+  } catch (error) {
+    console.error("AutoRedirect error:", error);
+    return <Navigate to="/login" replace />;
   }
 };
 
 function AppContent() {
   const { logout, isLoading, isAuthenticated } = useUser();
-  const { initializeNotifications } = useNotifications();
+  const { isDarkMode } = useTheme();
+  // TEMPORARILY DISABLED FOR MOBILE TESTING
+  // const { initializeNotifications } = useNotifications();
   const location = useLocation();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(() => {
+    // Only show splash on first app load, not on subsequent navigation or tab switches
+    return !sessionStorage.getItem("appLoaded");
+  });
+
+  // Update PWA theme color based on current theme
+  useEffect(() => {
+    const themeColor = isDarkMode ? "#111827" : "#ffffff";
+    const backgroundColor = isDarkMode ? "#111827" : "#ffffff";
+
+    // Update meta theme-color for PWA
+    const metaThemeColor = document.querySelector("meta[name='theme-color']");
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute("content", themeColor);
+    }
+
+    // Update body background color to match theme
+    document.body.style.backgroundColor = backgroundColor;
+    document.documentElement.style.backgroundColor = backgroundColor;
+
+    // Update Apple status bar style
+    const appleStatusBarStyle = document.querySelector(
+      "meta[name='apple-mobile-web-app-status-bar-style']"
+    );
+    if (appleStatusBarStyle) {
+      appleStatusBarStyle.setAttribute(
+        "content",
+        isDarkMode ? "black-translucent" : "black-translucent"
+      );
+    }
+  }, [isDarkMode]);
+
+  // Prevent app from refreshing when switching between apps
+  useEffect(() => {
+    const preventRefresh = () => {
+      // Only prevent refresh if user is authenticated and has token
+      const token = localStorage.getItem("authToken");
+      if (token && isAuthenticated) {
+        console.log("🛡️ Preventing app refresh - user is authenticated");
+        // Don't prevent the event, just log it
+      }
+    };
+
+    // Handle app state changes
+    const handleAppStateChange = () => {
+      const token = localStorage.getItem("authToken");
+      if (token) {
+        console.log("🔄 App state changed, but keeping auth token");
+        // Force maintain auth state
+        window.dispatchEvent(new Event("maintain-auth"));
+      }
+    };
+
+    window.addEventListener("beforeunload", preventRefresh);
+    window.addEventListener("focus", handleAppStateChange);
+    window.addEventListener("pageshow", handleAppStateChange);
+
+    return () => {
+      window.removeEventListener("beforeunload", preventRefresh);
+      window.removeEventListener("focus", handleAppStateChange);
+      window.removeEventListener("pageshow", handleAppStateChange);
+    };
+  }, [isAuthenticated]);
 
   // Auto-initialize notifications for authenticated users
+  // TEMPORARILY DISABLED FOR MOBILE TESTING
+  /* 
   useEffect(() => {
     if (isAuthenticated) {
       // Automatically request notification permission after login
@@ -107,16 +249,19 @@ function AppContent() {
         });
     }
   }, [isAuthenticated, initializeNotifications]);
+  */
 
-  // Handle splash screen - show for minimum 3 seconds
+  // Handle splash screen - show only on first load, then mark as loaded
   useEffect(() => {
-    if (!isLoading) {
+    if (!isLoading && showSplash) {
       const timer = setTimeout(() => {
         setShowSplash(false);
-      }, 3300); // Show splash for minimum 3 seconds
+        // Mark app as loaded so splash won't show again in this session
+        sessionStorage.setItem("appLoaded", "true");
+      }, 3300); // Reduced from 3.3 seconds to 2 seconds for faster experience
       return () => clearTimeout(timer);
     }
-  }, [isLoading]);
+  }, [isLoading, showSplash]);
 
   // Listen for logout event from TopNavBar
   useEffect(() => {
@@ -130,6 +275,8 @@ function AppContent() {
   }, []);
 
   // Listen for foreground push notifications
+  // TEMPORARILY DISABLED FOR MOBILE TESTING
+  /*
   useEffect(() => {
     const unsubscribe = onForegroundMessage((payload) => {
       console.log("🔔 Foreground notification received:", payload);
@@ -190,6 +337,7 @@ function AppContent() {
       }
     };
   }, []);
+  */
 
   const handleConfirmLogout = async () => {
     setIsLoggingOut(true);
@@ -250,11 +398,7 @@ function AppContent() {
           />
           <Route
             path="/email-verification"
-            element={
-              <EmailVerificationProtectedRoute>
-                <EmailVerificationOtp />
-              </EmailVerificationProtectedRoute>
-            }
+            element={<EmailVerificationOtp />}
           />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password-otp" element={<ResetPasswordOtp />} />
@@ -452,13 +596,15 @@ function AppContent() {
 
 function App() {
   return (
-    <ThemeProvider>
-      <UserProvider>
-        <Router>
-          <AppContent />
-        </Router>
-      </UserProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <UserProvider>
+          <Router>
+            <AppContent />
+          </Router>
+        </UserProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 

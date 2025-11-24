@@ -10,9 +10,17 @@ const ReportScreen = () => {
   const [statistics, setStatistics] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [revenueData, setRevenueData] = useState(null);
+  const [revenueFilter, setRevenueFilter] = useState("all_time");
+  const [customDateRange, setCustomDateRange] = useState({
+    start: "",
+    end: "",
+  });
+  const [showCustomDatePicker, setShowCustomDatePicker] = useState(false);
 
   useEffect(() => {
     fetchStatistics();
+    fetchRevenue();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -42,6 +50,58 @@ const ReportScreen = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const fetchRevenue = async (filter = revenueFilter, customRange = null) => {
+    try {
+      const token = authToken || localStorage.getItem("authToken");
+      let url = `${API_BASE_URL}/api/super-admin/revenue?filter=${filter}`;
+
+      if (filter === "custom" && customRange) {
+        url += `&start_date=${customRange.start}&end_date=${customRange.end}`;
+      }
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        setRevenueData(result.data);
+      } else {
+        console.error("Failed to fetch revenue:", result.message);
+      }
+    } catch (error) {
+      console.error("Error fetching revenue:", error);
+    }
+  };
+
+  const handleFilterChange = (filter) => {
+    setRevenueFilter(filter);
+    setShowCustomDatePicker(filter === "custom");
+    if (filter !== "custom") {
+      fetchRevenue(filter);
+    }
+  };
+
+  const handleCustomDateSubmit = () => {
+    if (customDateRange.start && customDateRange.end) {
+      fetchRevenue("custom", customDateRange);
+      setShowCustomDatePicker(false);
+    }
+  };
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: "NGN",
+      minimumFractionDigits: 0,
+    }).format(amount || 0);
   };
 
   if (isLoading) {
@@ -177,33 +237,191 @@ const ReportScreen = () => {
       <div className="w-full px-0">
         <div className="max-w-full mx-auto ">
           {/* Header */}
-          <div className="mb-8 flex items-center justify-between">
-            <div>
-              <h1
-                className={`text-2xl sm:text-3xl font-bold ${theme.text.primary} mb-2`}
+          <div className="mb-8">
+            <div className="flex items-start sm:items-center justify-between flex-col sm:flex-row gap-4">
+              <div>
+                <h1
+                  className={`text-2xl sm:text-3xl font-bold ${theme.text.primary} mb-2`}
+                >
+                  Reports & Analytics 📊
+                </h1>
+                <p className={`text-sm sm:text-base ${theme.text.secondary}`}>
+                  Comprehensive statistics and insights from your SpringField
+                  Estate database
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  fetchStatistics();
+                  fetchRevenue();
+                }}
+                disabled={isLoading}
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  isLoading
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-blue-500 hover:bg-blue-600"
+                } text-white flex items-center gap-2 whitespace-nowrap`}
               >
-                Reports & Analytics 📊
-              </h1>
-              <p className={`text-sm sm:text-base ${theme.text.secondary}`}>
-                Comprehensive statistics and insights from your SpringField
-                Estate database
-              </p>
+                <Icon
+                  icon={isLoading ? "mdi:loading" : "mdi:refresh"}
+                  className={isLoading ? "animate-spin" : ""}
+                />
+                {isLoading ? "Loading..." : "Refresh"}
+              </button>
             </div>
-            <button
-              onClick={fetchStatistics}
-              disabled={isLoading}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                isLoading
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-blue-500 hover:bg-blue-600"
-              } text-white flex items-center gap-2`}
+          </div>
+
+          {/* Revenue Section */}
+          <div className="mb-8">
+            <h2
+              className={`text-lg sm:text-xl font-bold ${theme.text.primary} mb-4`}
             >
-              <Icon
-                icon={isLoading ? "mdi:loading" : "mdi:refresh"}
-                className={isLoading ? "animate-spin" : ""}
-              />
-              {isLoading ? "Loading..." : "Refresh"}
-            </button>
+              Revenue Statistics 💰
+            </h2>
+
+            {/* Revenue Card */}
+            <div
+              className={`${theme.background.card} rounded-2xl ${theme.shadow.medium} p-4 sm:p-6 mb-4`}
+            >
+              <div className="flex flex-col gap-4">
+                {/* Filter Buttons */}
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { value: "all_time", label: "All Time" },
+                    { value: "this_year", label: "This Year" },
+                    { value: "this_month", label: "This Month" },
+                    { value: "this_week", label: "This Week" },
+                    { value: "today", label: "Today" },
+                    { value: "custom", label: "Custom" },
+                  ].map((filter) => (
+                    <button
+                      key={filter.value}
+                      onClick={() => handleFilterChange(filter.value)}
+                      className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                        revenueFilter === filter.value
+                          ? "bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-md"
+                          : `${theme.background.input} ${theme.text.secondary} hover:${theme.background.card}`
+                      }`}
+                    >
+                      {filter.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Custom Date Range Picker */}
+                {showCustomDatePicker && (
+                  <div className={`${theme.background.input} p-4 rounded-lg`}>
+                    <p
+                      className={`text-sm font-medium ${theme.text.primary} mb-3`}
+                    >
+                      Select Date Range
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <div className="flex-1">
+                        <label
+                          className={`text-xs ${theme.text.secondary} mb-1 block`}
+                        >
+                          Start Date
+                        </label>
+                        <input
+                          type="date"
+                          value={customDateRange.start}
+                          onChange={(e) =>
+                            setCustomDateRange({
+                              ...customDateRange,
+                              start: e.target.value,
+                            })
+                          }
+                          className={`w-full px-3 py-2 rounded-lg ${theme.background.card} ${theme.text.primary} border ${theme.border.secondary} outline-none focus:ring-2 focus:ring-green-500`}
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label
+                          className={`text-xs ${theme.text.secondary} mb-1 block`}
+                        >
+                          End Date
+                        </label>
+                        <input
+                          type="date"
+                          value={customDateRange.end}
+                          onChange={(e) =>
+                            setCustomDateRange({
+                              ...customDateRange,
+                              end: e.target.value,
+                            })
+                          }
+                          className={`w-full px-3 py-2 rounded-lg ${theme.background.card} ${theme.text.primary} border ${theme.border.secondary} outline-none focus:ring-2 focus:ring-green-500`}
+                        />
+                      </div>
+                      <button
+                        onClick={handleCustomDateSubmit}
+                        disabled={
+                          !customDateRange.start || !customDateRange.end
+                        }
+                        className={`px-4 py-2 rounded-lg font-medium transition-colors self-end ${
+                          customDateRange.start && customDateRange.end
+                            ? "bg-green-600 hover:bg-green-700 text-white"
+                            : "bg-gray-400 cursor-not-allowed text-gray-200"
+                        }`}
+                      >
+                        Apply
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Revenue Display */}
+                <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <div className="flex-1">
+                    <p className={`text-sm ${theme.text.secondary} mb-2`}>
+                      Total Revenue
+                      {revenueFilter !== "all_time" && (
+                        <span className="ml-2 text-xs">
+                          ({revenueFilter.replace("_", " ")})
+                        </span>
+                      )}
+                    </p>
+                    <p
+                      className={`text-3xl sm:text-4xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent`}
+                    >
+                      {revenueData
+                        ? formatCurrency(revenueData.total_revenue)
+                        : "Loading..."}
+                    </p>
+                    {revenueData && (
+                      <div className="mt-3 flex flex-wrap gap-4">
+                        <div>
+                          <p className={`text-xs ${theme.text.tertiary}`}>
+                            Total Payments
+                          </p>
+                          <p
+                            className={`text-lg font-semibold ${theme.text.primary}`}
+                          >
+                            {revenueData.total_payments}
+                          </p>
+                        </div>
+                        <div>
+                          <p className={`text-xs ${theme.text.tertiary}`}>
+                            Average Payment
+                          </p>
+                          <p
+                            className={`text-lg font-semibold ${theme.text.primary}`}
+                          >
+                            {formatCurrency(revenueData.average_payment)}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center shadow-lg">
+                    <Icon
+                      icon="mdi:cash-multiple"
+                      className="text-white text-3xl sm:text-4xl"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* User Statistics Section */}

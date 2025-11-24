@@ -554,6 +554,8 @@ class VisitorTokenController extends Controller
                 ->paginate(50);
 
             $formattedEntries = collect($entries->items())->map(function ($entry) {
+                $resident = $entry->token && $entry->token->resident ? $entry->token->resident : null;
+                
                 return [
                     'id' => $entry->id,
                     'visitor_name' => $entry->visitor_name,
@@ -562,8 +564,8 @@ class VisitorTokenController extends Controller
                     'exited_at' => $entry->exited_at ? $entry->exited_at->toISOString() : null,
                     'duration_minutes' => $entry->duration_minutes,
                     'is_active' => $entry->isActive(),
-                    'resident_name' => $entry->token->resident->full_name,
-                    'house_number' => $entry->token->resident->house_number ?? 'N/A',
+                    'resident_name' => $resident ? $resident->full_name : 'Unknown Resident',
+                    'house_number' => $resident && $resident->house_number ? $resident->house_number : 'N/A',
                     'guard_name' => $entry->guardUser ? $entry->guardUser->full_name : null,
                     'note' => $entry->note,
                 ];

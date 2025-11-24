@@ -4,6 +4,7 @@ import { useTheme } from "../../../../context/useTheme";
 import { Icon } from "@iconify/react";
 import ChangePasswordModal from "./ChangePasswordModal";
 import ProfileModal from "./ProfileModal";
+import PoweredByDriftTech from "../../../../components/GeneralComponents/PoweredByDrifttech";
 
 const SettingsScreen = () => {
   const navigate = useNavigate();
@@ -12,7 +13,7 @@ const SettingsScreen = () => {
   const [showProfileModal, setShowProfileModal] = useState(false);
 
   return (
-    <div className="min-h-screen pt-0 pb-20 w-full relative">
+    <div className="min-h-screen pt-0 pb-20 w-full relative flex flex-col">
       {/* Background */}
       <div
         className="fixed inset-0 -z-10"
@@ -162,6 +163,9 @@ const SettingsScreen = () => {
             </div>
           </div>
         </div>
+      </div>
+      <div className="fixed bottom-4 left-0 w-full z-10 flex items-center justify-center px-4">
+        <PoweredByDriftTech />
       </div>
 
       {/* Modals */}

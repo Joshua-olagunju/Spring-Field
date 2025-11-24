@@ -216,6 +216,23 @@ const Login = () => {
       if (result.success) {
         // Check if email needs verification
         if (result.needsVerification) {
+          // Store verification state in localStorage for persistence
+          const verificationData = {
+            email: result.user.email,
+            user_id: result.user.id,
+            role: result.user.role,
+            tempToken: result.token,
+            source: "login",
+          };
+          localStorage.setItem(
+            "emailVerificationData",
+            JSON.stringify(verificationData)
+          );
+          console.log(
+            "💾 Saved verification data to localStorage:",
+            verificationData
+          );
+
           displayModal(
             "warning",
             "Email Not Verified",

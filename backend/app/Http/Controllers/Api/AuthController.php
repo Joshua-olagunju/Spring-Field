@@ -823,7 +823,7 @@ class AuthController extends Controller
             // Get search and pagination parameters
             $search = $request->get('search', '');
             $page = max(1, intval($request->get('page', 1)));
-            $perPage = 20; // Fixed at 20 per page as requested
+            $perPage = max(1, intval($request->get('per_page', 50))); // Default 50 per page
 
             // Build the query
             $query = User::select([
@@ -834,7 +834,9 @@ class AuthController extends Controller
                 'role',
                 'status_active',
                 'created_at',
-                'updated_at'
+                'updated_at',
+                'last_login_at',
+                'payment_count'
             ]);
 
             // Apply search if provided
@@ -859,6 +861,10 @@ class AuthController extends Controller
 
             // Format users for frontend
             $formattedUsers = $users->map(function ($user) {
+                // Get actual payment count and required payments
+                $paymentCount = $user->payment_count ?? 0;
+                $monthsSinceRegistration = $user->getMonthsSinceRegistration();
+                
                 return [
                     'id' => $user->id,
                     'name' => $user->full_name,
@@ -868,23 +874,24 @@ class AuthController extends Controller
                     'status' => $user->status_active ? 'active' : 'inactive',
                     'created_at' => $user->created_at->format('Y-m-d'),
                     'updated_at' => $user->updated_at->format('Y-m-d'),
-                    'last_login_at' => 'Never', // We don't have last_login_at field in database
-                    'last_active' => 'Never'   // We don't have last_login_at field in database
+                    'last_login_at' => $user->last_login_at ? $user->last_login_at->format('Y-m-d H:i:s') : 'Never',
+                    'last_active' => $user->last_login_at ? $user->last_login_at->format('Y-m-d H:i:s') : 'Never',
+                    'payment_count' => $paymentCount,
+                    'months_since_registration' => $monthsSinceRegistration,
+                    'required_payments' => $monthsSinceRegistration,
+                    'is_payment_up_to_date' => $user->isPaymentUpToDate(),
                 ];
             });
 
+            // Return paginated data
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'users' => $formattedUsers,
-                    'pagination' => [
-                        'current_page' => $page,
-                        'per_page' => $perPage,
-                        'total' => $totalUsers,
-                        'total_pages' => $totalPages,
-                        'has_next' => $page < $totalPages,
-                        'has_prev' => $page > 1
-                    ]
+                    'data' => $formattedUsers, // Use 'data' key for consistency with AdminUsers
+                    'current_page' => $page,
+                    'last_page' => $totalPages,
+                    'total' => $totalUsers,
+                    'per_page' => $perPage
                 ]
             ]);
 

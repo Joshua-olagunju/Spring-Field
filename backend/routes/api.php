@@ -81,6 +81,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch('/users/{userId}/activate', [AuthController::class, 'activateUser']);
         Route::delete('/users/{userId}', [AuthController::class, 'deleteUser']);
         Route::get('/transactions', [PaymentController::class, 'getAllUserTransactions']);
+        Route::get('/revenue', [PaymentController::class, 'getRevenue']);
         
         // Notification management (Super Admin only)
         Route::post('/send-notification', [NotificationController::class, 'sendNotification']);
@@ -203,6 +204,72 @@ Route::get('/test-dashboard-stats', [VisitorTokenController::class, 'getTestDash
 
 // Test endpoint for security users (no auth required for testing)
 Route::get('/test-security-users', [AuthController::class, 'getAllUsersForSecurity']);
+
+// Test visitor entries endpoint (no auth required for testing) - REMOVE IN PRODUCTION
+Route::get('/test-visitor-entries', function() {
+    try {
+        $entriesCount = \App\Models\VisitorEntry::count();
+        $tokensCount = \App\Models\VisitorToken::count();
+        
+        if ($entriesCount === 0) {
+            return response()->json([
+                'success' => true,
+                'message' => 'No visitor entries found',
+                'entries_count' => $entriesCount,
+                'tokens_count' => $tokensCount
+            ]);
+        }
+        
+        $entries = \App\Models\VisitorEntry::with(['token.resident', 'guardUser'])
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+
+        $formattedEntries = $entries->map(function ($entry) {
+            $resident = $entry->token && $entry->token->resident ? $entry->token->resident : null;
+            
+            return [
+                'id' => $entry->id,
+                'visitor_name' => $entry->visitor_name,
+                'visitor_phone' => $entry->visitor_phone,
+                'entered_at' => $entry->entered_at->toISOString(),
+                'exited_at' => $entry->exited_at ? $entry->exited_at->toISOString() : null,
+                'duration_minutes' => $entry->duration_minutes,
+                'is_active' => $entry->isActive(),
+                'resident_name' => $resident ? $resident->full_name : 'Unknown Resident',
+                'house_number' => $resident && $resident->house_number ? $resident->house_number : 'N/A',
+                'guard_name' => $entry->guardUser ? $entry->guardUser->full_name : null,
+                'note' => $entry->note,
+                'token_info' => $entry->token ? [
+                    'id' => $entry->token->id,
+                    'resident_id' => $entry->token->resident_id,
+                    'has_resident' => $entry->token->resident ? true : false
+                ] : null
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'entries' => $formattedEntries,
+                'total_entries' => $entriesCount,
+                'total_tokens' => $tokensCount
+            ],
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error testing visitor entries',
+            'error' => $e->getMessage(),
+            'line' => $e->getLine(),
+            'file' => $e->getFile()
+        ], 500);
+    }
+});
+
+// Test all-entries endpoint (no auth required for testing) - REMOVE IN PRODUCTION
+Route::get('/test-all-entries', [VisitorTokenController::class, 'getAllEntries']);
 
 // Test endpoint to check actual user table structure
 Route::get('/test-user-fields', function() {

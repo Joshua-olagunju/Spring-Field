@@ -99,7 +99,7 @@ const SuperAdminDashboard = () => {
     fetchData();
   }, [authToken]);
 
-  const handleVisitorClick = (visitor) => {};
+  const handleVisitorClick = () => {};
 
   const handleGenerateAccountToken = () => {
     setShowAccountTokenModal(true);
@@ -151,9 +151,38 @@ const SuperAdminDashboard = () => {
 
   const copyToClipboard = async (text, tokenId) => {
     try {
-      await navigator.clipboard.writeText(text);
-      setCopiedTokenId(tokenId);
-      setTimeout(() => setCopiedTokenId(null), 2000);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+        setCopiedTokenId(tokenId);
+        setTimeout(() => setCopiedTokenId(null), 2000);
+      } else {
+        // iOS fallback using visible textarea
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.style.position = "fixed";
+        textarea.style.top = "0";
+        textarea.style.left = "0";
+        textarea.style.width = "2em";
+        textarea.style.height = "2em";
+        textarea.style.padding = "0";
+        textarea.style.border = "none";
+        textarea.style.outline = "none";
+        textarea.style.boxShadow = "none";
+        textarea.style.background = "transparent";
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+
+        try {
+          document.execCommand("copy");
+          setCopiedTokenId(tokenId);
+          setTimeout(() => setCopiedTokenId(null), 2000);
+        } catch (err) {
+          console.error("Fallback copy failed: ", err);
+        }
+
+        document.body.removeChild(textarea);
+      }
     } catch (err) {
       console.error("Failed to copy: ", err);
     }
@@ -200,12 +229,12 @@ const SuperAdminDashboard = () => {
               <h2
                 className={`text-xl sm:text-2xl font-bold ${theme.text.primary} mb-2`}
               >
-                Generate Resident Account
+                Generate Admin Account
               </h2>
               <p
                 className={`text-sm sm:text-base ${theme.text.secondary} mb-6 max-w-md`}
               >
-                Create a new resident account with access credentials
+                Create a new Admin account with access credentials
               </p>
               <button
                 onClick={handleGenerateAccountToken}

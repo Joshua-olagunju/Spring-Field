@@ -1,22 +1,57 @@
-import { createContext, useState, useEffect } from "react";
+import { createContext, useState, useEffect, useCallback } from "react";
 import { API_BASE_URL } from "../src/config/apiConfig";
 
 const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [authToken, setAuthToken] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  // Initialize state with localStorage data immediately to prevent flashing
+  const [user, setUser] = useState(() => {
+    try {
+      const userData = localStorage.getItem("userData");
+      if (userData) {
+        const parsedUser = JSON.parse(userData);
+        return parsedUser.email_verified_at ? parsedUser : null;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  });
 
-  // Initialize auth state from localStorage on mount
-  useEffect(() => {
-    checkAuthStatus();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  const [authToken, setAuthToken] = useState(() => {
+    const token = localStorage.getItem("authToken");
+    return token || null;
+  });
+
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    const token = localStorage.getItem("authToken");
+    const userData = localStorage.getItem("userData");
+    if (token && userData) {
+      try {
+        const user = JSON.parse(userData);
+        return !!user.email_verified_at;
+      } catch {
+        return false;
+      }
+    }
+    return false;
+  });
+
+  const [isLoading, setIsLoading] = useState(false); // Start as false since we initialize from localStorage
+
+  // Clear authentication data
+  const clearAuth = useCallback(() => {
+    setAuthToken(null);
+    setUser(null);
+    setIsAuthenticated(false);
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("userData");
+    localStorage.removeItem("token");
+    localStorage.removeItem("pendingVerificationUser");
   }, []);
 
   // Check if user is authenticated
-  const checkAuthStatus = async () => {
+  const checkAuthStatus = useCallback(async () => {
     try {
       const token = localStorage.getItem("authToken");
       const userData = localStorage.getItem("userData");
@@ -32,44 +67,79 @@ export const UserProvider = ({ children }) => {
         }
 
         // Trust the localStorage data - set auth immediately
+        console.log("✅ Setting auth from localStorage");
         setAuthToken(token);
         setUser(user);
         setIsAuthenticated(true);
         setIsLoading(false);
 
-        // Optional: Verify token in background (don't block UI or clear auth on failure)
-        try {
-          const response = await fetch(`${API_BASE_URL}/api/user`, {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          });
-
-          if (response.ok) {
-            const result = await response.json();
-            if (result.success && result.user) {
-              // Update with fresh data from server
-              setUser(result.user);
-              localStorage.setItem("userData", JSON.stringify(result.user));
-            }
-          } else if (response.status === 401) {
-            // Only clear auth if we get explicit 401 Unauthorized
-            clearAuth();
-          }
-        } catch (error) {
-          // Network errors shouldn't log user out - just log the error
-          console.error("Background token verification failed:", error);
-        }
+        // ONLY verify token in background if explicitly requested, don't auto-logout
+        // This prevents losing auth when switching apps
       } else {
+        console.log("❌ No auth token found in localStorage");
         setIsLoading(false);
       }
     } catch (error) {
       console.error("Auth check failed:", error);
+      // Don't clear auth on error - might be temporary issue
       setIsLoading(false);
     }
-  };
+  }, [clearAuth]);
+
+  // Initialize auth state from localStorage on mount
+  useEffect(() => {
+    checkAuthStatus();
+  }, [checkAuthStatus]);
+
+  // Handle page visibility changes (when user switches apps)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        console.log("🔄 App became visible again");
+        // Immediately restore auth state from localStorage if available
+        const token = localStorage.getItem("authToken");
+        const userData = localStorage.getItem("userData");
+
+        if (token && userData) {
+          try {
+            const user = JSON.parse(userData);
+            if (user.email_verified_at) {
+              // Force restore authentication state
+              console.log("🔑 Restoring auth state from localStorage");
+              setAuthToken(token);
+              setUser(user);
+              setIsAuthenticated(true);
+              setIsLoading(false);
+            }
+          } catch (error) {
+            console.error("Error parsing stored user data:", error);
+          }
+        }
+      } else {
+        console.log("🔄 App going to background, preserving auth state");
+      }
+    };
+
+    const handlePageHide = () => {
+      console.log("📱 Page hide event - preserving auth state");
+      // Don't clear anything when page hides
+    };
+
+    const handleBeforeUnload = () => {
+      console.log("🔄 Before unload - keeping auth token");
+      // Don't clear auth token on page refresh or navigation
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("pagehide", handlePageHide);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("pagehide", handlePageHide);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
 
   // Login function
   const login = async (email, password) => {
@@ -156,17 +226,6 @@ export const UserProvider = ({ children }) => {
     } finally {
       clearAuth();
     }
-  };
-
-  // Clear authentication data
-  const clearAuth = () => {
-    setAuthToken(null);
-    setUser(null);
-    setIsAuthenticated(false);
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("userData");
-    localStorage.removeItem("token"); // Also clear backward compatibility token
-    localStorage.removeItem("pendingVerificationUser");
   };
 
   // Update user data

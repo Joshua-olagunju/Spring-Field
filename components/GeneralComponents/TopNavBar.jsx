@@ -97,7 +97,7 @@ const TopNavBar = () => {
         <div className="flex items-center justify-between px-4 sm:px-6 py-3">
           {/* Logo Section */}
           <div className="flex items-center gap-3">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center shadow-md overflow-hidden">
+            <div className="w-16 h-16 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center shadow-md overflow-hidden">
               <img
                 src={logoImage}
                 alt="SpringField Estate Logo"

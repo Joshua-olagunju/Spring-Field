@@ -5,6 +5,7 @@ import { Icon } from "@iconify/react";
 import { GenerateUserTokenModal } from "../TokenGenerationModals";
 import { GenerateVisitorTokenModal } from "../../GeneralScreens/VisitorsTokenGenerationModal/VisitorsGenerationToken";
 import RecentVisitors from "../../../../components/GeneralComponents/RecentVisitors";
+import { API_BASE_URL } from "../../../config/apiConfig";
 
 const LandlordDashboard = () => {
   const { theme, isDarkMode } = useTheme();
@@ -20,9 +21,7 @@ const LandlordDashboard = () => {
     useState(false);
   const [showGenerateVisitorTokenModal, setShowGenerateVisitorTokenModal] =
     useState(false);
-  const [showActiveTokensModal, setShowActiveTokensModal] = useState(false);
   const [showPendingTokensModal, setShowPendingTokensModal] = useState(false);
-  const [activeTokens, setActiveTokens] = useState([]);
   const [pendingTokens, setPendingTokens] = useState([]);
   const [isLoadingTokens, setIsLoadingTokens] = useState(false);
   const [copiedTokenId, setCopiedTokenId] = useState(null);
@@ -83,7 +82,7 @@ const LandlordDashboard = () => {
     fetchData();
   }, [authToken]);
 
-  const handleVisitorClick = (visitor) => {};
+  const handleVisitorClick = () => {};
 
   const handleGenerateUserToken = () => {
     setShowGenerateUserTokenModal(true);
@@ -91,42 +90,6 @@ const LandlordDashboard = () => {
 
   const handleGenerateVisitorToken = () => {
     setShowGenerateVisitorTokenModal(true);
-  };
-
-  const handleActiveTokensClick = async () => {
-    setIsLoadingTokens(true);
-    setShowActiveTokensModal(true);
-
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/visitor-tokens/my-tokens`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
-      );
-
-      const result = await response.json();
-
-      if (response.ok && result.success) {
-        // Filter only active tokens (not expired and not used)
-        const active = result.data.tokens.filter(
-          (token) => !token.is_expired && !token.is_used
-        );
-        setActiveTokens(active);
-      } else {
-        console.error("Failed to fetch tokens:", result.message);
-        setActiveTokens([]);
-      }
-    } catch (error) {
-      console.error("Error fetching active tokens:", error);
-      setActiveTokens([]);
-    } finally {
-      setIsLoadingTokens(false);
-    }
   };
 
   const handlePendingTokensClick = async () => {
@@ -167,10 +130,38 @@ const LandlordDashboard = () => {
 
   const copyToClipboard = async (text, tokenId) => {
     try {
-      await navigator.clipboard.writeText(text);
-      setCopiedTokenId(tokenId);
-      // Reset the copied state after 2 seconds
-      setTimeout(() => setCopiedTokenId(null), 2000);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+        setCopiedTokenId(tokenId);
+        setTimeout(() => setCopiedTokenId(null), 2000);
+      } else {
+        // iOS fallback using visible textarea
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.style.position = "fixed";
+        textarea.style.top = "0";
+        textarea.style.left = "0";
+        textarea.style.width = "2em";
+        textarea.style.height = "2em";
+        textarea.style.padding = "0";
+        textarea.style.border = "none";
+        textarea.style.outline = "none";
+        textarea.style.boxShadow = "none";
+        textarea.style.background = "transparent";
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+
+        try {
+          document.execCommand("copy");
+          setCopiedTokenId(tokenId);
+          setTimeout(() => setCopiedTokenId(null), 2000);
+        } catch (err) {
+          console.error("Fallback copy failed: ", err);
+        }
+
+        document.body.removeChild(textarea);
+      }
     } catch (err) {
       console.error("Failed to copy: ", err);
     }
@@ -309,9 +300,8 @@ const LandlordDashboard = () => {
               </p>
             </div>
 
-            <button
-              onClick={handleActiveTokensClick}
-              className={`${theme.background.card} rounded-xl ${theme.shadow.small} hover:${theme.shadow.medium} p-4 sm:p-6 text-center transition-all hover:border-green-500 border border-transparent`}
+            <div
+              className={`${theme.background.card} rounded-xl ${theme.shadow.small} p-4 sm:p-6 text-center`}
             >
               <Icon
                 icon="mdi:clock-check-outline"
@@ -325,10 +315,7 @@ const LandlordDashboard = () => {
               <p className={`text-xs sm:text-sm ${theme.text.secondary}`}>
                 Active Tokens
               </p>
-              <p className={`text-xs ${theme.text.tertiary} mt-1`}>
-                Click to view
-              </p>
-            </button>
+            </div>
 
             <button
               onClick={handlePendingTokensClick}
@@ -365,191 +352,6 @@ const LandlordDashboard = () => {
         isOpen={showGenerateVisitorTokenModal}
         onClose={() => setShowGenerateVisitorTokenModal(false)}
       />
-
-      {/* Active Tokens Modal */}
-      {showActiveTokensModal && (
-        <div className="fixed inset-0 z-9999 flex items-center justify-center p-4">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/50"
-            onClick={() => setShowActiveTokensModal(false)}
-          />
-
-          {/* Modal Content */}
-          <div
-            className={`${theme.background.card} w-full max-w-2xl rounded-2xl ${theme.shadow.large} relative max-h-[80vh] overflow-hidden`}
-          >
-            {/* Header */}
-            <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-              <h2
-                className={`text-xl sm:text-2xl font-bold ${theme.text.primary}`}
-              >
-                Active Tokens ({stats.active_tokens})
-              </h2>
-              <button
-                onClick={() => setShowActiveTokensModal(false)}
-                className={`p-2 rounded-full hover:${theme.background.input} transition-colors`}
-              >
-                <Icon
-                  icon="mdi:close"
-                  className={`text-xl ${theme.text.tertiary}`}
-                />
-              </button>
-            </div>
-
-            {/* Content */}
-            <div className="p-6 max-h-96 overflow-y-auto">
-              {isLoadingTokens ? (
-                <div className="flex items-center justify-center py-8">
-                  <Icon
-                    icon="mdi:loading"
-                    className={`animate-spin text-4xl ${theme.text.tertiary}`}
-                  />
-                </div>
-              ) : activeTokens.length === 0 ? (
-                <div className="text-center py-8">
-                  <Icon
-                    icon="mdi:qrcode-off"
-                    className={`text-6xl ${theme.text.tertiary} mb-4 mx-auto`}
-                  />
-                  <p className={`text-base ${theme.text.secondary} mb-1`}>
-                    No active tokens found
-                  </p>
-                  <p className={`text-sm ${theme.text.tertiary} mb-4`}>
-                    Active tokens will appear here when you generate them
-                  </p>
-                  <button
-                    onClick={() => {
-                      setShowActiveTokensModal(false);
-                      setShowGenerateVisitorTokenModal(true);
-                    }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
-                  >
-                    Generate Visitor Token
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {activeTokens.map((token) => (
-                    <div
-                      key={token.id}
-                      className={`${theme.background.input} rounded-xl p-4 border ${theme.border.secondary}`}
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <h3
-                            className={`font-semibold ${theme.text.primary} mb-1 text-base`}
-                          >
-                            {token.visitor_name}
-                          </h3>
-                          <p className={`text-xs ${theme.text.secondary} mb-2`}>
-                            {token.visitor_phone || "No phone"} •{" "}
-                            {token.stay_type}
-                          </p>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span
-                              className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${theme.status.success}`}
-                            >
-                              <Icon
-                                icon="mdi:check-circle"
-                                className="text-sm"
-                              />
-                              Active
-                            </span>
-                            <span className={`text-xs ${theme.text.tertiary}`}>
-                              Expires:{" "}
-                              {new Date(token.expires_at).toLocaleDateString()}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex flex-col gap-2 min-w-0">
-                          {token.token ? (
-                            <>
-                              <div
-                                className={`${theme.background.card} rounded-lg p-3 border text-sm`}
-                              >
-                                <div className="flex items-center gap-2 mb-2">
-                                  <Icon
-                                    icon="mdi:qrcode"
-                                    className="text-blue-600"
-                                  />
-                                  <span className="font-medium text-blue-700">
-                                    Token
-                                  </span>
-                                </div>
-                                <div
-                                  className={`${theme.background.input} rounded p-2 font-mono text-sm ${theme.text.primary} break-all border`}
-                                >
-                                  {token.token}
-                                </div>
-                              </div>
-                              <div className="flex gap-2">
-                                <button
-                                  onClick={() =>
-                                    copyToClipboard(token.token, token.id)
-                                  }
-                                  className={`${
-                                    copiedTokenId === token.id
-                                      ? "bg-green-700 text-white"
-                                      : "bg-green-600 hover:bg-green-700 text-white"
-                                  } text-xs px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 flex-1 justify-center`}
-                                >
-                                  <Icon
-                                    icon={
-                                      copiedTokenId === token.id
-                                        ? "mdi:check"
-                                        : "mdi:content-copy"
-                                    }
-                                    className="text-sm"
-                                  />
-                                  {copiedTokenId === token.id
-                                    ? "Copied!"
-                                    : "Copy Token"}
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    setShowActiveTokensModal(false);
-                                    setShowGenerateVisitorTokenModal(true);
-                                  }}
-                                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 justify-center"
-                                >
-                                  <Icon icon="mdi:plus" className="text-sm" />
-                                  New
-                                </button>
-                              </div>
-                            </>
-                          ) : (
-                            <div
-                              className={`${theme.background.card} rounded-lg p-3 border text-sm text-center`}
-                            >
-                              <Icon
-                                icon="mdi:lock"
-                                className="text-gray-500 text-2xl mb-2"
-                              />
-                              <p className="text-xs text-gray-500">
-                                Token no longer available
-                              </p>
-                              <button
-                                onClick={() => {
-                                  setShowActiveTokensModal(false);
-                                  setShowGenerateVisitorTokenModal(true);
-                                }}
-                                className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded mt-2"
-                              >
-                                Generate New
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Pending Tokens Modal */}
       {showPendingTokensModal && (

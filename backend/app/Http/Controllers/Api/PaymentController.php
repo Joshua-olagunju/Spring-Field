@@ -835,15 +835,24 @@ class PaymentController extends Controller
 
             // Transform the data to include user information
             $transformedPayments = collect($payments->items())->map(function ($payment) {
+                // Handle cases where user might be null (deleted users)
+                $user = $payment->user;
+                
                 return [
                     'id' => $payment->id,
-                    'user' => [
-                        'id' => $payment->user->id,
-                        'full_name' => $payment->user->full_name ?? 
-                                     ($payment->user->first_name . ' ' . $payment->user->last_name),
-                        'email' => $payment->user->email,
-                        'role' => $payment->user->role,
-                        'house_type' => $payment->user->house_type,
+                    'user' => $user ? [
+                        'id' => $user->id,
+                        'full_name' => $user->full_name ?? 
+                                     ($user->first_name . ' ' . $user->last_name),
+                        'email' => $user->email,
+                        'role' => $user->role,
+                        'house_type' => $user->house_type,
+                    ] : [
+                        'id' => null,
+                        'full_name' => 'Deleted User',
+                        'email' => 'N/A',
+                        'role' => 'N/A',
+                        'house_type' => null,
                     ],
                     'amount' => $payment->amount,
                     'period_type' => $payment->period_type,
@@ -877,6 +886,88 @@ class PaymentController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error fetching transactions',
+                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get revenue statistics with filtering
+     */
+    public function getRevenue(Request $request)
+    {
+        try {
+            $user = Auth::user();
+
+            // Only super admin can access this endpoint
+            if (!$user || $user->role !== 'super') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized access'
+                ], 403);
+            }
+
+            $filter = $request->input('filter', 'all_time');
+            $startDate = $request->input('start_date');
+            $endDate = $request->input('end_date');
+
+            // Build query for paid payments only
+            $query = Payment::where('status', 'paid');
+
+            // Apply date filters
+            switch ($filter) {
+                case 'today':
+                    $query->whereDate('created_at', today());
+                    break;
+                case 'this_week':
+                    $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
+                    break;
+                case 'this_month':
+                    $query->whereMonth('created_at', now()->month)
+                          ->whereYear('created_at', now()->year);
+                    break;
+                case 'this_year':
+                    $query->whereYear('created_at', now()->year);
+                    break;
+                case 'custom':
+                    if ($startDate && $endDate) {
+                        $query->whereBetween('created_at', [$startDate, $endDate]);
+                    }
+                    break;
+                case 'all_time':
+                default:
+                    // No additional filter for all time
+                    break;
+            }
+
+            // Calculate statistics
+            $totalRevenue = $query->sum('amount');
+            $totalPayments = $query->count();
+            $averagePayment = $totalPayments > 0 ? $totalRevenue / $totalPayments : 0;
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Revenue statistics retrieved successfully',
+                'data' => [
+                    'total_revenue' => round($totalRevenue, 2),
+                    'total_payments' => $totalPayments,
+                    'average_payment' => round($averagePayment, 2),
+                    'filter' => $filter,
+                    'period' => [
+                        'start' => $startDate,
+                        'end' => $endDate
+                    ]
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error fetching revenue statistics', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching revenue statistics',
                 'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
             ], 500);
         }

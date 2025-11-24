@@ -6,6 +6,8 @@ body {
   padding: 0;
   overflow-x: hidden;
   font-family: "Poppins", sans-serif;
+  /* Background color will be set dynamically by theme context */
+  transition: background-color 0.3s ease;
 }
 
 #root {
@@ -15,12 +17,42 @@ body {
 }
 
 input {
-  font-size: 0.8rem;
+  font-size: 16px; /* iOS won't zoom if font-size is 16px or larger */
   padding: 1rem;
 }
+
+/* Prevent iOS zoom on input focus */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="tel"],
+input[type="number"],
+textarea,
+select {
+  font-size: 16px; /* Prevents iOS auto-zoom */
+}
+
 label {
   font-size: 0.8rem;
   font-weight: 500;
+}
+
+/* Prevent touch callout and text selection on iOS for better app feel */
+* {
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Allow text selection only for input fields and text content */
+input,
+textarea,
+[contenteditable],
+p,
+span,
+div[class*="text"] {
+  -webkit-touch-callout: default;
+  -webkit-user-select: text;
+  user-select: text;
 }
 /* make it visible: larger scrollbar so gradient shows */
 ::-webkit-scrollbar {

@@ -3,7 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/icons/icon-192x192.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <title>SpringField Estate</title>
 
     <!-- PWA Meta Tags -->
@@ -11,13 +14,25 @@
       name="description"
       content="SpringField Estate Management System - Secure and efficient estate management"
     />
-    <meta name="theme-color" content="#3B82F6" />
+    <meta
+      name="theme-color"
+      content="#ffffff"
+      media="(prefers-color-scheme: light)"
+    />
+    <meta
+      name="theme-color"
+      content="#111827"
+      media="(prefers-color-scheme: dark)"
+    />
     <link rel="manifest" href="/manifest.json" />
 
     <!-- Apple Touch Icon -->
     <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
     <meta name="apple-mobile-web-app-title" content="SpringField Estate" />
 
     <!-- Microsoft Tiles -->
@@ -40,6 +55,8 @@
     <script type="module" src="/src/main.jsx"></script>
 
     <!-- Service Worker Registration -->
+    <!-- TEMPORARILY DISABLED FOR MOBILE TESTING -->
+    <!--
     <script>
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
@@ -54,5 +71,6 @@
         });
       }
     </script>
+    -->
   </body>
 </html>

@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useTheme } from "../../../context/useTheme";
 import { API_BASE_URL } from "../../config/apiConfig";
 import AnimatedSecurityBackground from "../../../components/GeneralComponents/AnimatedSecurityBackground";
-import PoweredByDriftTech from "../../../components/GeneralComponents/PoweredByDriftTech";
+import PoweredByDriftTech from "../../../components/GeneralComponents/PoweredByDrifttech";
 import { Icon } from "@iconify/react";
 
 const ResetPassword = () => {

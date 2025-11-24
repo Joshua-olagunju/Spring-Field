@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useTheme } from "../../../context/useTheme";
 import { useUser } from "../../../context/useUser";
 import AnimatedSecurityBackground from "../../../components/GeneralComponents/AnimatedSecurityBackground";
-import PoweredByDriftTech from "../../../components/GeneralComponents/PoweredByDriftTech";
+import PoweredByDriftTech from "../../../components/GeneralComponents/PoweredByDrifttech";
 import { Icon } from "@iconify/react";
 import { API_BASE_URL } from "../../config/apiConfig";
 
@@ -255,6 +255,23 @@ const SignUp = () => {
         // Save auth token to localStorage and UserContext
         const authToken = result.token || result.data?.token;
         const userData = result.data?.user || result.user;
+
+        // Store verification state in localStorage for persistence
+        const verificationData = {
+          email: formData.email,
+          user_id: userData?.id,
+          role: userData?.role,
+          tempToken: authToken,
+          source: "signup",
+        };
+        localStorage.setItem(
+          "emailVerificationData",
+          JSON.stringify(verificationData)
+        );
+        console.log(
+          "💾 Saved verification data to localStorage:",
+          verificationData
+        );
 
         if (authToken) {
           localStorage.setItem("authToken", authToken);
@@ -948,21 +965,6 @@ const SignUp = () => {
                     "Create Account"
                   )}
                 </button>
-
-                {/* Login Link */}
-                <div
-                  className={`text-center mt-8 pt-6 border-t ${theme.border.secondary}`}
-                >
-                  <p className={`text-sm ${theme.text.secondary}`}>
-                    Already have an account?{" "}
-                    <a
-                      href="/login"
-                      className={`${theme.text.link} text-[0.8rem] hover:${theme.text.linkHover} underline`}
-                    >
-                      Sign In
-                    </a>
-                  </p>
-                </div>
               </form>
             </div>
           </div>

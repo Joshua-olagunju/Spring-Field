@@ -176,22 +176,48 @@ export const ShareTokenImage = ({ qrCanvasRef, token, visitorName }) => {
   const shareImage = async () => {
     try {
       const canvas = await generateShareableImage();
-      const blob = await new Promise((resolve) => canvas.toBlob(resolve));
-      const file = new File([blob], `visitor-token-${token.slice(0, 8)}.png`, {
-        type: "image/png",
-      });
 
-      if (navigator.share) {
+      // Check if Web Share API is available and supports files
+      if (navigator.share && navigator.canShare) {
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve));
+        const file = new File(
+          [blob],
+          `visitor-token-${token.slice(0, 8)}.png`,
+          {
+            type: "image/png",
+          }
+        );
+
+        // Check if files can be shared
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: "Visitor Access Token",
+            text: `Visitor token for ${visitorName}`,
+            files: [file],
+          });
+        } else {
+          // Fallback to sharing without files (text only)
+          await navigator.share({
+            title: "Visitor Access Token",
+            text: `Visitor token for ${visitorName}. Token: ${token}`,
+          });
+        }
+      } else if (navigator.share) {
+        // Share API available but no canShare method (older browsers)
         await navigator.share({
           title: "Visitor Access Token",
-          text: `Visitor token for ${visitorName}`,
-          files: [file],
+          text: `Visitor token for ${visitorName}. Token: ${token}`,
         });
       } else {
+        // No share API - download instead
         downloadImage();
       }
     } catch (err) {
-      console.error("Error sharing image:", err);
+      if (err.name !== "AbortError") {
+        console.error("Error sharing image:", err);
+        // If sharing fails, fallback to download
+        downloadImage();
+      }
     }
   };
 

@@ -134,7 +134,7 @@ const AdminUsers = () => {
                 placeholder="Search admins…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className={`flex-1 bg-transparent text-sm ${theme.text.primary} placeholder-current placeholder-opacity-40 outline-none`}
+                className={`flex-1 min-w-0 bg-transparent text-sm ${theme.text.primary} placeholder-current placeholder-opacity-40 outline-none overflow-hidden text-ellipsis`}
               />
               {searchQuery && (
                 <button

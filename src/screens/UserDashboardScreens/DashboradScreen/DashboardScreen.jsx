@@ -102,9 +102,38 @@ const DashboardScreen = () => {
 
   const copyToClipboard = async (text, tokenId) => {
     try {
-      await navigator.clipboard.writeText(text);
-      setCopiedTokenId(tokenId);
-      setTimeout(() => setCopiedTokenId(null), 2000);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+        setCopiedTokenId(tokenId);
+        setTimeout(() => setCopiedTokenId(null), 2000);
+      } else {
+        // iOS fallback using visible textarea
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.style.position = "fixed";
+        textarea.style.top = "0";
+        textarea.style.left = "0";
+        textarea.style.width = "2em";
+        textarea.style.height = "2em";
+        textarea.style.padding = "0";
+        textarea.style.border = "none";
+        textarea.style.outline = "none";
+        textarea.style.boxShadow = "none";
+        textarea.style.background = "transparent";
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+
+        try {
+          document.execCommand("copy");
+          setCopiedTokenId(tokenId);
+          setTimeout(() => setCopiedTokenId(null), 2000);
+        } catch (err) {
+          console.error("Fallback copy failed: ", err);
+        }
+
+        document.body.removeChild(textarea);
+      }
     } catch (err) {
       console.error("Failed to copy: ", err);
     }

@@ -128,26 +128,28 @@ const VisitorsScreen = () => {
 
           {/* Search Bar */}
           <div className="mb-6 px-4 md:px-0">
-            <div className="relative">
+            <div
+              className={`relative max-w-md flex items-center gap-2 px-3 py-2 rounded-lg ${theme.background.card} ${theme.shadow.small} border ${theme.border.secondary}`}
+            >
               <Icon
                 icon="mdi:magnify"
-                className={`absolute left-4 top-1/2 -translate-y-1/2 text-xl ${theme.text.tertiary}`}
+                className={`text-xl ${theme.text.secondary} flex-shrink-0`}
               />
               <input
                 type="text"
                 placeholder="Search by visitor name, host, house number, or phone..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className={`w-full pl-12 pr-4 py-3 rounded-xl ${theme.background.card} ${theme.text.primary} border ${theme.border.secondary} focus:outline-none focus:border-blue-500 transition-colors ${theme.shadow.small}`}
+                className={`flex-1 min-w-0 bg-transparent text-sm ${theme.text.primary} placeholder-current placeholder-opacity-40 outline-none overflow-hidden text-ellipsis`}
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
-                  className={`absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-full hover:${theme.background.input} transition-colors`}
+                  className={`p-1 rounded-full hover:${theme.background.secondary} transition-colors flex-shrink-0`}
                 >
                   <Icon
                     icon="mdi:close"
-                    className={`text-lg ${theme.text.tertiary}`}
+                    className={`text-base ${theme.text.tertiary}`}
                   />
                 </button>
               )}
