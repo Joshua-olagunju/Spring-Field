@@ -446,7 +446,7 @@ const Transactions = () => {
       />
 
       {/* Content */}
-      <div className="w-full px-0">
+      <div className="w-full px-4">
         <div className="max-w-full mx-auto">
           {/* Header with Back Button */}
           <div className="flex items-center gap-3 mb-8">

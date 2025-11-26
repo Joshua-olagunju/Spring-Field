@@ -141,7 +141,7 @@ export const ShareTokenImage = ({ qrCanvasRef, token, visitorName }) => {
           mainCtx.fillText(
             "Present this token at the gate/entrance",
             width / 2,
-            height - 90
+            height - 110
           );
 
           // Security system text - subtle
@@ -151,8 +151,15 @@ export const ShareTokenImage = ({ qrCanvasRef, token, visitorName }) => {
           mainCtx.fillText(
             "Springfield Estate Security System",
             width / 2,
-            height - 60
+            height - 85
           );
+          mainCtx.globalAlpha = 1;
+
+          // Powered by DriftTech text - professional footer
+          mainCtx.fillStyle = lightText;
+          mainCtx.globalAlpha = 0.7;
+          mainCtx.font = "12px Arial";
+          mainCtx.fillText("Powered by DriftTech", width / 2, height - 55);
           mainCtx.globalAlpha = 1;
         }
       }, 100);
@@ -176,46 +183,37 @@ export const ShareTokenImage = ({ qrCanvasRef, token, visitorName }) => {
   const shareImage = async () => {
     try {
       const canvas = await generateShareableImage();
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve));
+      const file = new File([blob], `visitor-token-${token.slice(0, 8)}.png`, {
+        type: "image/png",
+      });
 
-      // Check if Web Share API is available and supports files
-      if (navigator.share && navigator.canShare) {
-        const blob = await new Promise((resolve) => canvas.toBlob(resolve));
-        const file = new File(
-          [blob],
-          `visitor-token-${token.slice(0, 8)}.png`,
-          {
-            type: "image/png",
-          }
-        );
-
-        // Check if files can be shared
-        if (navigator.canShare({ files: [file] })) {
+      // Check if Web Share API is available
+      if (navigator.share) {
+        // Try to share with file
+        try {
           await navigator.share({
-            title: "Visitor Access Token",
-            text: `Visitor token for ${visitorName}`,
+            title: "Visitor Access Token - Springfield Estate",
+            text: `Visitor Access Token for ${visitorName}\n\nToken: ${token}\n\nPresent this at the gate for entry.`,
             files: [file],
           });
-        } else {
-          // Fallback to sharing without files (text only)
-          await navigator.share({
-            title: "Visitor Access Token",
-            text: `Visitor token for ${visitorName}. Token: ${token}`,
-          });
+        } catch (shareErr) {
+          // If file sharing fails, try text-only share
+          if (shareErr.name !== "AbortError") {
+            await navigator.share({
+              title: "Visitor Access Token - Springfield Estate",
+              text: `Visitor Access Token for ${visitorName}\n\nToken: ${token}\n\nPresent this at the gate for entry.\n\nDownload the QR code from the app for easier access.`,
+            });
+          }
         }
-      } else if (navigator.share) {
-        // Share API available but no canShare method (older browsers)
-        await navigator.share({
-          title: "Visitor Access Token",
-          text: `Visitor token for ${visitorName}. Token: ${token}`,
-        });
       } else {
         // No share API - download instead
         downloadImage();
       }
     } catch (err) {
       if (err.name !== "AbortError") {
-        console.error("Error sharing image:", err);
-        // If sharing fails, fallback to download
+        console.error("Error sharing:", err);
+        // If sharing fails completely, fallback to download
         downloadImage();
       }
     }

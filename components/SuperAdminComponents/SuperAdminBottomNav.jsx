@@ -1,6 +1,9 @@
 import { useTheme } from "../../context/useTheme";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
+import { motion } from "framer-motion";
+
+const Motion = motion;
 
 const SuperAdminBottomNav = () => {
   const { theme } = useTheme();
@@ -66,25 +69,41 @@ const SuperAdminBottomNav = () => {
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
-            <button
+            <Motion.button
               key={item.path}
               onClick={() => navigate(item.path)}
-              className={`flex flex-col items-center justify-center gap-1 flex-1 sm:flex-none py-2 px-1 rounded-xl transition-all ${
+              className={`relative flex flex-col items-center justify-center gap-1 flex-1 sm:flex-none py-2 px-1 rounded-xl transition-colors ${
                 isActive ? theme.bottomBar.active : theme.bottomBar.inactive
               }`}
+              whileTap={{ scale: 0.95 }}
             >
-              <Icon
-                icon={isActive ? item.iconFilled : item.icon}
-                className={`text-2xl ${
-                  isActive
-                    ? theme.bottomBar.iconActive
-                    : theme.bottomBar.iconInactive
-                }`}
-              />
-              <span className="text-xs font-medium text-center truncate w-full">
+              {isActive && (
+                <Motion.div
+                  layoutId="activeTabSuperAdmin"
+                  className="absolute inset-0 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 dark:from-blue-600/30 dark:to-purple-600/30"
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                />
+              )}
+              <Motion.div
+                animate={{ scale: isActive ? 1.1 : 1 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              >
+                <Icon
+                  icon={isActive ? item.iconFilled : item.icon}
+                  className={`text-2xl ${
+                    isActive
+                      ? theme.bottomBar.iconActive
+                      : theme.bottomBar.iconInactive
+                  }`}
+                />
+              </Motion.div>
+              <Motion.span
+                className="text-xs font-medium text-center truncate w-full relative z-10"
+                animate={{ fontWeight: isActive ? 600 : 500 }}
+              >
                 {item.name}
-              </span>
-            </button>
+              </Motion.span>
+            </Motion.button>
           );
         })}
       </div>

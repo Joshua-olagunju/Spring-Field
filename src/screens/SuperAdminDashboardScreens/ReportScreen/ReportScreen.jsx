@@ -243,7 +243,7 @@ const ReportScreen = () => {
                 <h1
                   className={`text-2xl sm:text-3xl font-bold ${theme.text.primary} mb-2`}
                 >
-                  Reports & Analytics 📊
+                  Reports & Analytics
                 </h1>
                 <p className={`text-sm sm:text-base ${theme.text.secondary}`}>
                   Comprehensive statistics and insights from your SpringField
@@ -276,7 +276,7 @@ const ReportScreen = () => {
             <h2
               className={`text-lg sm:text-xl font-bold ${theme.text.primary} mb-4`}
             >
-              Revenue Statistics 💰
+              Revenue Statistics
             </h2>
 
             {/* Revenue Card */}
@@ -297,7 +297,7 @@ const ReportScreen = () => {
                     <button
                       key={filter.value}
                       onClick={() => handleFilterChange(filter.value)}
-                      className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                      className={`px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
                         revenueFilter === filter.value
                           ? "bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-md"
                           : `${theme.background.input} ${theme.text.secondary} hover:${theme.background.card}`
@@ -316,10 +316,10 @@ const ReportScreen = () => {
                     >
                       Select Date Range
                     </p>
-                    <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
                       <div className="flex-1">
                         <label
-                          className={`text-xs ${theme.text.secondary} mb-1 block`}
+                          className={`text-xs text-center ${theme.text.secondary} mb-1 block`}
                         >
                           Start Date
                         </label>
@@ -335,6 +335,7 @@ const ReportScreen = () => {
                           className={`w-full px-3 py-2 rounded-lg ${theme.background.card} ${theme.text.primary} border ${theme.border.secondary} outline-none focus:ring-2 focus:ring-green-500`}
                         />
                       </div>
+
                       <div className="flex-1">
                         <label
                           className={`text-xs ${theme.text.secondary} mb-1 block`}
@@ -353,12 +354,13 @@ const ReportScreen = () => {
                           className={`w-full px-3 py-2 rounded-lg ${theme.background.card} ${theme.text.primary} border ${theme.border.secondary} outline-none focus:ring-2 focus:ring-green-500`}
                         />
                       </div>
+
                       <button
                         onClick={handleCustomDateSubmit}
                         disabled={
                           !customDateRange.start || !customDateRange.end
                         }
-                        className={`px-4 py-2 rounded-lg font-medium transition-colors self-end ${
+                        className={`px-4 py-2 rounded-lg font-medium transition-colors self-center ${
                           customDateRange.start && customDateRange.end
                             ? "bg-green-600 hover:bg-green-700 text-white"
                             : "bg-gray-400 cursor-not-allowed text-gray-200"
@@ -440,11 +442,25 @@ const ReportScreen = () => {
                 trend={statistics.user_statistics.user_growth_trend}
               />
               <StatCard
-                icon="mdi:shield-account-multiple"
-                label="Total Admins"
-                value={statistics.user_statistics.total_admins}
+                icon="mdi:account-group"
+                label="Total Landlords"
+                value={statistics.user_statistics.total_landlords}
                 color="#f97316"
                 trend={2}
+              />
+              <StatCard
+                icon="mdi:shield-crown"
+                label="Total Super Admins"
+                value={statistics.user_statistics.total_super_admins}
+                color="#8b5cf6"
+                trend={0}
+              />
+              <StatCard
+                icon="mdi:shield-account"
+                label="Total Security"
+                value={statistics.user_statistics.total_security}
+                color="#06b6d4"
+                trend={1}
               />
               <StatCard
                 icon="mdi:home-city"
@@ -553,7 +569,7 @@ const ReportScreen = () => {
                 trend={3}
               />
               <StatCard
-                icon="mdi:calendar-x"
+                icon="mdi:calendar-remove"
                 label="Expired Tokens"
                 value={statistics.token_statistics.expired_tokens}
                 color="#dc2626"

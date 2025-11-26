@@ -22,8 +22,8 @@ const TokenVerificationModal = ({ theme, isOpen, onClose }) => {
         await html5QrCodeRef.current.stop();
         await html5QrCodeRef.current.clear();
         setIsScanning(false);
-      } catch (err) {
-        console.error("Error stopping scanner:", err);
+      } catch {
+        // Error stopping scanner
       }
     }
   }, []);
@@ -88,8 +88,7 @@ const TokenVerificationModal = ({ theme, isOpen, onClose }) => {
           message: result.message || "Invalid or expired token",
         });
       }
-    } catch (error) {
-      console.error("Token verification error:", error);
+    } catch {
       setErrorMessage("Verification failed. Please try again.");
     } finally {
       setIsVerifying(false);
@@ -126,8 +125,7 @@ const TokenVerificationModal = ({ theme, isOpen, onClose }) => {
         if (!cameras || cameras.length === 0) {
           throw new Error("No cameras found on this device");
         }
-      } catch (cameraError) {
-        console.error("Error getting cameras:", cameraError);
+      } catch {
         throw new Error(
           "Failed to access camera. Please allow camera permission when prompted."
         );
@@ -171,8 +169,6 @@ const TokenVerificationModal = ({ theme, isOpen, onClose }) => {
         }
       );
     } catch (err) {
-      console.error("Error starting scanner:", err);
-
       let errorMsg = "Failed to start camera scanner. ";
 
       if (
@@ -255,8 +251,7 @@ const TokenVerificationModal = ({ theme, isOpen, onClose }) => {
       } else {
         setErrorMessage(result.message || "Failed to grant entry");
       }
-    } catch (error) {
-      console.error("Grant entry error:", error);
+    } catch {
       setErrorMessage("Failed to grant entry. Please try again.");
     } finally {
       setIsGrantingEntry(false);
@@ -307,8 +302,7 @@ const TokenVerificationModal = ({ theme, isOpen, onClose }) => {
       } else {
         setErrorMessage(result.message || "Failed to check out visitor");
       }
-    } catch (error) {
-      console.error("Checkout error:", error);
+    } catch {
       setErrorMessage("Failed to check out visitor. Please try again.");
     } finally {
       setIsCheckingOut(false);

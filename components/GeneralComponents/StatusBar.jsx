@@ -1,13 +1,18 @@
 import { useTheme } from "../../context/useTheme";
 
 const StatusBar = () => {
-  const { theme } = useTheme();
+  const { isDarkMode } = useTheme();
 
   return (
     <div
-      className="fixed top-0 left-0 right-0 z-50 h-6"
+      className="fixed top-0 left-0 right-0 z-[9999]"
       style={{
-        backgroundColor: theme.statusBar.background,
+        height: "max(24px, env(safe-area-inset-top))",
+        paddingTop: "env(safe-area-inset-top)",
+        backgroundColor: isDarkMode ? "#111827" : "#ffffff",
+        WebkitBackdropFilter: "none",
+        backdropFilter: "none",
+        opacity: 1,
       }}
     />
   );

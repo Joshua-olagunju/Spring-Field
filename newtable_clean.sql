@@ -76,6 +76,11 @@ CREATE TABLE `email_verifications` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `email_verifications`
+--
+
+
 -- --------------------------------------------------------
 
 --
@@ -90,6 +95,11 @@ CREATE TABLE `houses` (
   `house_type` varchar(50) DEFAULT 'room_self',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `houses`
+--
+
 
 -- --------------------------------------------------------
 
@@ -107,6 +117,11 @@ CREATE TABLE `logs` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `logs`
+--
+
+
 -- --------------------------------------------------------
 
 --
@@ -118,6 +133,11 @@ CREATE TABLE `migrations` (
   `migration` varchar(255) NOT NULL,
   `batch` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `migrations`
+--
+
 
 -- --------------------------------------------------------
 
@@ -140,6 +160,11 @@ CREATE TABLE `payments` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `payments`
+--
+
 
 --
 -- Triggers `payments`
@@ -202,6 +227,11 @@ CREATE TABLE `personal_access_tokens` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `personal_access_tokens`
+--
+
+
 -- --------------------------------------------------------
 
 --
@@ -210,11 +240,9 @@ CREATE TABLE `personal_access_tokens` (
 
 CREATE TABLE `registration_codes` (
   `id` int(11) NOT NULL,
+  `house_id` int(11) NOT NULL,
   `code_hash` varchar(255) NOT NULL,
   `issued_by` int(11) NOT NULL,
-  `issued_for` enum('landlord','resident','security') NOT NULL,
-  `house_id` int(11) DEFAULT NULL,
-  `description` text DEFAULT NULL,
   `expires_at` datetime NOT NULL,
   `used_at` datetime DEFAULT NULL,
   `used_by_user_id` int(11) DEFAULT NULL,
@@ -230,20 +258,25 @@ CREATE TABLE `registration_codes` (
 
 CREATE TABLE `registration_otps` (
   `id` bigint(20) UNSIGNED NOT NULL,
-  `otp_code` varchar(6) NOT NULL,
-  `generated_by` bigint(20) UNSIGNED NOT NULL,
+  `otp_code` varchar(10) NOT NULL,
+  `generated_by` int(11) NOT NULL,
   `target_role` enum('landlord','resident','security') NOT NULL,
-  `house_number` varchar(255) DEFAULT NULL,
+  `house_number` varchar(50) DEFAULT NULL,
   `address` varchar(255) DEFAULT NULL,
-  `house_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `expires_at` timestamp NOT NULL DEFAULT '2024-11-10 21:38:20' ON UPDATE current_timestamp(),
-  `used_at` timestamp NULL DEFAULT NULL,
-  `used_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `is_active` tinyint(1) NOT NULL DEFAULT 1,
-  `metadata` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`metadata`)),
+  `house_id` int(11) DEFAULT NULL,
+  `expires_at` datetime NOT NULL,
+  `used_at` datetime DEFAULT NULL,
+  `used_by` int(11) DEFAULT NULL,
+  `is_active` tinyint(1) DEFAULT 1,
+  `metadata` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`metadata`)),
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `registration_otps`
+--
+
 
 -- --------------------------------------------------------
 
@@ -266,6 +299,11 @@ CREATE TABLE `subscriptions` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `subscriptions`
+--
+
 
 -- --------------------------------------------------------
 
@@ -298,6 +336,11 @@ CREATE TABLE `users` (
   `fcm_token` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `users`
+--
+
+
 -- --------------------------------------------------------
 
 --
@@ -318,6 +361,11 @@ CREATE TABLE `visitor_entries` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `visitor_entries`
+--
+
+
 -- --------------------------------------------------------
 
 --
@@ -337,6 +385,11 @@ CREATE TABLE `visitor_tokens` (
   `used_at` datetime DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `visitor_tokens`
+--
+
 
 --
 -- Triggers `visitor_tokens`
@@ -527,37 +580,37 @@ ALTER TABLE `visitor_tokens`
 -- AUTO_INCREMENT for table `email_verifications`
 --
 ALTER TABLE `email_verifications`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=101;
 
 --
 -- AUTO_INCREMENT for table `houses`
 --
 ALTER TABLE `houses`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `logs`
 --
 ALTER TABLE `logs`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=444;
 
 --
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
 
 --
 -- AUTO_INCREMENT for table `payments`
 --
 ALTER TABLE `payments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=59;
 
 --
 -- AUTO_INCREMENT for table `personal_access_tokens`
 --
 ALTER TABLE `personal_access_tokens`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=387;
 
 --
 -- AUTO_INCREMENT for table `registration_codes`
@@ -569,31 +622,31 @@ ALTER TABLE `registration_codes`
 -- AUTO_INCREMENT for table `registration_otps`
 --
 ALTER TABLE `registration_otps`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=53;
 
 --
 -- AUTO_INCREMENT for table `subscriptions`
 --
 ALTER TABLE `subscriptions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=51;
 
 --
 -- AUTO_INCREMENT for table `visitor_entries`
 --
 ALTER TABLE `visitor_entries`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT for table `visitor_tokens`
 --
 ALTER TABLE `visitor_tokens`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

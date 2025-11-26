@@ -101,6 +101,8 @@ import LogoutConfirmModal from "../components/GeneralComponents/LogoutConfirmMod
 import ProtectedRoute from "../components/GeneralComponents/ProtectedRoute";
 import SignupProtectedRoute from "../components/GeneralComponents/SignupProtectedRoute";
 import EmailVerificationProtectedRoute from "../components/GeneralComponents/EmailVerificationProtectedRoute";
+import ResetPasswordOtpProtectedRoute from "../components/GeneralComponents/ResetPasswordOtpProtectedRoute";
+import ResetPasswordProtectedRoute from "../components/GeneralComponents/ResetPasswordProtectedRoute";
 import PaymentScreen from "./screens/GeneralScreens/PaymentScreen/PaymentScreen";
 import Transactions from "./screens/GeneralScreens/PaymentScreen/Transactions";
 import SplashScreen from "../components/GeneralComponents/SplashScreen";
@@ -131,9 +133,7 @@ const AutoRedirect = () => {
       try {
         const storedData = localStorage.getItem("emailVerificationData");
         if (storedData) {
-          console.log(
-            "📧 Found stored verification data, redirecting to email verification"
-          );
+          // Found stored verification data
         }
       } catch (error) {
         console.error("Error checking verification data:", error);
@@ -206,7 +206,6 @@ function AppContent() {
       // Only prevent refresh if user is authenticated and has token
       const token = localStorage.getItem("authToken");
       if (token && isAuthenticated) {
-        console.log("🛡️ Preventing app refresh - user is authenticated");
         // Don't prevent the event, just log it
       }
     };
@@ -215,7 +214,6 @@ function AppContent() {
     const handleAppStateChange = () => {
       const token = localStorage.getItem("authToken");
       if (token) {
-        console.log("🔄 App state changed, but keeping auth token");
         // Force maintain auth state
         window.dispatchEvent(new Event("maintain-auth"));
       }
@@ -241,11 +239,11 @@ function AppContent() {
       initializeNotifications()
         .then((token) => {
           if (token) {
-            console.log("🔔 Notifications auto-enabled for authenticated user");
+            // Notifications auto-enabled for authenticated user
           }
         })
         .catch((error) => {
-          console.log("⚠️ Notification permission not granted:", error);
+          // Notification permission not granted
         });
     }
   }, [isAuthenticated, initializeNotifications]);
@@ -279,7 +277,7 @@ function AppContent() {
   /*
   useEffect(() => {
     const unsubscribe = onForegroundMessage((payload) => {
-      console.log("🔔 Foreground notification received:", payload);
+      // Foreground notification received
 
       // Show browser notification
       if (payload.notification) {
@@ -307,7 +305,7 @@ function AppContent() {
             notification.close();
 
             // Handle navigation based on notification type
-            console.log("📱 Notification clicked, data:", notificationData);
+            // Notification clicked
 
             // You can add navigation logic here for different notification types
             if (
@@ -315,10 +313,7 @@ function AppContent() {
               notificationData.type === "visitor_departure"
             ) {
               // Could navigate to visitors page or show visitor details
-              console.log(
-                "🚪 Visitor notification clicked:",
-                notificationData.visitor_name
-              );
+              // Visitor notification clicked
             }
           };
 
@@ -365,8 +360,26 @@ function AppContent() {
     "/email-verification",
   ];
 
+  // Routes that have their own back button and don't need full TopNavBar padding
+  const routesWithReducedPadding = [
+    "/settings",
+    "/transactions",
+    "/admin/transactions",
+    "/super-admin/transactions",
+  ];
+
   const showNavigation =
     isAuthenticated && !publicRoutes.includes(location.pathname);
+
+  // Determine padding based on route type
+  const shouldUseReducedPadding = routesWithReducedPadding.includes(
+    location.pathname
+  );
+  const contentPadding = showNavigation
+    ? shouldUseReducedPadding
+      ? "pt-4"
+      : "pt-15"
+    : "";
 
   // Show splash screen while loading
   if (showSplash) {
@@ -381,8 +394,8 @@ function AppContent() {
       {/* Top Navigation Bar - Shows only on protected routes */}
       {showNavigation && <TopNavBar />}
 
-      {/* Main Content - No padding, screens handle their own spacing */}
-      <div className={showNavigation ? "pt-6" : ""}>
+      {/* Main Content - Dynamic padding based on route type */}
+      <div className={contentPadding}>
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<AutoRedirect />} />
@@ -398,11 +411,29 @@ function AppContent() {
           />
           <Route
             path="/email-verification"
-            element={<EmailVerificationOtp />}
+            element={
+              <EmailVerificationProtectedRoute>
+                <EmailVerificationOtp />
+              </EmailVerificationProtectedRoute>
+            }
           />
           <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password-otp" element={<ResetPasswordOtp />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route
+            path="/reset-password-otp"
+            element={
+              <ResetPasswordOtpProtectedRoute>
+                <ResetPasswordOtp />
+              </ResetPasswordOtpProtectedRoute>
+            }
+          />
+          <Route
+            path="/reset-password"
+            element={
+              <ResetPasswordProtectedRoute>
+                <ResetPassword />
+              </ResetPasswordProtectedRoute>
+            }
+          />
 
           {/* Resident/User Routes */}
           <Route

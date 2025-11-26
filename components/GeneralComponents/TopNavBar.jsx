@@ -6,6 +6,7 @@ import { Icon } from "@iconify/react";
 import { API_BASE_URL } from "../../src/config/apiConfig";
 import logoImage from "../../src/assets/logo.png";
 import PwaInstallBanner from "./PwaInstallBanner";
+import SubscriptionBanner from "./SubscriptionBanner";
 
 const TopNavBar = () => {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ const TopNavBar = () => {
   const { authToken, user } = useUser();
   const [showDropdown, setShowDropdown] = useState(false);
   const [userName, setUserName] = useState("User");
+  const [isPwaVisible, setIsPwaVisible] = useState(false);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -89,12 +91,18 @@ const TopNavBar = () => {
   return (
     <>
       {/* PWA Install Banner - Slides down from top nav */}
-      <PwaInstallBanner />
+      <PwaInstallBanner onVisibilityChange={setIsPwaVisible} />
+
+      {/* Subscription Status Banner - Shows when PWA is not visible */}
+      <SubscriptionBanner isPwaVisible={isPwaVisible} />
 
       <nav
-        className={`fixed top-0 z-[1000] left-0 right-0 z-40 ${theme.topNav.background} ${theme.topNav.border} border-b`}
+        className={`fixed left-0 right-0 z-[1000] ${theme.topNav.background} ${theme.topNav.border} border-b`}
+        style={{
+          top: "max(24px, env(safe-area-inset-top))",
+        }}
       >
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-2">
           {/* Logo Section */}
           <div className="flex items-center gap-3">
             <div className="w-16 h-16 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center shadow-md overflow-hidden">
@@ -117,7 +125,7 @@ const TopNavBar = () => {
           </div>
 
           {/* Custom animation keyframes */}
-          <style jsx>{`
+          <style>{`
             @keyframes gentleFloat {
               0%,
               100% {

@@ -268,10 +268,6 @@ const SignUp = () => {
           "emailVerificationData",
           JSON.stringify(verificationData)
         );
-        console.log(
-          "💾 Saved verification data to localStorage:",
-          verificationData
-        );
 
         if (authToken) {
           localStorage.setItem("authToken", authToken);

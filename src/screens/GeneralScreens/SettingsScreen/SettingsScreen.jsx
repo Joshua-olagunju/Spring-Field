@@ -13,7 +13,7 @@ const SettingsScreen = () => {
   const [showProfileModal, setShowProfileModal] = useState(false);
 
   return (
-    <div className="min-h-screen pt-0 pb-20 w-full relative flex flex-col">
+    <div className="min-h-screen pb-20 w-full relative flex flex-col ">
       {/* Background */}
       <div
         className="fixed inset-0 -z-10"
@@ -25,8 +25,8 @@ const SettingsScreen = () => {
       />
 
       {/* Content */}
-      <div className="w-full px-0">
-        <div className="max-w-full mx-auto ">
+      <div className="w-full px-4">
+        <div className="max-w-full mx-auto">
           {/* Header with Back Button */}
           <div className="flex items-center gap-3 mb-8">
             <button
@@ -55,67 +55,61 @@ const SettingsScreen = () => {
               onClick={() => setShowProfileModal(true)}
               className={`w-full ${theme.background.card} rounded-xl ${theme.shadow.small} p-4 sm:p-5 hover:${theme.shadow.medium} transition-all text-left border ${theme.border.secondary} hover:border-blue-500 active:scale-98`}
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 sm:gap-4 flex-1">
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Icon
-                      icon="mdi:account"
-                      className="text-white text-xl sm:text-2xl"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3
-                      className={`font-semibold ${theme.text.primary} mb-1 text-sm sm:text-base`}
-                    >
-                      Profile
-                    </h3>
-                    <p
-                      className={`text-xs sm:text-sm ${theme.text.secondary} truncate`}
-                    >
-                      View and edit your profile information
-                    </p>
-                  </div>
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Icon
+                    icon="mdi:account"
+                    className="text-white text-xl sm:text-2xl"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3
+                    className={`font-semibold ${theme.text.primary} mb-1 text-sm sm:text-base`}
+                  >
+                    Profile
+                  </h3>
+                  <p
+                    className={`text-xs sm:text-sm ${theme.text.secondary} truncate`}
+                  >
+                    View and edit your profile information
+                  </p>
                 </div>
                 <Icon
                   icon="mdi:chevron-right"
-                  className={`text-xl ${theme.text.tertiary} flex-shrink-0`}
+                  className={`text-xl ${theme.text.tertiary} flex-shrink-0 ml-2`}
                 />
               </div>
             </button>
-
             {/* Change Password Setting */}
             <button
               onClick={() => setShowChangePasswordModal(true)}
               className={`w-full ${theme.background.card} rounded-xl ${theme.shadow.small} p-4 sm:p-5 hover:${theme.shadow.medium} transition-all text-left border ${theme.border.secondary} hover:border-blue-500 active:scale-98`}
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 sm:gap-4 flex-1">
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Icon
-                      icon="mdi:lock"
-                      className="text-white text-xl sm:text-2xl"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3
-                      className={`font-semibold ${theme.text.primary} mb-1 text-sm sm:text-base`}
-                    >
-                      Change Password
-                    </h3>
-                    <p
-                      className={`text-xs sm:text-sm ${theme.text.secondary} truncate`}
-                    >
-                      Update your account password
-                    </p>
-                  </div>
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Icon
+                    icon="mdi:lock"
+                    className="text-white text-xl sm:text-2xl"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3
+                    className={`font-semibold ${theme.text.primary} mb-1 text-sm sm:text-base`}
+                  >
+                    Change Password
+                  </h3>
+                  <p
+                    className={`text-xs sm:text-sm ${theme.text.secondary} truncate`}
+                  >
+                    Update your account password
+                  </p>
                 </div>
                 <Icon
                   icon="mdi:chevron-right"
-                  className={`text-xl ${theme.text.tertiary} flex-shrink-0`}
+                  className={`text-xl ${theme.text.tertiary} flex-shrink-0 ml-2`}
                 />
               </div>
-            </button>
-
+            </button>{" "}
             {/* Theme Toggle Setting */}
             <div
               className={`w-full ${theme.background.card} rounded-xl ${theme.shadow.small} p-4 sm:p-5 border ${theme.border.secondary}`}

@@ -6,7 +6,7 @@ import { API_BASE_URL } from "../../../config/apiConfig";
 
 const UsersScreen = () => {
   const { theme, isDarkMode } = useTheme();
-  const { user, authToken } = useUser();
+  const { authToken } = useUser();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
   const [showUserModal, setShowUserModal] = useState(false);
@@ -421,23 +421,32 @@ const UsersScreen = () => {
                             >
                               Payments:
                             </span>
-                            <span
-                              className={`text-sm font-bold ${
-                                (user.payment_count || 0) >=
-                                (user.months_since_registration || 0)
-                                  ? "text-green-600 dark:text-green-400"
-                                  : (user.payment_count || 0) >=
-                                    Math.ceil(
-                                      (user.months_since_registration || 0) *
-                                        0.6
-                                    )
-                                  ? "text-yellow-600 dark:text-yellow-400"
-                                  : "text-red-600 dark:text-red-400"
-                              }`}
-                            >
-                              {user.payment_count || 0}/
-                              {user.months_since_registration || 0}
-                            </span>
+                            {user.role.toLowerCase() === "super" ||
+                            user.role.toLowerCase() === "security" ? (
+                              <span
+                                className={`text-sm font-medium ${theme.text.tertiary}`}
+                              >
+                                N/A
+                              </span>
+                            ) : (
+                              <span
+                                className={`text-sm font-bold ${
+                                  (user.payment_count || 0) >=
+                                  (user.months_since_registration || 0)
+                                    ? "text-green-600 dark:text-green-400"
+                                    : (user.payment_count || 0) >=
+                                      Math.ceil(
+                                        (user.months_since_registration || 0) *
+                                          0.6
+                                      )
+                                    ? "text-yellow-600 dark:text-yellow-400"
+                                    : "text-red-600 dark:text-red-400"
+                                }`}
+                              >
+                                {user.payment_count || 0}/
+                                {user.months_since_registration || 0}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -516,9 +525,9 @@ const UsersScreen = () => {
             onClick={handleCloseModal}
           />
           <div
-            className={`${theme.background.card} w-full max-w-md rounded-2xl ${theme.shadow.large} relative`}
+            className={`${theme.background.card} w-full max-w-md rounded-2xl ${theme.shadow.large} relative max-h-[90vh] overflow-y-auto`}
           >
-            <div className="p-6">
+            <div className="p-6 pb-4">
               {/* Header */}
               <div className="flex items-center justify-between mb-6">
                 <h2 className={`text-xl font-bold ${theme.text.primary}`}>
@@ -568,12 +577,12 @@ const UsersScreen = () => {
 
               {/* User Details */}
               <div
-                className={`${theme.background.input} p-4 rounded-lg space-y-4`}
+                className={`${theme.background.input} p-4 rounded-lg space-y-3`}
               >
-                <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="space-y-3 text-sm">
                   <div>
                     <p className={`${theme.text.tertiary} mb-1`}>Email</p>
-                    <p className={`${theme.text.primary}`}>
+                    <p className={`${theme.text.primary} break-all`}>
                       {selectedUser.email}
                     </p>
                   </div>
@@ -614,68 +623,86 @@ const UsersScreen = () => {
                   <div>
                     <p className={`${theme.text.tertiary} mb-1`}>Payments</p>
                     <p className={`${theme.text.primary}`}>
-                      <span
-                        className={`font-bold ${
-                          (selectedUser.payment_count || 0) >=
-                          (selectedUser.months_since_registration || 0)
-                            ? "text-green-600 dark:text-green-400"
-                            : (selectedUser.payment_count || 0) >=
-                              Math.ceil(
-                                (selectedUser.months_since_registration || 0) *
-                                  0.6
-                              )
-                            ? "text-yellow-600 dark:text-yellow-400"
-                            : "text-red-600 dark:text-red-400"
-                        }`}
-                      >
-                        {selectedUser.payment_count || 0}/
-                        {selectedUser.months_since_registration || 0}
-                      </span>
+                      {selectedUser.role.toLowerCase() === "super" ||
+                      selectedUser.role.toLowerCase() === "security" ? (
+                        <span className={`font-medium ${theme.text.tertiary}`}>
+                          N/A
+                        </span>
+                      ) : (
+                        <span
+                          className={`font-bold ${
+                            (selectedUser.payment_count || 0) >=
+                            (selectedUser.months_since_registration || 0)
+                              ? "text-green-600 dark:text-green-400"
+                              : (selectedUser.payment_count || 0) >=
+                                Math.ceil(
+                                  (selectedUser.months_since_registration ||
+                                    0) * 0.6
+                                )
+                              ? "text-yellow-600 dark:text-yellow-400"
+                              : "text-red-600 dark:text-red-400"
+                          }`}
+                        >
+                          {selectedUser.payment_count || 0}/
+                          {selectedUser.months_since_registration || 0}
+                        </span>
+                      )}
                     </p>
                   </div>
                   <div>
                     <p className={`${theme.text.tertiary} mb-1`}>
                       Payment Status
                     </p>
-                    <span
-                      className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                        (selectedUser.payment_count || 0) >=
-                        (selectedUser.months_since_registration || 0)
-                          ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                          : (selectedUser.payment_count || 0) >=
-                            Math.ceil(
-                              (selectedUser.months_since_registration || 0) *
-                                0.6
-                            )
-                          ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-                          : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                      }`}
-                    >
-                      <Icon
-                        icon={
+                    {selectedUser.role.toLowerCase() === "super" ||
+                    selectedUser.role.toLowerCase() === "security" ? (
+                      <span
+                        className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200`}
+                      >
+                        <Icon icon="mdi:minus-circle" className="text-sm" />
+                        N/A
+                      </span>
+                    ) : (
+                      <span
+                        className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
                           (selectedUser.payment_count || 0) >=
                           (selectedUser.months_since_registration || 0)
-                            ? "mdi:check-circle"
+                            ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
                             : (selectedUser.payment_count || 0) >=
                               Math.ceil(
                                 (selectedUser.months_since_registration || 0) *
                                   0.6
                               )
-                            ? "mdi:alert-circle"
-                            : "mdi:close-circle"
-                        }
-                        className="text-sm"
-                      />
-                      {(selectedUser.payment_count || 0) >=
-                      (selectedUser.months_since_registration || 0)
-                        ? "Up to Date"
-                        : (selectedUser.payment_count || 0) >=
-                          Math.ceil(
-                            (selectedUser.months_since_registration || 0) * 0.6
-                          )
-                        ? "Behind"
-                        : "Overdue"}
-                    </span>
+                            ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                            : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                        }`}
+                      >
+                        <Icon
+                          icon={
+                            (selectedUser.payment_count || 0) >=
+                            (selectedUser.months_since_registration || 0)
+                              ? "mdi:check-circle"
+                              : (selectedUser.payment_count || 0) >=
+                                Math.ceil(
+                                  (selectedUser.months_since_registration ||
+                                    0) * 0.6
+                                )
+                              ? "mdi:alert-circle"
+                              : "mdi:close-circle"
+                          }
+                          className="text-sm"
+                        />
+                        {(selectedUser.payment_count || 0) >=
+                        (selectedUser.months_since_registration || 0)
+                          ? "Up to Date"
+                          : (selectedUser.payment_count || 0) >=
+                            Math.ceil(
+                              (selectedUser.months_since_registration || 0) *
+                                0.6
+                            )
+                          ? "Behind"
+                          : "Overdue"}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

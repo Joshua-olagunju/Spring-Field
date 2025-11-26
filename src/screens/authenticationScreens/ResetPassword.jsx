@@ -41,12 +41,48 @@ const ResetPassword = () => {
     hasSpecialChar: false,
   });
 
-  // Get email and token from navigation state
-  const userEmail = location.state?.email || "";
-  const resetToken = location.state?.token || "";
+  // Get email and token from navigation state or localStorage
+  const [userEmail, setUserEmail] = useState("");
+  const [resetToken, setResetToken] = useState("");
+
+  // Initialize email and token from navigation state or localStorage
+  useEffect(() => {
+    // First try to get from location.state
+    if (location.state?.email && location.state?.token) {
+      setUserEmail(location.state.email);
+      setResetToken(location.state.token);
+      // Loaded reset credentials from navigation state
+
+      // Save to localStorage for persistence
+      try {
+        const tokenData = {
+          email: location.state.email,
+          token: location.state.token,
+          timestamp: Date.now(),
+        };
+        localStorage.setItem("resetPasswordToken", JSON.stringify(tokenData));
+        // Saved reset token to localStorage
+      } catch (error) {
+        console.warn("Error saving reset token to localStorage:", error);
+      }
+    } else {
+      // If not in location.state, try localStorage
+      try {
+        const storedData = localStorage.getItem("resetPasswordToken");
+        if (storedData) {
+          const tokenData = JSON.parse(storedData);
+          setUserEmail(tokenData.email || "");
+          setResetToken(tokenData.token || "");
+          // Restored reset credentials from localStorage
+        }
+      } catch (error) {
+        console.warn("Error parsing stored reset token:", error);
+      }
+    }
+  }, [location.state]);
 
   useEffect(() => {
-    // Redirect if no email or token provided (commented out for development)
+    // Redirect if no email or token provided (now checking state variables)
     // if (!userEmail || !resetToken) {
     //   navigate("/forgot-password");
     // }
@@ -126,25 +162,53 @@ const ResetPassword = () => {
 
     if (!isFormValid) return;
 
+    // Validate that we have email and token
+    if (!userEmail || !resetToken) {
+      displayModal(
+        "error",
+        "Session Expired",
+        "Please start the password reset process again."
+      );
+      setTimeout(() => {
+        navigate("/forgot-password");
+      }, 3000);
+      return;
+    }
+
     setIsLoading(true);
 
     try {
+      const requestData = {
+        email: userEmail,
+        token: resetToken,
+        password: formData.password,
+        password_confirmation: formData.confirmPassword,
+      };
+
+      // Submitting password reset
+
       const response = await fetch(`${API_BASE_URL}/api/reset-password`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          email: userEmail,
-          token: resetToken,
-          password: formData.password,
-          password_confirmation: formData.confirmPassword,
-        }),
+        body: JSON.stringify(requestData),
       });
 
       const result = await response.json();
 
+      // Reset password response received
+
       if (response.ok && result.success) {
+        // Clear localStorage after successful password reset
+        try {
+          localStorage.removeItem("resetPasswordToken");
+          localStorage.removeItem("resetPasswordData");
+          // Cleared reset password data from localStorage
+        } catch (error) {
+          console.warn("Error clearing localStorage:", error);
+        }
+
         displayModal(
           "success",
           "Password Reset Successful!",
@@ -152,11 +216,19 @@ const ResetPassword = () => {
         );
         setFormData({ password: "", confirmPassword: "" });
       } else {
-        displayModal(
-          "error",
-          "Password Reset Failed",
-          result.message || "Please try again."
-        );
+        // Handle validation errors
+        let errorMessage = result.message || "Please try again.";
+
+        if (result.errors) {
+          // Extract first error message
+          const firstError = Object.values(result.errors)[0];
+          if (Array.isArray(firstError) && firstError.length > 0) {
+            errorMessage = firstError[0];
+          }
+          console.error("❌ Validation errors:", result.errors);
+        }
+
+        displayModal("error", "Password Reset Failed", errorMessage);
       }
     } catch (error) {
       console.error("Reset password error:", error);
@@ -414,7 +486,16 @@ const ResetPassword = () => {
                 >
                   <button
                     type="button"
-                    onClick={() => navigate("/login")}
+                    onClick={() => {
+                      // Clear localStorage when going back
+                      try {
+                        localStorage.removeItem("resetPasswordToken");
+                        localStorage.removeItem("resetPasswordData");
+                      } catch (error) {
+                        console.warn("Error clearing localStorage:", error);
+                      }
+                      navigate("/login");
+                    }}
                     className={`text-sm ${theme.text.link} hover:${theme.text.linkHover} underline flex items-center justify-center gap-1 mx-auto`}
                   >
                     <Icon icon="mdi:arrow-left" className="text-base" />

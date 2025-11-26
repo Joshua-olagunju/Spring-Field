@@ -68,10 +68,6 @@ const SecDashboard = () => {
     fetchTokenStats();
   }, [authToken]);
 
-  const handleViewAllTokens = () => {
-    // This would navigate to ReportScreen - implement with router when needed
-  };
-
   const handleViewActiveTokens = () => {
     setShowActiveTokensModal(true);
   };
@@ -176,7 +172,7 @@ const SecDashboard = () => {
             <div
               className={`${theme.background.card} rounded-xl ${theme.shadow.medium} p-6 sm:p-8`}
             >
-              <div className="flex items-start justify-between mb-6">
+              <div className="flex items-start justify-between">
                 <div>
                   <p
                     className={`text-sm sm:text-base ${theme.text.secondary} mb-2`}
@@ -188,6 +184,9 @@ const SecDashboard = () => {
                   >
                     {totalTokens}
                   </p>
+                  <p className={`text-xs ${theme.text.tertiary} mt-2`}>
+                    All time entries
+                  </p>
                 </div>
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
                   <Icon
@@ -196,46 +195,35 @@ const SecDashboard = () => {
                   />
                 </div>
               </div>
-              <button
-                onClick={handleViewAllTokens}
-                className={`text-sm font-semibold ${theme.text.link} hover:${theme.text.linkHover} flex items-center gap-1 transition-all`}
-              >
-                View All Tokens
-                <Icon icon="mdi:arrow-right" className="text-base" />
-              </button>
             </div>
 
             {/* Active Tokens Card */}
             <div
               className={`${theme.background.card} rounded-xl ${theme.shadow.medium} p-6 sm:p-8`}
             >
-              <div className="flex items-start justify-between mb-6">
+              <div className="flex items-start justify-between">
                 <div>
                   <p
                     className={`text-sm sm:text-base ${theme.text.secondary} mb-2`}
                   >
-                    Active Tokens
+                    Active Visitors
                   </p>
                   <p
                     className={`text-3xl sm:text-4xl font-bold ${theme.text.primary}`}
                   >
                     {activeTokens}
                   </p>
+                  <p className={`text-xs ${theme.text.tertiary} mt-2`}>
+                    Currently on premises
+                  </p>
                 </div>
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
                   <Icon
-                    icon="mdi:check-circle"
+                    icon="mdi:account-check"
                     className="text-white text-2xl sm:text-3xl"
                   />
                 </div>
               </div>
-              <button
-                onClick={handleViewActiveTokens}
-                className={`text-sm font-semibold ${theme.text.link} hover:${theme.text.linkHover} flex items-center gap-1 transition-all`}
-              >
-                View Active Tokens
-                <Icon icon="mdi:arrow-right" className="text-base" />
-              </button>
             </div>
           </div>
         </div>

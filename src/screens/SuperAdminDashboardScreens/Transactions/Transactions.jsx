@@ -441,7 +441,7 @@ const SuperAdminTransactions = () => {
         }
 
         const result = await response.json();
-        console.log("Transactions API Response:", result);
+        // Transactions API response received
 
         if (response.ok && result.success) {
           // Handle paginated response
@@ -525,7 +525,7 @@ const SuperAdminTransactions = () => {
       />
 
       {/* Content */}
-      <div className="w-full px-0">
+      <div className="w-full px-0 pt-12">
         <div className="max-w-full mx-auto">
           {/* Header */}
           <div className="mb-6">

@@ -247,7 +247,7 @@ const PaymentScreen = () => {
             response.charge_response_message
           );
 
-          console.log("Response Object:", JSON.stringify(response, null, 2));
+          // Response object logged
 
           setIsPaymentLoading(true);
 
@@ -259,9 +259,7 @@ const PaymentScreen = () => {
           logPayment(
             "⚠️ IMPORTANT: In test mode, we verify ALL payment attempts"
           );
-          console.log(
-            "🔄 CALLING VERIFICATION (regardless of Flutterwave status)..."
-          );
+          // Calling verification regardless of Flutterwave status
 
           // In test mode, ALWAYS verify the payment regardless of status
           // This is because test payments should always succeed
@@ -269,16 +267,7 @@ const PaymentScreen = () => {
             logPayment(
               "✅ Payment response received, starting verification process"
             );
-            console.log("Verification details:", {
-              tx_ref: response.tx_ref,
-              transaction_id: response.transaction_id,
-              amount: response.amount,
-              status: response.status,
-              api_url: `${API_BASE_URL}/api/payments/verify/${response.tx_ref}`,
-              auth_token: authToken ? "Present" : "Missing",
-              user_id: user?.id,
-              is_test_payment: response.tx_ref?.includes("SF_") || false,
-            });
+            // Verification details logged
 
             try {
               logPayment("📤 SENDING VERIFICATION REQUEST TO BACKEND");
@@ -291,12 +280,7 @@ const PaymentScreen = () => {
                 authToken ? "Present" : "Missing"
               );
 
-              console.log(
-                "Auth Token for verification:",
-                authToken
-                  ? `Present (${authToken.substring(0, 20)}...)`
-                  : "Missing"
-              );
+              // Auth token status logged
 
               alert(
                 "📤 Sending verification request to backend...\nURL: " +
@@ -322,10 +306,7 @@ const PaymentScreen = () => {
                 statusText: verifyResponse.statusText,
               });
 
-              console.log(
-                "Response headers:",
-                Object.fromEntries(verifyResponse.headers.entries())
-              );
+              // Response headers logged
 
               alert(
                 "📥 Verification response received!\nStatus: " +

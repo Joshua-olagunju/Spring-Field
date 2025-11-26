@@ -20,8 +20,10 @@ class ReportsController extends Controller
         try {
             // User Statistics
             $totalUsers = User::count();
-            $totalAdmins = User::whereIn('role', ['super', 'landlord', 'security'])->count();
+            $totalLandlords = User::where('role', 'landlord')->count(); // Only landlords, not super or security
             $totalResidents = User::where('role', 'resident')->count();
+            $totalSuperAdmins = User::where('role', 'super')->count();
+            $totalSecurity = User::where('role', 'security')->count();
             $activeUsers = User::where('status_active', 1)->count();
             $verifiedUsers = User::whereNotNull('email_verified_at')->count();
 
@@ -131,8 +133,10 @@ class ReportsController extends Controller
                 'data' => [
                     'user_statistics' => [
                         'total_users' => $totalUsers,
-                        'total_admins' => $totalAdmins,
+                        'total_landlords' => $totalLandlords,
                         'total_residents' => $totalResidents,
+                        'total_super_admins' => $totalSuperAdmins,
+                        'total_security' => $totalSecurity,
                         'active_users' => $activeUsers,
                         'inactive_users' => $totalUsers - $activeUsers,
                         'verified_users' => $verifiedUsers,

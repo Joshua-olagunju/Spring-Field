@@ -67,7 +67,6 @@ export const UserProvider = ({ children }) => {
         }
 
         // Trust the localStorage data - set auth immediately
-        console.log("✅ Setting auth from localStorage");
         setAuthToken(token);
         setUser(user);
         setIsAuthenticated(true);
@@ -76,7 +75,6 @@ export const UserProvider = ({ children }) => {
         // ONLY verify token in background if explicitly requested, don't auto-logout
         // This prevents losing auth when switching apps
       } else {
-        console.log("❌ No auth token found in localStorage");
         setIsLoading(false);
       }
     } catch (error) {
@@ -95,7 +93,6 @@ export const UserProvider = ({ children }) => {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        console.log("🔄 App became visible again");
         // Immediately restore auth state from localStorage if available
         const token = localStorage.getItem("authToken");
         const userData = localStorage.getItem("userData");
@@ -105,7 +102,6 @@ export const UserProvider = ({ children }) => {
             const user = JSON.parse(userData);
             if (user.email_verified_at) {
               // Force restore authentication state
-              console.log("🔑 Restoring auth state from localStorage");
               setAuthToken(token);
               setUser(user);
               setIsAuthenticated(true);
@@ -115,18 +111,14 @@ export const UserProvider = ({ children }) => {
             console.error("Error parsing stored user data:", error);
           }
         }
-      } else {
-        console.log("🔄 App going to background, preserving auth state");
       }
     };
 
     const handlePageHide = () => {
-      console.log("📱 Page hide event - preserving auth state");
       // Don't clear anything when page hides
     };
 
     const handleBeforeUnload = () => {
-      console.log("🔄 Before unload - keeping auth token");
       // Don't clear auth token on page refresh or navigation
     };
 

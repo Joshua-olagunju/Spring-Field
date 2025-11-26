@@ -4,6 +4,7 @@ import { useUser } from "../../../../context/useUser";
 import { Icon } from "@iconify/react";
 import AdminUsersActions from "./AdminUsersActions";
 import { GenerateUserTokenModal } from "../../AdminDashboardScreens/TokenGenerationModals";
+import SecurityManagementModal from "./SecurityManagementModal";
 import { API_BASE_URL } from "../../../config/apiConfig";
 
 const AdminUsers = () => {
@@ -16,6 +17,7 @@ const AdminUsers = () => {
   const [selectedAdmin, setSelectedAdmin] = useState(null);
   const [pagination, setPagination] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [showSecurityModal, setShowSecurityModal] = useState(false);
 
   // Fetch admins/landlords from API
   const fetchAdmins = useCallback(
@@ -110,14 +112,25 @@ const AdminUsers = () => {
         <div className="max-w-full mx-auto">
           {/* Header */}
           <div className="mb-6">
-            <h1
-              className={`text-2xl sm:text-3xl font-bold ${theme.text.primary} mb-2`}
-            >
-              Manage Admins
-            </h1>
-            <p className={`text-sm sm:text-base ${theme.text.secondary}`}>
-              View and manage all administrator accounts
-            </p>
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div>
+                <h1
+                  className={`text-2xl sm:text-3xl font-bold ${theme.text.primary} mb-2`}
+                >
+                  Manage Admins
+                </h1>
+                <p className={`text-sm sm:text-base ${theme.text.secondary}`}>
+                  View and manage all administrator accounts
+                </p>
+              </div>
+              <button
+                onClick={() => setShowSecurityModal(true)}
+                className="px-4 py-2 rounded-lg font-medium bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white transition-all shadow-md hover:shadow-lg flex items-center gap-2"
+              >
+                <Icon icon="mdi:shield-account" className="text-xl" />
+                Security Personnel
+              </button>
+            </div>
           </div>
           {/* Search Bar */}
           <div className="mb-6">
@@ -402,6 +415,12 @@ const AdminUsers = () => {
           }}
         />
       )}
+
+      {/* Security Management Modal */}
+      <SecurityManagementModal
+        isOpen={showSecurityModal}
+        onClose={() => setShowSecurityModal(false)}
+      />
     </div>
   );
 };

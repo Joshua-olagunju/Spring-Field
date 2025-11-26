@@ -555,6 +555,7 @@ class VisitorTokenController extends Controller
 
             $formattedEntries = collect($entries->items())->map(function ($entry) {
                 $resident = $entry->token && $entry->token->resident ? $entry->token->resident : null;
+                $token = $entry->token;
                 
                 return [
                     'id' => $entry->id,
@@ -564,8 +565,11 @@ class VisitorTokenController extends Controller
                     'exited_at' => $entry->exited_at ? $entry->exited_at->toISOString() : null,
                     'duration_minutes' => $entry->duration_minutes,
                     'is_active' => $entry->isActive(),
+                    'expires_at' => $token && $token->expires_at ? $token->expires_at->toISOString() : null,
                     'resident_name' => $resident ? $resident->full_name : 'Unknown Resident',
+                    'resident_phone' => $resident && $resident->phone ? $resident->phone : 'N/A',
                     'house_number' => $resident && $resident->house_number ? $resident->house_number : 'N/A',
+                    'address' => $resident && $resident->address ? $resident->address : 'N/A',
                     'guard_name' => $entry->guardUser ? $entry->guardUser->full_name : null,
                     'note' => $entry->note,
                 ];
@@ -610,6 +614,9 @@ class VisitorTokenController extends Controller
                 ->paginate(50);
 
             $formattedEntries = collect($entries->items())->map(function ($entry) {
+                $token = $entry->token;
+                $resident = $token && $token->resident ? $token->resident : null;
+                
                 return [
                     'id' => $entry->id,
                     'visitor_name' => $entry->visitor_name,
@@ -618,8 +625,11 @@ class VisitorTokenController extends Controller
                     'exited_at' => $entry->exited_at ? $entry->exited_at->toISOString() : null,
                     'duration_minutes' => $entry->duration_minutes,
                     'is_active' => $entry->isActive(),
-                    'resident_name' => $entry->token->resident->full_name,
-                    'house_number' => $entry->token->resident->house_number ?? 'N/A',
+                    'expires_at' => $token && $token->expires_at ? $token->expires_at->toISOString() : null,
+                    'resident_name' => $resident ? $resident->full_name : 'Unknown Resident',
+                    'resident_phone' => $resident && $resident->phone ? $resident->phone : 'N/A',
+                    'house_number' => $resident && $resident->house_number ? $resident->house_number : 'N/A',
+                    'address' => $resident && $resident->address ? $resident->address : 'N/A',
                     'guard_name' => $entry->guardUser ? $entry->guardUser->full_name : null,
                     'note' => $entry->note,
                 ];
@@ -655,6 +665,8 @@ class VisitorTokenController extends Controller
         try {
             $activeEntries = VisitorEntry::with(['token.resident', 'guardUser'])
                 ->whereNull('exited_at')
+                ->whereHas('token') // Only get entries that have a token
+                ->whereHas('token.resident') // Only get entries where token has a resident
                 ->orderBy('entered_at', 'desc')
                 ->get();
 
@@ -664,14 +676,16 @@ class VisitorTokenController extends Controller
                     'token_id' => $entry->token_id,
                     'visitor_name' => $entry->visitor_name,
                     'visitor_phone' => $entry->visitor_phone,
-                    'purpose' => $entry->token->visit_type,
+                    'purpose' => $entry->token->visit_type ?? 'N/A',
                     'entered_at' => $entry->entered_at->toISOString(),
-                    'expires_at' => $entry->token->expires_at->toISOString(),
-                    'resident_name' => $entry->token->resident->full_name,
+                    'expires_at' => $entry->token->expires_at ? $entry->token->expires_at->toISOString() : null,
+                    'resident_name' => $entry->token->resident->full_name ?? 'Unknown',
                     'house_number' => $entry->token->resident->house_number ?? 'N/A',
                     'address' => $entry->token->resident->address ?? 'N/A',
                     'guard_name' => $entry->guardUser ? $entry->guardUser->full_name : 'Unknown',
                     'note' => $entry->note,
+                    // Add status based on token expiration
+                    'is_expired' => $entry->token && $entry->token->isExpired(),
                 ];
             });
 
@@ -681,6 +695,7 @@ class VisitorTokenController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
+            Log::error('Get Active Entries Error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Error fetching active entries',

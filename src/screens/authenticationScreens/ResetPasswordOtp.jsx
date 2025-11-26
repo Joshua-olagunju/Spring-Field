@@ -17,24 +17,97 @@ const ResetPasswordOtp = () => {
   const [resendTimer, setResendTimer] = useState(0);
   const [successMessage, setSuccessMessage] = useState("");
 
-  // Get email from navigation state
-  const userEmail = location.state?.email || "";
+  // Get email from navigation state or localStorage
+  const [userEmail, setUserEmail] = useState("");
 
   // Refs for each OTP input
   const inputRefs = useRef([]);
 
+  // Initialize email from navigation state or localStorage
   useEffect(() => {
-    // Redirect if no email provided (commented out for development)
-    // if (!userEmail) {
-    //   navigate("/forgot-password");
-    //   return;
-    // }
+    // First try to get from location.state
+    if (location.state?.email) {
+      setUserEmail(location.state.email);
+    } else {
+      // If not in location.state, try localStorage
+      try {
+        const storedData = localStorage.getItem("resetPasswordData");
+        if (storedData) {
+          const resetData = JSON.parse(storedData);
+          setUserEmail(resetData.email || "");
+
+          // Restore partially entered OTP if available
+          if (resetData.currentOtp && resetData.currentOtp.length <= 6) {
+            try {
+              const restoredOtp = resetData.currentOtp
+                .split("")
+                .concat(["", "", "", "", "", ""])
+                .slice(0, 6);
+              setOtp(restoredOtp);
+            } catch (otpError) {
+              console.warn("Error restoring OTP:", otpError);
+            }
+          }
+        }
+      } catch (error) {
+        console.warn("Error parsing stored reset password data:", error);
+      }
+    }
 
     // Focus on first input when component mounts
     if (inputRefs.current[0]) {
       inputRefs.current[0].focus();
     }
-  }, [navigate]);
+  }, [location.state]);
+
+  // Save current reset password state to localStorage
+  useEffect(() => {
+    // Save current verification state to localStorage periodically
+    const saveResetPasswordState = () => {
+      try {
+        if (userEmail) {
+          const resetData = {
+            email: userEmail,
+            currentOtp: otp.join(""),
+            timestamp: Date.now(),
+          };
+          localStorage.setItem("resetPasswordData", JSON.stringify(resetData));
+        }
+      } catch (error) {
+        console.warn("Error saving reset password state:", error);
+      }
+    };
+
+    // Save state when user switches apps or page becomes hidden
+    const handleVisibilityChange = () => {
+      try {
+        if (document.visibilityState === "hidden") {
+          saveResetPasswordState();
+        }
+      } catch (error) {
+        console.warn("Error in visibility change handler:", error);
+      }
+    };
+
+    try {
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+      window.addEventListener("beforeunload", saveResetPasswordState);
+    } catch (error) {
+      console.warn("Error adding event listeners:", error);
+    }
+
+    return () => {
+      try {
+        document.removeEventListener(
+          "visibilitychange",
+          handleVisibilityChange
+        );
+        window.removeEventListener("beforeunload", saveResetPasswordState);
+      } catch (error) {
+        console.warn("Error removing event listeners:", error);
+      }
+    };
+  }, [userEmail, otp]);
 
   // Resend timer countdown
   useEffect(() => {
@@ -52,6 +125,27 @@ const ResetPasswordOtp = () => {
     newOtp[index] = value;
     setOtp(newOtp);
     setError("");
+
+    // Save current OTP state to localStorage as user types
+    try {
+      const storedData = localStorage.getItem("resetPasswordData");
+      if (storedData) {
+        const resetData = JSON.parse(storedData);
+        resetData.currentOtp = newOtp.join("");
+        resetData.timestamp = Date.now();
+        localStorage.setItem("resetPasswordData", JSON.stringify(resetData));
+      } else if (userEmail) {
+        // Create new entry if it doesn't exist
+        const resetData = {
+          email: userEmail,
+          currentOtp: newOtp.join(""),
+          timestamp: Date.now(),
+        };
+        localStorage.setItem("resetPasswordData", JSON.stringify(resetData));
+      }
+    } catch (storageError) {
+      console.warn("Error saving OTP state:", storageError);
+    }
 
     // Move to next input if value is entered
     if (value && index < 5) {
@@ -159,6 +253,25 @@ const ResetPasswordOtp = () => {
       const result = await response.json();
 
       if (response.ok && result.success) {
+        // Save token to localStorage before navigation
+        try {
+          const tokenData = {
+            email: userEmail,
+            token: result.token,
+            timestamp: Date.now(),
+          };
+          localStorage.setItem("resetPasswordToken", JSON.stringify(tokenData));
+        } catch (error) {
+          console.warn("Error saving reset token to localStorage:", error);
+        }
+
+        // Clear OTP data after successful verification
+        try {
+          localStorage.removeItem("resetPasswordData");
+        } catch (error) {
+          console.warn("Error clearing localStorage:", error);
+        }
+
         // Navigate to reset password screen with email and verified OTP token
         navigate("/reset-password", {
           state: { email: userEmail, token: result.token },
@@ -328,7 +441,15 @@ const ResetPasswordOtp = () => {
                 >
                   <button
                     type="button"
-                    onClick={() => navigate("/forgot-password")}
+                    onClick={() => {
+                      // Clear localStorage when going back
+                      try {
+                        localStorage.removeItem("resetPasswordData");
+                      } catch (error) {
+                        console.warn("Error clearing localStorage:", error);
+                      }
+                      navigate("/forgot-password");
+                    }}
                     className={`text-sm ${theme.text.link} hover:${theme.text.linkHover} underline flex items-center justify-center gap-1 mx-auto`}
                   >
                     <Icon icon="mdi:arrow-left" className="text-base" />

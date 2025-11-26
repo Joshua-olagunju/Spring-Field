@@ -15,7 +15,6 @@ const NotificationTestButton = () => {
     setMessage("");
 
     try {
-      console.log("🔔 Requesting notification permission...");
       setMessage("🔔 Requesting permission...");
 
       const fcmToken = await requestNotificationPermission();
@@ -27,7 +26,6 @@ const NotificationTestButton = () => {
         return;
       }
 
-      console.log("💾 Saving FCM token to backend...");
       setMessage("💾 Saving token...");
 
       const saved = await saveFcmTokenToBackend(fcmToken);
@@ -41,7 +39,6 @@ const NotificationTestButton = () => {
 
       setMessage("✅ Notifications enabled!");
       setIsEnabled(true);
-      console.log("✅ Notifications enabled successfully!");
       setTimeout(() => setMessage(""), 3000);
     } catch (error) {
       setMessage(`❌ Error: ${error.message}`);
@@ -60,7 +57,6 @@ const NotificationTestButton = () => {
       const apiUrl =
         import.meta.env.VITE_API_BASE_URL || "http://192.168.145.118:8000";
 
-      console.log("📤 Sending test notification to:", apiUrl);
       setMessage("📤 Sending...");
 
       const response = await fetch(`${apiUrl}/api/test-notification`, {
@@ -75,7 +71,6 @@ const NotificationTestButton = () => {
 
       if (data.success) {
         setMessage("✅ Notification sent!");
-        console.log("✅ Test notification sent successfully!");
       } else {
         setMessage(`❌ ${data.message}`);
         console.error("❌ Failed:", data.message);

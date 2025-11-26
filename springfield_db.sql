@@ -3,7 +3,6 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 12, 2025 at 02:59 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -20,6 +19,8 @@ SET time_zone = "+00:00";
 --
 -- Database: `springfield_db`
 --
+CREATE DATABASE IF NOT EXISTS `springfield_db` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE `springfield_db`;
 
 -- --------------------------------------------------------
 
@@ -67,16 +68,13 @@ CREATE TABLE `email_verifications` (
   `user_id` bigint(20) UNSIGNED NOT NULL,
   `email` varchar(255) NOT NULL,
   `otp_code` varchar(6) NOT NULL,
+  `reset_token` varchar(64) DEFAULT NULL,
   `expires_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `verified_at` timestamp NULL DEFAULT NULL,
   `attempts` int(11) NOT NULL DEFAULT 0,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `email_verifications`
---
 
 -- --------------------------------------------------------
 
@@ -92,10 +90,6 @@ CREATE TABLE `houses` (
   `house_type` varchar(50) DEFAULT 'room_self',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `houses`
---
 
 -- --------------------------------------------------------
 
@@ -113,10 +107,6 @@ CREATE TABLE `logs` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Dumping data for table `logs`
---
-
 -- --------------------------------------------------------
 
 --
@@ -128,10 +118,6 @@ CREATE TABLE `migrations` (
   `migration` varchar(255) NOT NULL,
   `batch` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `migrations`
---
 
 -- --------------------------------------------------------
 
@@ -147,9 +133,12 @@ CREATE TABLE `payments` (
   `period_start` date DEFAULT NULL,
   `period_end` date DEFAULT NULL,
   `flutterwave_txn_id` varchar(100) DEFAULT NULL,
+  `flutterwave_plan_id` varchar(255) DEFAULT NULL,
+  `flutterwave_response` text DEFAULT NULL,
   `status` enum('pending','paid','failed') DEFAULT 'pending',
   `paid_at` datetime DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -213,10 +202,6 @@ CREATE TABLE `personal_access_tokens` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Dumping data for table `personal_access_tokens`
---
-
 -- --------------------------------------------------------
 
 --
@@ -225,9 +210,11 @@ CREATE TABLE `personal_access_tokens` (
 
 CREATE TABLE `registration_codes` (
   `id` int(11) NOT NULL,
-  `house_id` int(11) NOT NULL,
   `code_hash` varchar(255) NOT NULL,
   `issued_by` int(11) NOT NULL,
+  `issued_for` enum('landlord','resident','security') NOT NULL,
+  `house_id` int(11) DEFAULT NULL,
+  `description` text DEFAULT NULL,
   `expires_at` datetime NOT NULL,
   `used_at` datetime DEFAULT NULL,
   `used_by_user_id` int(11) DEFAULT NULL,
@@ -243,24 +230,42 @@ CREATE TABLE `registration_codes` (
 
 CREATE TABLE `registration_otps` (
   `id` bigint(20) UNSIGNED NOT NULL,
-  `otp_code` varchar(10) NOT NULL,
-  `generated_by` int(11) NOT NULL,
+  `otp_code` varchar(6) NOT NULL,
+  `generated_by` bigint(20) UNSIGNED NOT NULL,
   `target_role` enum('landlord','resident','security') NOT NULL,
-  `house_number` varchar(50) DEFAULT NULL,
+  `house_number` varchar(255) DEFAULT NULL,
   `address` varchar(255) DEFAULT NULL,
-  `house_id` int(11) DEFAULT NULL,
-  `expires_at` datetime NOT NULL,
-  `used_at` datetime DEFAULT NULL,
-  `used_by` int(11) DEFAULT NULL,
-  `is_active` tinyint(1) DEFAULT 1,
-  `metadata` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`metadata`)),
+  `house_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `expires_at` timestamp NOT NULL DEFAULT '2024-11-10 21:38:20' ON UPDATE current_timestamp(),
+  `used_at` timestamp NULL DEFAULT NULL,
+  `used_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `metadata` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`metadata`)),
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- --------------------------------------------------------
+
 --
--- Dumping data for table `registration_otps`
+-- Table structure for table `subscriptions`
 --
+
+CREATE TABLE `subscriptions` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` bigint(20) UNSIGNED NOT NULL,
+  `payment_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `package_type` varchar(255) NOT NULL,
+  `period` varchar(255) NOT NULL,
+  `amount` decimal(10,2) NOT NULL,
+  `starts_at` datetime NOT NULL,
+  `expires_at` datetime NOT NULL,
+  `status` enum('active','expired','cancelled','suspended') NOT NULL DEFAULT 'active',
+  `auto_renew` tinyint(1) NOT NULL DEFAULT 0,
+  `subscription_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`subscription_data`)),
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -270,23 +275,28 @@ CREATE TABLE `registration_otps` (
 
 CREATE TABLE `users` (
   `id` int(11) NOT NULL,
+  `first_name` varchar(255) DEFAULT NULL,
+  `last_name` varchar(255) DEFAULT NULL,
   `full_name` varchar(150) NOT NULL,
   `phone` varchar(20) NOT NULL,
+  `address` text DEFAULT NULL,
   `email` varchar(100) DEFAULT NULL,
   `email_verified_at` timestamp NULL DEFAULT NULL,
+  `payment_count` int(11) NOT NULL DEFAULT 0 COMMENT 'Total months paid for since registration',
+  `is_payment_up_to_date` tinyint(1) NOT NULL DEFAULT 1 COMMENT 'Whether user is up to date with monthly payments',
+  `last_payment_check` timestamp NULL DEFAULT NULL COMMENT 'Last time payment status was checked',
   `password_hash` varchar(255) NOT NULL,
   `role` enum('super','landlord','resident','security') NOT NULL,
   `house_id` int(11) DEFAULT NULL,
   `landlord_id` bigint(20) UNSIGNED DEFAULT NULL,
   `house_type` varchar(255) DEFAULT 'room_self',
   `status_active` tinyint(1) DEFAULT 1,
+  `theme_preference` varchar(255) NOT NULL DEFAULT 'light',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `last_login_at` timestamp NULL DEFAULT NULL,
+  `fcm_token` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `users`
---
 
 -- --------------------------------------------------------
 
@@ -318,6 +328,7 @@ CREATE TABLE `visitor_tokens` (
   `id` int(11) NOT NULL,
   `resident_id` int(11) NOT NULL,
   `token_hash` varchar(255) NOT NULL,
+  `temp_token` varchar(20) DEFAULT NULL,
   `issued_for_name` varchar(100) DEFAULT NULL,
   `issued_for_phone` varchar(20) DEFAULT NULL,
   `visit_type` enum('short','long','delivery','contractor','other') DEFAULT 'short',
@@ -463,6 +474,14 @@ ALTER TABLE `registration_otps`
   ADD KEY `registration_otps_expires_at_index` (`expires_at`);
 
 --
+-- Indexes for table `subscriptions`
+--
+ALTER TABLE `subscriptions`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_subscriptions_user_status` (`user_id`,`status`),
+  ADD KEY `idx_subscriptions_expires_status` (`expires_at`,`status`);
+
+--
 -- Indexes for table `users`
 --
 ALTER TABLE `users`
@@ -508,25 +527,25 @@ ALTER TABLE `visitor_tokens`
 -- AUTO_INCREMENT for table `email_verifications`
 --
 ALTER TABLE `email_verifications`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `houses`
 --
 ALTER TABLE `houses`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `logs`
 --
 ALTER TABLE `logs`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=70;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `payments`
@@ -538,7 +557,7 @@ ALTER TABLE `payments`
 -- AUTO_INCREMENT for table `personal_access_tokens`
 --
 ALTER TABLE `personal_access_tokens`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=55;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `registration_codes`
@@ -550,13 +569,19 @@ ALTER TABLE `registration_codes`
 -- AUTO_INCREMENT for table `registration_otps`
 --
 ALTER TABLE `registration_otps`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `subscriptions`
+--
+ALTER TABLE `subscriptions`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `visitor_entries`
@@ -569,63 +594,6 @@ ALTER TABLE `visitor_entries`
 --
 ALTER TABLE `visitor_tokens`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- Constraints for dumped tables
---
-
---
--- Constraints for table `houses`
---
-ALTER TABLE `houses`
-  ADD CONSTRAINT `fk_houses_landlord` FOREIGN KEY (`landlord_id`) REFERENCES `users` (`id`) ON UPDATE CASCADE;
-
---
--- Constraints for table `logs`
---
-ALTER TABLE `logs`
-  ADD CONSTRAINT `logs_ibfk_1` FOREIGN KEY (`actor_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
---
--- Constraints for table `payments`
---
-ALTER TABLE `payments`
-  ADD CONSTRAINT `payments_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
--- Constraints for table `registration_codes`
---
-ALTER TABLE `registration_codes`
-  ADD CONSTRAINT `registration_codes_ibfk_1` FOREIGN KEY (`house_id`) REFERENCES `houses` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `registration_codes_ibfk_2` FOREIGN KEY (`issued_by`) REFERENCES `users` (`id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `registration_codes_ibfk_3` FOREIGN KEY (`used_by_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
---
--- Constraints for table `registration_otps`
---
-ALTER TABLE `registration_otps`
-  ADD CONSTRAINT `registration_otps_generated_by_foreign` FOREIGN KEY (`generated_by`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `registration_otps_house_id_foreign` FOREIGN KEY (`house_id`) REFERENCES `houses` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `registration_otps_used_by_foreign` FOREIGN KEY (`used_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
-
---
--- Constraints for table `users`
---
-ALTER TABLE `users`
-  ADD CONSTRAINT `users_ibfk_1` FOREIGN KEY (`house_id`) REFERENCES `houses` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
---
--- Constraints for table `visitor_entries`
---
-ALTER TABLE `visitor_entries`
-  ADD CONSTRAINT `visitor_entries_ibfk_1` FOREIGN KEY (`token_id`) REFERENCES `visitor_tokens` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `visitor_entries_ibfk_2` FOREIGN KEY (`guard_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
---
--- Constraints for table `visitor_tokens`
---
-ALTER TABLE `visitor_tokens`
-  ADD CONSTRAINT `visitor_tokens_ibfk_1` FOREIGN KEY (`resident_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

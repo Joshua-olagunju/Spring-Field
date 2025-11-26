@@ -156,7 +156,7 @@ const DashboardScreen = () => {
             <h1
               className={`text-2xl sm:text-3xl font-bold ${theme.text.primary} mb-2`}
             >
-              Welcome Back! 👋
+              Welcome Back!
             </h1>
             <p className={`text-sm sm:text-base ${theme.text.secondary}`}>
               Manage your visitors and generate access tokens

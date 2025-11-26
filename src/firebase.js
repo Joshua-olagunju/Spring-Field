@@ -6,12 +6,21 @@ import { getMessaging, getToken, onMessage } from "firebase/messaging";
 // Your web app's Firebase configuration
 // Uses environment variables for production deployment
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDhhXqDiOx_6QujQp4uPxY2poXzTMygulk",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "notification-3e1ff.firebaseapp.com",
+  apiKey:
+    import.meta.env.VITE_FIREBASE_API_KEY ||
+    "AIzaSyDhhXqDiOx_6QujQp4uPxY2poXzTMygulk",
+  authDomain:
+    import.meta.env.VITE_FIREBASE_AUTH_DOMAIN ||
+    "notification-3e1ff.firebaseapp.com",
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "notification-3e1ff",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "notification-3e1ff.firebasestorage.app",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "273002087588",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:273002087588:web:89fe7bbc074671ce8c9231",
+  storageBucket:
+    import.meta.env.VITE_FIREBASE_STORAGE_BUCKET ||
+    "notification-3e1ff.firebasestorage.app",
+  messagingSenderId:
+    import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "273002087588",
+  appId:
+    import.meta.env.VITE_FIREBASE_APP_ID ||
+    "1:273002087588:web:89fe7bbc074671ce8c9231",
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-ZFPEBC7ECZ",
 };
 
@@ -26,16 +35,16 @@ const messaging = getMessaging(app);
  */
 export async function requestNotificationPermission() {
   try {
-    console.log("🔔 Requesting notification permission...");
+    // Requesting notification permission
 
     const permission = await Notification.requestPermission();
 
     if (permission !== "granted") {
-      console.log("❌ Notification permission denied");
+      // Notification permission denied
       return null;
     }
 
-    console.log("✅ Notification permission granted");
+    // Notification permission granted
 
     // Get FCM token
     const token = await getToken(messaging, {
@@ -45,10 +54,10 @@ export async function requestNotificationPermission() {
     });
 
     if (token) {
-      console.log("📱 FCM Token:", token);
+      // FCM Token obtained
       return token;
     } else {
-      console.log("⚠️ No registration token available");
+      // No registration token available
       return null;
     }
   } catch (error) {
@@ -62,7 +71,7 @@ export async function requestNotificationPermission() {
  */
 export function onForegroundMessage(callback) {
   onMessage(messaging, (payload) => {
-    console.log("📬 Foreground message received:", payload);
+    // Foreground message received
     callback(payload);
   });
 }
@@ -78,7 +87,7 @@ export async function saveFcmTokenToBackend(token) {
     const apiUrl =
       import.meta.env.VITE_API_BASE_URL || "http://192.168.145.118:8000";
 
-    console.log("💾 Saving FCM token to:", apiUrl);
+    // Saving FCM token to backend
 
     const response = await fetch(`${apiUrl}/api/save-fcm-token`, {
       method: "POST",
@@ -90,7 +99,7 @@ export async function saveFcmTokenToBackend(token) {
     });
 
     if (response.ok) {
-      console.log("✅ FCM token saved to backend");
+      // FCM token saved to backend
       return true;
     } else {
       console.error("❌ Failed to save FCM token:", await response.text());

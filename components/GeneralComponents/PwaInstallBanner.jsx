@@ -12,7 +12,7 @@ const Motion = motion;
  * Shows for 20 seconds then slides back up
  * Features attractive gradient and animations
  */
-const PwaInstallBanner = () => {
+const PwaInstallBanner = ({ onVisibilityChange }) => {
   const { theme } = useTheme();
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isInstalled, setIsInstalled] = useState(false);
@@ -27,22 +27,12 @@ const PwaInstallBanner = () => {
       window.navigator.standalone === true;
 
     if (isStandalone) {
-      console.log(
-        "✅ PwaInstallBanner: App already installed (standalone mode)"
-      );
       setIsInstalled(true);
       return;
     }
 
-    console.log(
-      "🔄 PwaInstallBanner: Waiting for beforeinstallprompt event..."
-    );
-
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
-      console.log(
-        "🎉 PwaInstallBanner: beforeinstallprompt event fired! Install is available."
-      );
       setDeferredPrompt(e);
     };
 
@@ -69,13 +59,13 @@ const PwaInstallBanner = () => {
     if (isInstalled) return;
 
     const showBannerCycle = () => {
-      console.log("🎉 PWA Banner: Showing banner!");
       setShowBanner(true);
+      if (onVisibilityChange) onVisibilityChange(true);
 
       // Hide after 20 seconds
       const hideTimer = setTimeout(() => {
-        console.log("👋 PWA Banner: Hiding banner after 20 seconds");
         setShowBanner(false);
+        if (onVisibilityChange) onVisibilityChange(false);
       }, 20000); // 20 seconds
 
       return hideTimer;
@@ -95,25 +85,17 @@ const PwaInstallBanner = () => {
       clearTimeout(initialTimer);
       clearInterval(interval);
     };
-  }, [isInstalled]);
+  }, [isInstalled, onVisibilityChange]);
 
   // Handle install button click
   const handleInstallClick = async () => {
     if (!deferredPrompt) {
-      console.log(
-        "ℹ️ PwaInstallBanner: No install prompt available. Showing manual instructions."
-      );
       setShowInfoModal(true);
       return;
     }
 
-    console.log("📥 PwaInstallBanner: Showing native install prompt...");
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
-
-    if (outcome === "accepted") {
-      console.log("User accepted the install prompt");
-    }
 
     setDeferredPrompt(null);
     setShowBanner(false);
@@ -122,6 +104,7 @@ const PwaInstallBanner = () => {
   // Manual close
   const handleClose = () => {
     setShowBanner(false);
+    if (onVisibilityChange) onVisibilityChange(false);
   };
 
   // Don't render if app is installed

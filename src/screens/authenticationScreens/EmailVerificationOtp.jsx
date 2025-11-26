@@ -44,11 +44,6 @@ const EmailVerificationOtp = () => {
       setUserRole(location.state.role || "resident");
       setTempToken(location.state.tempToken);
       setShouldAutoResend(location.state.autoResend || false);
-      console.log("✅ Loaded user data from navigation state:", {
-        email: location.state.email,
-        userId: location.state.user_id,
-        role: location.state.role,
-      });
     } else {
       // If not in location.state, try localStorage
       try {
@@ -72,25 +67,10 @@ const EmailVerificationOtp = () => {
                 .concat(["", "", "", "", "", ""])
                 .slice(0, 6);
               setOtp(restoredOtp);
-              console.log(
-                "🔄 Restored partially entered OTP:",
-                verificationData.currentOtp
-              );
             } catch (otpError) {
               console.warn("Error restoring OTP:", otpError);
             }
           }
-
-          console.log(
-            "📧 Restored email verification data from localStorage:",
-            {
-              email: verificationData.email,
-              role: verificationData.role,
-              userId: verificationData.user_id,
-              source: verificationData.source,
-              hasPartialOtp: !!verificationData.currentOtp,
-            }
-          );
         }
       } catch (error) {
         console.warn("Error parsing stored verification data:", error);
@@ -98,14 +78,17 @@ const EmailVerificationOtp = () => {
     }
   }, [location.state]);
 
+  // Focus on first input only when component mounts (runs once)
   useEffect(() => {
-    // Prevent back navigation to dashboard by replacing history
-    window.history.replaceState(null, "", window.location.pathname);
-
-    // Focus on first input when component mounts
     if (inputRefs.current[0]) {
       inputRefs.current[0].focus();
     }
+  }, []);
+
+  // Prevent back navigation and setup localStorage saving
+  useEffect(() => {
+    // Prevent back navigation to dashboard by replacing history
+    window.history.replaceState(null, "", window.location.pathname);
 
     // Save current verification state to localStorage periodically
     const saveVerificationState = () => {
@@ -124,7 +107,6 @@ const EmailVerificationOtp = () => {
             "emailVerificationData",
             JSON.stringify(verificationData)
           );
-          console.log("💾 Updated verification data in localStorage");
         }
       } catch (error) {
         console.warn("Error saving verification state:", error);
@@ -137,9 +119,6 @@ const EmailVerificationOtp = () => {
       try {
         if (document.visibilityState === "hidden") {
           saveVerificationState();
-          console.log("📱 App going to background - saving verification state");
-        } else {
-          console.log("📱 App became visible - verification state preserved");
         }
       } catch (error) {
         console.warn("Error in visibility change handler:", error);
@@ -169,11 +148,13 @@ const EmailVerificationOtp = () => {
 
   // Auto-resend OTP if coming from login screen
   useEffect(() => {
-    if (shouldAutoResend) {
+    if (shouldAutoResend && userEmail && userId) {
       handleResendOtp();
+      // Reset the flag after triggering to prevent multiple resends
+      setShouldAutoResend(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [shouldAutoResend, userEmail, userId]);
 
   // Resend timer countdown
   useEffect(() => {
@@ -279,7 +260,6 @@ const EmailVerificationOtp = () => {
     setSuccessMessage("");
 
     try {
-      console.log("🔄 Resending OTP with:", { userId, userEmail });
       const response = await fetch(
         `${API_BASE_URL}/api/email-verification/resend-otp`,
         {
@@ -334,7 +314,6 @@ const EmailVerificationOtp = () => {
     setSuccessMessage("");
 
     try {
-      console.log("✅ Verifying OTP with:", { userId, userEmail, otpCode });
       // API call to verify email OTP
       const response = await fetch(
         `${API_BASE_URL}/api/email-verification/verify`,
@@ -361,6 +340,13 @@ const EmailVerificationOtp = () => {
           role: userRole,
           email_verified_at: new Date().toISOString(),
         };
+
+        // Clear localStorage after successful email verification
+        try {
+          localStorage.removeItem("emailVerificationData");
+        } catch (error) {
+          console.warn("Error clearing localStorage:", error);
+        }
 
         // Complete email verification in UserContext
         // This saves the auth token and marks user as authenticated

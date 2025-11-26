@@ -34,24 +34,14 @@ const InstallPwaButton = ({
       window.navigator.standalone === true;
 
     if (isStandalone) {
-      console.log(
-        "✅ InstallPwaButton: App already installed (standalone mode)"
-      );
       setIsInstalled(true);
       return;
     }
-
-    console.log(
-      "🔄 InstallPwaButton: Waiting for beforeinstallprompt event..."
-    );
 
     // Listen for beforeinstallprompt event
     const handleBeforeInstallPrompt = (e) => {
       // Prevent the mini-infobar from appearing on mobile
       e.preventDefault();
-      console.log(
-        "🎉 InstallPwaButton: beforeinstallprompt event fired! Install is available."
-      );
       // Store the event for later use
       setDeferredPrompt(e);
     };
@@ -78,25 +68,15 @@ const InstallPwaButton = ({
   const handleInstallClick = async () => {
     if (!deferredPrompt) {
       // If no prompt available, show info modal instead
-      console.log(
-        "ℹ️ InstallPwaButton: No install prompt available. Showing manual instructions."
-      );
       setShowInfoModal(true);
       return;
     }
 
-    console.log("📥 InstallPwaButton: Showing native install prompt...");
     // Show the install prompt
     deferredPrompt.prompt();
 
     // Wait for the user to respond to the prompt
     const { outcome } = await deferredPrompt.userChoice;
-
-    if (outcome === "accepted") {
-      console.log("User accepted the install prompt");
-    } else {
-      console.log("User dismissed the install prompt");
-    }
 
     // Clear the deferredPrompt
     setDeferredPrompt(null);

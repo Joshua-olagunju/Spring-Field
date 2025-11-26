@@ -7,11 +7,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log as FacadesLog;
+use Illuminate\Support\Facades\Mail;
 use App\Models\User;
 use App\Models\House;
 use App\Models\Log;
 use App\Models\RegistrationOtp;
 use App\Models\EmailVerification;
+use App\Mail\PasswordResetMail;
 
 class AuthController extends Controller
 {
@@ -178,7 +181,7 @@ class AuthController extends Controller
                     'email' => $request->email,
                     'password_hash' => Hash::make($request->password),
                     'role' => $userRole,
-                    'status_active' => $canBeSuperAdmin || $userRole === User::ROLE_RESIDENT, // Super admin candidates and residents are auto-active
+                    'status_active' => $canBeSuperAdmin || $userRole === User::ROLE_RESIDENT || $userRole === User::ROLE_SECURITY, // Super admin candidates, residents, and security are auto-active
                 ];
 
                 // Add house_id and house_type for users who need houses (not super admins or security)
@@ -553,6 +556,52 @@ class AuthController extends Controller
     }
 
     /**
+     * Get all security personnel (Super Admin only)
+     */
+    public function getSecurityPersonnel(Request $request)
+    {
+        try {
+            // Check if user is super admin
+            if ($request->user()->role !== User::ROLE_SUPER) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized'
+                ], 403);
+            }
+
+            $perPage = $request->get('per_page', 20);
+            
+            $security = User::where('role', User::ROLE_SECURITY)
+                ->orderBy('created_at', 'desc')
+                ->paginate($perPage)
+                ->through(function ($person) {
+                    return [
+                        'id' => $person->id,
+                        'full_name' => $person->full_name,
+                        'email' => $person->email,
+                        'phone' => $person->phone,
+                        'status_active' => $person->status_active,
+                        'created_at' => $person->created_at,
+                        'last_login_at' => $person->last_login_at,
+                        'email_verified_at' => $person->email_verified_at,
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => $security
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch security personnel',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Get users under a specific landlord
      */
     public function getLandlordUsers(Request $request, $landlordId = null)
@@ -899,6 +948,268 @@ class AuthController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to fetch users',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Send password reset OTP to user's email
+     */
+    public function forgotPassword(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|email|exists:users,email'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Email not found in our records',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $user = User::where('email', $request->email)->first();
+
+            // Generate 6-digit OTP
+            $otpCode = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            $expiresAt = now()->addMinutes(10);
+
+            // Store OTP in database (using email_verifications table temporarily)
+            DB::table('email_verifications')->updateOrInsert(
+                ['email' => $request->email],
+                [
+                    'otp_code' => $otpCode,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                    'verified_at' => null
+                ]
+            );
+
+            // Send OTP via email
+            try {
+                Mail::to($user->email)->send(new PasswordResetMail(
+                    $otpCode,
+                    $user->full_name,
+                    $expiresAt
+                ));
+                
+                FacadesLog::info("Password Reset OTP sent to {$request->email}");
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Password reset code sent to your email',
+                    'otp' => $otpCode // Remove this in production
+                ]);
+            } catch (\Exception $mailError) {
+                FacadesLog::error('Failed to send password reset email: ' . $mailError->getMessage());
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to send reset code. Please try again.'
+                ], 500);
+            }
+
+        } catch (\Exception $e) {
+            FacadesLog::error('Forgot Password Error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to process request',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Verify password reset OTP
+     */
+    public function verifyResetPasswordOtp(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|email',
+                'otp' => 'required|string|size:6'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid input',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Check if OTP exists and is valid (within 10 minutes)
+            $verification = DB::table('email_verifications')
+                ->where('email', $request->email)
+                ->where('otp_code', $request->otp)
+                ->where('created_at', '>=', now()->subMinutes(10))
+                ->first();
+
+            if (!$verification) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid or expired OTP'
+                ], 422);
+            }
+
+            // Generate a temporary token for password reset
+            $resetToken = bin2hex(random_bytes(32));
+
+            // Store reset token in dedicated column
+            DB::table('email_verifications')
+                ->where('email', $request->email)
+                ->update([
+                    'verified_at' => now(),
+                    'reset_token' => $resetToken
+                ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'OTP verified successfully',
+                'token' => $resetToken
+            ]);
+
+        } catch (\Exception $e) {
+            FacadesLog::error('Verify Reset OTP Error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to verify OTP',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Resend password reset OTP
+     */
+    public function resendResetPasswordOtp(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|email|exists:users,email'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Email not found',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Generate new 6-digit OTP
+            $otpCode = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            $expiresAt = now()->addMinutes(10);
+
+            // Update OTP in database
+            DB::table('email_verifications')->updateOrInsert(
+                ['email' => $request->email],
+                [
+                    'otp_code' => $otpCode,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                    'verified_at' => null
+                ]
+            );
+
+            // Send OTP via email
+            $user = User::where('email', $request->email)->first();
+            try {
+                Mail::to($user->email)->send(new PasswordResetMail(
+                    $otpCode,
+                    $user->full_name,
+                    $expiresAt
+                ));
+                
+                FacadesLog::info("Password Reset OTP resent to {$request->email}");
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => 'New code sent to your email',
+                    'otp' => $otpCode // Remove this in production
+                ]);
+            } catch (\Exception $mailError) {
+                FacadesLog::error('Failed to resend password reset email: ' . $mailError->getMessage());
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to send code. Please try again.'
+                ], 500);
+            }
+
+        } catch (\Exception $e) {
+            FacadesLog::error('Resend Reset OTP Error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to resend code',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Reset password with verified token
+     */
+    public function resetPassword(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|email|exists:users,email',
+                'token' => 'required|string',
+                'password' => [
+                    'required',
+                    'string',
+                    'min:8',
+                    'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&\-_])[A-Za-z\d@$!%*?&\-_]*$/',
+                    'confirmed'
+                ],
+                'password_confirmation' => 'required|string'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid input',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Verify token in the reset_token column
+            $verification = DB::table('email_verifications')
+                ->where('email', $request->email)
+                ->where('reset_token', $request->token)
+                ->whereNotNull('verified_at')
+                ->where('verified_at', '>=', now()->subMinutes(30)) // Token valid for 30 minutes
+                ->first();
+
+            if (!$verification) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid or expired reset token'
+                ], 422);
+            }
+
+            // Update user password
+            $user = User::where('email', $request->email)->first();
+            $user->password_hash = Hash::make($request->password);
+            $user->save();
+
+            // Delete verification record
+            DB::table('email_verifications')
+                ->where('email', $request->email)
+                ->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Password reset successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            FacadesLog::error('Reset Password Error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to reset password',
                 'error' => $e->getMessage()
             ], 500);
         }

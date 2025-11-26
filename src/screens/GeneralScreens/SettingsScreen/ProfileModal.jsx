@@ -62,7 +62,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
         // Get user role from response or localStorage
         const role =
           data.role ||
-          JSON.parse(localStorage.getItem("user") || "{}").role ||
+          JSON.parse(localStorage.getItem("userData") || "{}").role ||
           "";
         setUserRole(role);
       } else {

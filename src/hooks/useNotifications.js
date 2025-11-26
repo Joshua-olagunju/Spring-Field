@@ -40,7 +40,7 @@ export function useNotifications() {
   // Listen for foreground messages
   useEffect(() => {
     onForegroundMessage((payload) => {
-      console.log("📬 Foreground notification:", payload);
+      // Foreground notification received
       setForegroundMessage(payload);
 
       // Show notification using browser Notification API

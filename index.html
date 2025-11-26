@@ -5,8 +5,9 @@
     <link rel="icon" type="image/png" href="/icons/icon-192x192.png" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
+    <meta name="color-scheme" content="light dark" />
     <title>SpringField Estate</title>
 
     <!-- PWA Meta Tags -->
@@ -14,17 +15,8 @@
       name="description"
       content="SpringField Estate Management System - Secure and efficient estate management"
     />
-    <meta
-      name="theme-color"
-      content="#ffffff"
-      media="(prefers-color-scheme: light)"
-    />
-    <meta
-      name="theme-color"
-      content="#111827"
-      media="(prefers-color-scheme: dark)"
-    />
     <link rel="manifest" href="/manifest.json" />
+    <!-- <meta name="theme-color" content="#ffffff" id="theme-color-meta" /> -->
 
     <!-- Apple Touch Icon -->
     <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
@@ -53,6 +45,40 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+
+    <!-- Theme-based status bar color -->
+    <script>
+      // Update status bar color based on theme
+      function updateStatusBarColor() {
+        const theme = localStorage.getItem("theme") || "light";
+        const isDark = theme === "dark";
+
+        // Update color-scheme meta tag
+        const colorScheme = document.querySelector('meta[name="color-scheme"]');
+        if (colorScheme) {
+          colorScheme.setAttribute("content", isDark ? "dark" : "light");
+        }
+
+        // Update theme-color meta tag
+        const themeColor = document.getElementById("theme-color-meta");
+        if (themeColor) {
+          themeColor.setAttribute("content", isDark ? "#111827" : "#ffffff");
+        }
+      }
+
+      // Update immediately on load
+      updateStatusBarColor();
+
+      // Listen for theme changes from other tabs
+      window.addEventListener("storage", function (e) {
+        if (e.key === "theme") {
+          updateStatusBarColor();
+        }
+      });
+
+      // Poll for theme changes within same tab (when user toggles theme)
+      setInterval(updateStatusBarColor, 300);
+    </script>
 
     <!-- Service Worker Registration -->
     <!-- TEMPORARILY DISABLED FOR MOBILE TESTING -->

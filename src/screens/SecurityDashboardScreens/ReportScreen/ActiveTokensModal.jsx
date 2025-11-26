@@ -34,11 +34,9 @@ const ActiveTokensModal = ({ theme, isOpen, onClose }) => {
 
       if (response.ok && result.success) {
         setActiveTokens(result.data || []);
-      } else {
-        console.error("Failed to fetch active tokens:", result.message);
       }
-    } catch (error) {
-      console.error("Error fetching active tokens:", error);
+    } catch {
+      // Error fetching active tokens
     } finally {
       setIsLoading(false);
     }
@@ -99,8 +97,7 @@ const ActiveTokensModal = ({ theme, isOpen, onClose }) => {
       } else {
         alert(result.message || "Failed to check out visitor");
       }
-    } catch (error) {
-      console.error("Error checking out visitor:", error);
+    } catch {
       alert("Error checking out visitor");
     } finally {
       setIsCheckingOut(false);

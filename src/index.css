@@ -56,7 +56,7 @@ div[class*="text"] {
 }
 /* make it visible: larger scrollbar so gradient shows */
 ::-webkit-scrollbar {
-  width: 0.6rem; /* visible width */
+  width: 0.4rem; /* visible width */
   height: 0.6rem; /* visible height for horizontal scroll */
 }
 

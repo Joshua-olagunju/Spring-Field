@@ -208,7 +208,7 @@ const SuperAdminDashboard = () => {
             <h1
               className={`text-2xl sm:text-3xl font-bold ${theme.text.primary} mb-2`}
             >
-              Admin Dashboard 👨‍💼
+              Admin Dashboard
             </h1>
             <p className={`text-sm sm:text-base ${theme.text.secondary}`}>
               Manage residents, admins, visitors, and system reports

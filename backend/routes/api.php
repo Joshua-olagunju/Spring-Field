@@ -31,6 +31,12 @@ Route::prefix('auth')->group(function () {
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
+// Password reset routes (public)
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/verify-reset-password-otp', [AuthController::class, 'verifyResetPasswordOtp']);
+Route::post('/resend-reset-password-otp', [AuthController::class, 'resendResetPasswordOtp']);
+Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+
 // Public email verification routes (before user is logged in)
 Route::prefix('email-verification')->group(function () {
     Route::post('/send-otp', [EmailVerificationController::class, 'sendVerificationOtp']);
@@ -75,6 +81,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Super Admin Dashboard routes
     Route::prefix('super-admin')->group(function () {
         Route::get('/landlords', [AuthController::class, 'getLandlords']);
+        Route::get('/security', [AuthController::class, 'getSecurityPersonnel']);
         Route::get('/landlord-users/{landlordId}', [AuthController::class, 'getLandlordUsers']);
         Route::post('/generate-user-token-for-landlord', [RegistrationOtpController::class, 'generateTokenForLandlord']);
         Route::patch('/users/{userId}/deactivate', [AuthController::class, 'deactivateUser']);

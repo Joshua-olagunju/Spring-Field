@@ -62,7 +62,6 @@ const EmailVerificationProtectedRoute = ({ children }) => {
   if (!isAuthenticated && !hasVerificationState) {
     // Don't redirect to login - just show the email verification page
     // This prevents users from being kicked to login when switching apps
-    console.log("⚠️ Not authenticated but allowing email verification access");
     return children;
   }
 

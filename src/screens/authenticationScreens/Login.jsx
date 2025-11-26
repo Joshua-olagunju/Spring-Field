@@ -49,23 +49,13 @@ const Login = () => {
       window.navigator.standalone === true;
 
     if (isStandalone) {
-      console.log(
-        "✅ Login PWA Banner: App already installed (standalone mode)"
-      );
       setIsInstalled(true);
       setShowPwaBanner(false);
       return;
     }
 
-    console.log(
-      "🔄 Login PWA Banner: Waiting for beforeinstallprompt event..."
-    );
-
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
-      console.log(
-        "🎉 Login PWA Banner: beforeinstallprompt event fired! Install is available."
-      );
       setDeferredPrompt(e);
     };
 
@@ -90,19 +80,14 @@ const Login = () => {
   // Handle install button click
   const handlePwaInstallClick = async () => {
     if (!deferredPrompt) {
-      console.log(
-        "ℹ️ Login PWA Banner: No install prompt available. Showing manual instructions."
-      );
       setShowInfoModal(true);
       return;
     }
 
-    console.log("📥 Login PWA Banner: Showing native install prompt...");
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
 
     if (outcome === "accepted") {
-      console.log("User accepted the install prompt");
       setShowPwaBanner(false);
     }
 
@@ -227,10 +212,6 @@ const Login = () => {
           localStorage.setItem(
             "emailVerificationData",
             JSON.stringify(verificationData)
-          );
-          console.log(
-            "💾 Saved verification data to localStorage:",
-            verificationData
           );
 
           displayModal(
