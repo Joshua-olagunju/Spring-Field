@@ -48,7 +48,7 @@ const LogoutConfirmModal = ({ isOpen, onClose, onConfirm, isLoading }) => {
           <button
             onClick={onConfirm}
             disabled={isLoading}
-            className="flex-1 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            className="flex-1 px-4 py-2 rounded-lg bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-medium transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-red-500/50 disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {isLoading ? (
               <>

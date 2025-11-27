@@ -517,7 +517,7 @@ const Transactions = () => {
               </div>
               <button
                 onClick={fetchTransactions}
-                className="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                className="mt-4 px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-lg transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-red-500/50"
               >
                 Try Again
               </button>

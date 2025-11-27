@@ -28,7 +28,7 @@ const TopNavBar = () => {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${authToken}`,
           },
         });
         const result = await response.json();

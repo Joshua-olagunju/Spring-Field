@@ -2,10 +2,12 @@
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../../context/useTheme";
 import { useUser } from "../../../context/useUser";
+import useStore from "../../store/useStore";
 import AnimatedSecurityBackground from "../../../components/GeneralComponents/AnimatedSecurityBackground";
 import PoweredByDriftTech from "../../../components/GeneralComponents/PoweredByDrifttech";
 import { Icon } from "@iconify/react";
 import { motion, AnimatePresence } from "framer-motion";
+import { validateEmail as validateEmailUtil } from "../../utils/formValidation";
 
 const Motion = motion;
 
@@ -33,6 +35,12 @@ const Login = () => {
   const [errors, setErrors] = useState({
     email: "",
     password: "",
+  });
+
+  // Real-time validation state
+  const [touched, setTouched] = useState({
+    email: false,
+    password: false,
   });
 
   // PWA Install Banner State
@@ -94,11 +102,6 @@ const Login = () => {
     setDeferredPrompt(null);
   };
 
-  const validateEmail = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
   const handleInputChange = (e) => {
     const { id, value } = e.target;
 
@@ -107,34 +110,44 @@ const Login = () => {
       [id]: value,
     }));
 
-    if (id === "email") {
-      if (value.trim() === "") {
-        setErrors((prev) => ({ ...prev, email: "" }));
-      } else if (!validateEmail(value)) {
-        setErrors((prev) => ({
-          ...prev,
-          email: "Please enter a valid email address",
-        }));
-      } else {
-        setErrors((prev) => ({ ...prev, email: "" }));
-      }
+    // Real-time validation
+    if (id === "email" && touched.email) {
+      const validation = validateEmailUtil(value);
+      setErrors((prev) => ({ ...prev, email: validation.message }));
     }
 
-    if (id === "password") {
-      // No validation for password on login screen
-      setErrors((prev) => ({ ...prev, password: "" }));
+    if (id === "password" && touched.password) {
+      if (!value.trim()) {
+        setErrors((prev) => ({ ...prev, password: "Password is required" }));
+      } else {
+        setErrors((prev) => ({ ...prev, password: "" }));
+      }
+    }
+  };
+
+  const handleBlur = (field) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+
+    // Validate on blur
+    if (field === "email") {
+      const validation = validateEmailUtil(formData.email);
+      setErrors((prev) => ({ ...prev, email: validation.message }));
+    } else if (field === "password") {
+      if (!formData.password.trim()) {
+        setErrors((prev) => ({ ...prev, password: "Password is required" }));
+      }
     }
   };
 
   // Redirect if already authenticated - with validation checks
   useEffect(() => {
     if (isAuthenticated) {
-      // Get user data from context or localStorage
-      const userData = localStorage.getItem("userData");
+      // Get user data from context (now using Zustand via useUser)
+      const userData = useStore.getState().user;
 
       if (userData) {
         try {
-          const user = JSON.parse(userData);
+          const user = userData;
 
           // All checks already passed in UserContext checkAuthStatus
           // which prevents isAuthenticated from being true if email is not verified
@@ -201,7 +214,7 @@ const Login = () => {
       if (result.success) {
         // Check if email needs verification
         if (result.needsVerification) {
-          // Store verification state in localStorage for persistence
+          // Store verification state in store for persistence
           const verificationData = {
             email: result.user.email,
             user_id: result.user.id,
@@ -209,10 +222,7 @@ const Login = () => {
             tempToken: result.token,
             source: "login",
           };
-          localStorage.setItem(
-            "emailVerificationData",
-            JSON.stringify(verificationData)
-          );
+          useStore.getState().setEmailVerificationData(verificationData);
 
           displayModal(
             "warning",
@@ -439,13 +449,34 @@ const Login = () => {
                       id="email"
                       value={formData.email}
                       onChange={handleInputChange}
-                      className={`w-full pl-12 pr-4 py-3 placeholder:text-[0.8rem] ${theme.background.input} ${theme.text.primary} border rounded-[0.3rem] focus:outline-none transition-all focus:${theme.brand.primaryRing}`}
+                      onBlur={() => handleBlur("email")}
+                      className={`w-full pl-12 pr-4 py-3 placeholder:text-[0.8rem] ${
+                        theme.background.input
+                      } ${
+                        theme.text.primary
+                      } border rounded-[0.3rem] focus:outline-none transition-all ${
+                        touched.email && errors.email
+                          ? "border-red-500 focus:ring-2 focus:ring-red-500"
+                          : touched.email && !errors.email
+                          ? "border-green-500 focus:ring-2 focus:ring-green-500"
+                          : `focus:${theme.brand.primaryRing}`
+                      }`}
                       placeholder="Enter your email"
                       autoComplete="email"
+                      aria-label="Email address"
+                      aria-required="true"
+                      aria-invalid={
+                        touched.email && errors.email ? "true" : "false"
+                      }
+                      aria-describedby={
+                        errors.email ? "email-error" : undefined
+                      }
                     />
                   </div>
                   {errors.email && (
                     <p
+                      id="email-error"
+                      role="alert"
                       className={`${theme.text.error} text-xs mt-2 ml-1 flex items-center gap-1`}
                     >
                       <Icon icon="mdi:alert-circle" className="text-sm" />
@@ -474,17 +505,28 @@ const Login = () => {
                       id="password"
                       value={formData.password}
                       onChange={handleInputChange}
+                      onBlur={() => handleBlur("password")}
                       className={`w-full px-4 py-3 placeholder:text-[0.8rem] ${
                         theme.background.input
                       } ${
                         theme.text.primary
                       } border rounded-[0.3rem] focus:outline-none transition-all ${
-                        errors.password
-                          ? "focus:ring-red-500 bg-red-50"
+                        touched.password && errors.password
+                          ? "border-red-500 focus:ring-2 focus:ring-red-500"
+                          : touched.password && !errors.password
+                          ? "border-green-500 focus:ring-2 focus:ring-green-500"
                           : `focus:${theme.brand.primaryRing}`
                       }`}
                       placeholder="Enter your password"
                       autoComplete="current-password"
+                      aria-label="Password"
+                      aria-required="true"
+                      aria-invalid={
+                        touched.password && errors.password ? "true" : "false"
+                      }
+                      aria-describedby={
+                        errors.password ? "password-error" : undefined
+                      }
                     />
                     <button
                       type="button"
@@ -502,6 +544,8 @@ const Login = () => {
                   </div>
                   {errors.password && (
                     <p
+                      id="password-error"
+                      role="alert"
                       className={`${theme.text.error} text-xs mt-2 ml-1 flex items-center gap-1`}
                     >
                       <Icon icon="mdi:alert-circle" className="text-sm" />
@@ -524,11 +568,17 @@ const Login = () => {
                 <button
                   type="submit"
                   disabled={!isFormValid || isLoading}
-                  className={`w-full font-semibold text-[0.9rem] py-3 px-2 rounded-[0.3rem] text-white transition-all active:scale-95 ${
+                  className={`w-full font-semibold text-[0.9rem] py-3 px-2 rounded-[0.3rem] text-white transition-all duration-300 transform focus:outline-none focus:ring-4 ${
                     isFormValid && !isLoading
-                      ? "bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 hover:from-blue-700 hover:via-purple-700 hover:to-blue-700 shadow-lg hover:shadow-xl"
+                      ? "bg-gradient-to-r from-purple-600 via-blue-600 to-purple-600 hover:from-purple-700 hover:via-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl hover:scale-105 focus:ring-purple-500/50 active:scale-95"
                       : theme.button.disabled
                   }`}
+                  aria-label={
+                    isLoading
+                      ? "Signing in, please wait"
+                      : "Sign in to your account"
+                  }
+                  aria-busy={isLoading}
                 >
                   {isLoading ? (
                     <span className="flex items-center justify-center gap-2">

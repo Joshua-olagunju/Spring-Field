@@ -2,10 +2,16 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTheme } from "../../../context/useTheme";
 import { useUser } from "../../../context/useUser";
+import useStore from "../../store/useStore";
 import AnimatedSecurityBackground from "../../../components/GeneralComponents/AnimatedSecurityBackground";
 import PoweredByDriftTech from "../../../components/GeneralComponents/PoweredByDrifttech";
 import { Icon } from "@iconify/react";
 import { API_BASE_URL } from "../../config/apiConfig";
+import {
+  validatePassword as validatePasswordUtil,
+  getPasswordStrengthColor,
+  getPasswordStrengthText,
+} from "../../utils/formValidation";
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -52,6 +58,18 @@ const SignUp = () => {
     address: "",
     password: "",
     confirmPassword: "",
+  });
+
+  // Real-time validation state
+  const [touched, setTouched] = useState({
+    firstName: false,
+    lastName: false,
+    email: false,
+    phoneNumber: false,
+    houseNumber: false,
+    address: false,
+    password: false,
+    confirmPassword: false,
   });
 
   // Password requirements state
@@ -190,7 +208,7 @@ const SignUp = () => {
             user_id: userId,
             role: userRole,
             fromRegistration: true,
-            tempToken: localStorage.getItem("authToken"), // Include auth token for verification
+            tempToken: useStore.getState().authToken, // Include auth token for verification
           },
         });
       }
@@ -252,11 +270,11 @@ const SignUp = () => {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        // Save auth token to localStorage and UserContext
+        // Save auth token to store and UserContext
         const authToken = result.token || result.data?.token;
         const userData = result.data?.user || result.user;
 
-        // Store verification state in localStorage for persistence
+        // Store verification state in store for persistence
         const verificationData = {
           email: formData.email,
           user_id: userData?.id,
@@ -264,14 +282,10 @@ const SignUp = () => {
           tempToken: authToken,
           source: "signup",
         };
-        localStorage.setItem(
-          "emailVerificationData",
-          JSON.stringify(verificationData)
-        );
+        useStore.getState().setEmailVerificationData(verificationData);
 
         if (authToken) {
-          localStorage.setItem("authToken", authToken);
-          localStorage.setItem("token", authToken); // For backward compatibility
+          // Auth token is automatically handled by store persistence
           // Update user context with the user data
           if (userData) {
             updateUser(userData);
@@ -781,13 +795,26 @@ const SignUp = () => {
                       id="password"
                       value={formData.password}
                       onChange={handleInputChange}
+                      onBlur={() => setTouched({ ...touched, password: true })}
                       className={`w-full px-4 py-3 pr-12 placeholder:text-[0.8rem] ${theme.background.input} ${theme.text.primary} border rounded-[0.3rem] focus:outline-none transition-all focus:${theme.brand.primaryRing}`}
                       placeholder="Create password"
+                      aria-label="Password"
+                      aria-required="true"
+                      aria-invalid={
+                        touched.password &&
+                        !Object.values(passwordRequirements).every((v) => v)
+                          ? "true"
+                          : "false"
+                      }
+                      aria-describedby="password-requirements"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute inset-y-0 right-0 pr-4 flex items-center"
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
                     >
                       <Icon
                         icon={showPassword ? "mdi:eye" : "mdi:eye-off"}
@@ -796,8 +823,59 @@ const SignUp = () => {
                     </button>
                   </div>
 
+                  {/* Password Strength Indicator */}
+                  {formData.password && (
+                    <div className="mt-2">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full transition-all duration-300 ${getPasswordStrengthColor(
+                              validatePasswordUtil(formData.password).strength
+                            )}`}
+                            style={{
+                              width: `${
+                                (validatePasswordUtil(formData.password)
+                                  .strength /
+                                  5) *
+                                100
+                              }%`,
+                            }}
+                          />
+                        </div>
+                        <span
+                          className={`text-xs font-semibold ${
+                            getPasswordStrengthText(
+                              validatePasswordUtil(formData.password).strength
+                            ) === "Weak"
+                              ? "text-red-500"
+                              : getPasswordStrengthText(
+                                  validatePasswordUtil(formData.password)
+                                    .strength
+                                ) === "Fair"
+                              ? "text-yellow-500"
+                              : getPasswordStrengthText(
+                                  validatePasswordUtil(formData.password)
+                                    .strength
+                                ) === "Good"
+                              ? "text-blue-500"
+                              : getPasswordStrengthText(
+                                  validatePasswordUtil(formData.password)
+                                    .strength
+                                ) === "Strong"
+                              ? "text-green-500"
+                              : "text-green-600"
+                          }`}
+                        >
+                          {getPasswordStrengthText(
+                            validatePasswordUtil(formData.password).strength
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Password Requirements */}
-                  <div className="mt-3 space-y-1.5">
+                  <div id="password-requirements" className="mt-3 space-y-1.5">
                     <p
                       className={`text-xs font-semibold ${theme.text.secondary}`}
                     >
@@ -913,8 +991,35 @@ const SignUp = () => {
                       id="confirmPassword"
                       value={formData.confirmPassword}
                       onChange={handleInputChange}
-                      className={`w-full px-4 py-3 pr-12 placeholder:text-[0.8rem] ${theme.background.input} ${theme.text.primary} border rounded-[0.3rem] focus:outline-none transition-all focus:${theme.brand.primaryRing}`}
+                      onBlur={() =>
+                        setTouched({ ...touched, confirmPassword: true })
+                      }
+                      className={`w-full px-4 py-3 pr-12 placeholder:text-[0.8rem] ${
+                        theme.background.input
+                      } ${
+                        theme.text.primary
+                      } border rounded-[0.3rem] focus:outline-none transition-all ${
+                        touched.confirmPassword && errors.confirmPassword
+                          ? "border-red-500 focus:ring-2 focus:ring-red-500"
+                          : touched.confirmPassword &&
+                            !errors.confirmPassword &&
+                            formData.confirmPassword
+                          ? "border-green-500 focus:ring-2 focus:ring-green-500"
+                          : `focus:${theme.brand.primaryRing}`
+                      }`}
                       placeholder="Confirm your password"
+                      aria-label="Confirm password"
+                      aria-required="true"
+                      aria-invalid={
+                        touched.confirmPassword && errors.confirmPassword
+                          ? "true"
+                          : "false"
+                      }
+                      aria-describedby={
+                        errors.confirmPassword
+                          ? "confirmPassword-error"
+                          : undefined
+                      }
                     />
                     <button
                       type="button"
@@ -922,6 +1027,11 @@ const SignUp = () => {
                         setShowConfirmPassword(!showConfirmPassword)
                       }
                       className="absolute inset-y-0 right-0 pr-4 flex items-center"
+                      aria-label={
+                        showConfirmPassword
+                          ? "Hide password confirmation"
+                          : "Show password confirmation"
+                      }
                     >
                       <Icon
                         icon={showConfirmPassword ? "mdi:eye" : "mdi:eye-off"}
@@ -931,6 +1041,8 @@ const SignUp = () => {
                   </div>
                   {errors.confirmPassword && (
                     <p
+                      id="confirmPassword-error"
+                      role="alert"
                       className={`${theme.text.error} text-xs mt-2 ml-1 flex items-center gap-1`}
                     >
                       <Icon icon="mdi:alert-circle" className="text-sm" />
@@ -1022,7 +1134,8 @@ const SignUp = () => {
 
               <button
                 onClick={() => setShowModal(false)}
-                className="w-full px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors flex items-center justify-center gap-2"
+                className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-purple-500/50 flex items-center justify-center gap-2"
+                aria-label="Close success modal"
               >
                 <Icon icon="mdi:check" />
                 OK

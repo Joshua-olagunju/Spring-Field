@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Icon } from "@iconify/react";
 import { API_BASE_URL } from "../../src/config/apiConfig";
+import useStore from "../../src/store/useStore";
 
 const FlutterwaveSimulationModal = ({
   isOpen,
@@ -58,7 +59,7 @@ const FlutterwaveSimulationModal = ({
             method: "GET",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+              Authorization: `Bearer ${useStore.getState().authToken}`,
             },
           }
         );

@@ -30,7 +30,7 @@ const UsersScreen = () => {
         setLoading(true);
         setError("");
 
-        const token = authToken || localStorage.getItem("authToken");
+        const token = authToken;
         if (!token) {
           setError("Authentication required");
           return;

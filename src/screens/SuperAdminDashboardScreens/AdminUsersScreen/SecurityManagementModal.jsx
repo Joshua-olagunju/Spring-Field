@@ -33,9 +33,7 @@ const SecurityManagementModal = ({ isOpen, onClose }) => {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${
-                authToken || localStorage.getItem("authToken")
-              }`,
+              Authorization: `Bearer ${authToken}`,
             },
           }
         );
@@ -89,9 +87,7 @@ const SecurityManagementModal = ({ isOpen, onClose }) => {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${
-              authToken || localStorage.getItem("authToken")
-            }`,
+            Authorization: `Bearer ${authToken}`,
           },
         }
       );
@@ -122,9 +118,7 @@ const SecurityManagementModal = ({ isOpen, onClose }) => {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${
-              authToken || localStorage.getItem("authToken")
-            }`,
+            Authorization: `Bearer ${authToken}`,
           },
         }
       );
@@ -155,9 +149,7 @@ const SecurityManagementModal = ({ isOpen, onClose }) => {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${
-              authToken || localStorage.getItem("authToken")
-            }`,
+            Authorization: `Bearer ${authToken}`,
           },
         }
       );
@@ -568,7 +560,7 @@ const SecurityManagementModal = ({ isOpen, onClose }) => {
                 <button
                   onClick={() => handleActivate(actionModal.securityId)}
                   disabled={isProcessing}
-                  className="flex-1 px-4 py-2 rounded-lg font-medium bg-green-600 hover:bg-green-700 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-2 rounded-lg font-medium bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-green-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isProcessing ? "Activating..." : "Activate"}
                 </button>
@@ -624,7 +616,7 @@ const SecurityManagementModal = ({ isOpen, onClose }) => {
                 <button
                   onClick={() => handleDeactivate(actionModal.securityId)}
                   disabled={isProcessing}
-                  className="flex-1 px-4 py-2 rounded-lg font-medium bg-yellow-600 hover:bg-yellow-700 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-2 rounded-lg font-medium bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-yellow-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isProcessing ? "Deactivating..." : "Deactivate"}
                 </button>
@@ -680,7 +672,7 @@ const SecurityManagementModal = ({ isOpen, onClose }) => {
                 <button
                   onClick={() => handleDelete(actionModal.securityId)}
                   disabled={isProcessing}
-                  className="flex-1 px-4 py-2 rounded-lg font-medium bg-red-600 hover:bg-red-700 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-2 rounded-lg font-medium bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-red-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isProcessing ? "Deleting..." : "Delete"}
                 </button>

@@ -3,6 +3,7 @@ import { useTheme } from "../../../../context/useTheme";
 import { useUser } from "../../../../context/useUser";
 import { Icon } from "@iconify/react";
 import { API_BASE_URL } from "../../../config/apiConfig";
+import useStore from "../../../store/useStore";
 import TokenDetailModal from "../../SecurityDashboardScreens/ReportScreen/TokenDetailModal";
 
 const VisitorsScreen = () => {
@@ -26,8 +27,8 @@ const VisitorsScreen = () => {
       try {
         setIsLoading(true);
         // For admin users, fetch all entries; for regular users, fetch their entries
-        const userData = JSON.parse(localStorage.getItem("userData") || "{}");
-        const userRole = userData.role;
+        const userData = useStore.getState().user;
+        const userRole = userData?.role;
         const endpoint =
           userRole === "admin" || userRole === "super_admin"
             ? `${API_BASE_URL}/api/visitor-tokens/all-entries`
@@ -37,9 +38,7 @@ const VisitorsScreen = () => {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${
-              authToken || localStorage.getItem("authToken")
-            }`,
+            Authorization: `Bearer ${authToken}`,
           },
         });
 

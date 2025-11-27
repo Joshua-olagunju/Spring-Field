@@ -54,7 +54,7 @@ const ReportScreen = () => {
 
   const fetchRevenue = async (filter = revenueFilter, customRange = null) => {
     try {
-      const token = authToken || localStorage.getItem("authToken");
+      const token = authToken;
       let url = `${API_BASE_URL}/api/super-admin/revenue?filter=${filter}`;
 
       if (filter === "custom" && customRange) {

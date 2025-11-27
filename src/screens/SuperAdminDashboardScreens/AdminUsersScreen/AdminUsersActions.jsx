@@ -19,13 +19,7 @@ const DetailItem = ({ icon, label, value, theme }) => (
   </div>
 );
 
-const AdminUsersActions = ({
-  theme,
-  admin,
-  adminIndex,
-  onGenerateToken,
-  onAdminUpdate,
-}) => {
+const AdminUsersActions = ({ theme, admin, adminIndex, onGenerateToken }) => {
   const { authToken } = useUser();
   const [activeModal, setActiveModal] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -51,9 +45,7 @@ const AdminUsersActions = ({
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${
-              authToken || localStorage.getItem("authToken")
-            }`,
+            Authorization: `Bearer ${authToken}`,
           },
         }
       );
@@ -75,7 +67,7 @@ const AdminUsersActions = ({
   // User management actions
   const handleToggleUserStatus = async (userId, action) => {
     try {
-      const token = authToken || localStorage.getItem("authToken");
+      const token = authToken;
       const response = await fetch(
         `${API_BASE_URL}/api/super-admin/users/${userId}/${action}`,
         {
@@ -110,7 +102,7 @@ const AdminUsersActions = ({
 
   const handleDeleteUser = async (userId) => {
     try {
-      const token = authToken || localStorage.getItem("authToken");
+      const token = authToken;
       const response = await fetch(
         `${API_BASE_URL}/api/super-admin/users/${userId}`,
         {
@@ -231,8 +223,8 @@ const AdminUsersActions = ({
 
   const confirmGenerateOTP = async () => {
     try {
-      // Get auth token from localStorage
-      const authToken = localStorage.getItem("authToken");
+      // Get auth token from context
+      const authTokenValue = authToken;
 
       // API call to generate OTP
       const response = await fetch(
@@ -241,7 +233,7 @@ const AdminUsersActions = ({
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken}`,
+            Authorization: `Bearer ${authTokenValue}`,
           },
           body: JSON.stringify({
             admin_id: admin.id,
@@ -419,7 +411,7 @@ const AdminUsersActions = ({
                 </button>
                 <button
                   onClick={confirmGenerateOTP}
-                  className="flex-1 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors"
+                  className="flex-1 px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-purple-500/50"
                 >
                   Generate
                 </button>
@@ -466,7 +458,7 @@ const AdminUsersActions = ({
                     handleToggleUserStatus(admin.id, "deactivate");
                     setActiveModal(null);
                   }}
-                  className="flex-1 px-4 py-2 rounded-lg bg-yellow-600 hover:bg-yellow-700 text-white font-medium transition-colors"
+                  className="flex-1 px-4 py-2 rounded-lg bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white font-medium transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-yellow-500/50"
                 >
                   Deactivate
                 </button>
@@ -513,7 +505,7 @@ const AdminUsersActions = ({
                     handleToggleUserStatus(admin.id, "activate");
                     setActiveModal(null);
                   }}
-                  className="flex-1 px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium transition-colors"
+                  className="flex-1 px-4 py-2 rounded-lg bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-medium transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-green-500/50"
                 >
                   Activate
                 </button>
@@ -553,7 +545,7 @@ const AdminUsersActions = ({
                 </button>
                 <button
                   onClick={() => setActiveModal(null)}
-                  className="flex-1 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium transition-colors"
+                  className="flex-1 px-4 py-2 rounded-lg bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-medium transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-red-500/50"
                 >
                   Delete
                 </button>
@@ -1023,7 +1015,7 @@ const AdminUsersActions = ({
                   onClick={() =>
                     handleToggleUserStatus(userActionModal.userId, "deactivate")
                   }
-                  className="flex-1 px-4 py-3 rounded-lg bg-yellow-600 hover:bg-yellow-700 text-white font-medium transition-colors"
+                  className="flex-1 px-4 py-3 rounded-lg bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white font-medium transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-yellow-500/50"
                 >
                   Deactivate
                 </button>
@@ -1076,7 +1068,7 @@ const AdminUsersActions = ({
                   onClick={() =>
                     handleToggleUserStatus(userActionModal.userId, "activate")
                   }
-                  className="flex-1 px-4 py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium transition-colors"
+                  className="flex-1 px-4 py-3 rounded-lg bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-medium transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-green-500/50"
                 >
                   Activate
                 </button>
@@ -1125,7 +1117,7 @@ const AdminUsersActions = ({
                 </button>
                 <button
                   onClick={() => handleDeleteUser(userActionModal.userId)}
-                  className="flex-1 px-4 py-3 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium transition-colors"
+                  className="flex-1 px-4 py-3 rounded-lg bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-medium transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-red-500/50"
                 >
                   Delete
                 </button>

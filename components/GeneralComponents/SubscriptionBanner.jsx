@@ -1,12 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { useTheme } from "../../context/useTheme";
 import { useUser } from "../../context/useUser";
 import { Icon } from "@iconify/react";
 import { API_BASE_URL } from "../../src/config/apiConfig";
 
 const SubscriptionBanner = ({ isPwaVisible }) => {
-  const { theme } = useTheme();
   const { user, authToken } = useUser();
   const navigate = useNavigate();
   const [showBanner, setShowBanner] = useState(false);

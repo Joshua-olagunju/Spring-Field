@@ -1,5 +1,6 @@
-import { createContext, useState, useEffect } from "react";
+import { createContext, useEffect } from "react";
 import { API_BASE_URL } from "../src/config/apiConfig";
+import useStore from "../src/store/useStore";
 
 const ThemeContext = createContext();
 
@@ -198,23 +199,23 @@ const themes = {
 };
 
 export const ThemeProvider = ({ children }) => {
-  // Check for saved theme preference or default to 'light'
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    const savedTheme = localStorage.getItem("theme");
-    return savedTheme === "dark";
-  });
+  // Get theme state and actions from Zustand store
+  const isDarkMode = useStore((state) => state.isDarkMode);
+  const authToken = useStore((state) => state.authToken);
+  const toggleTheme = useStore((state) => state.toggleTheme);
+  const setTheme = useStore((state) => state.setTheme);
+  const syncThemeWithBackend = useStore((state) => state.syncThemeWithBackend);
 
   // Load user's theme preference from backend on app load
   useEffect(() => {
     const loadUserTheme = async () => {
-      const token = localStorage.getItem("token");
-      if (token) {
+      if (authToken) {
         try {
           const response = await fetch(`${API_BASE_URL}/api/settings/profile`, {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
+              Authorization: `Bearer ${authToken}`,
             },
           });
 
@@ -222,54 +223,24 @@ export const ThemeProvider = ({ children }) => {
             const result = await response.json();
             if (result.success && result.data.theme_preference) {
               const userTheme = result.data.theme_preference === "dark";
-              setIsDarkMode(userTheme);
-              localStorage.setItem("theme", result.data.theme_preference);
+              setTheme(userTheme);
             }
           }
         } catch (error) {
           console.error("Failed to load user theme preference:", error);
-          // Continue with localStorage theme if backend fails
         }
       }
     };
 
     loadUserTheme();
-  }, []); // Run once on app load
+  }, [authToken, setTheme]); // Run when authToken changes
 
-  // Update localStorage and document class when theme changes
+  // Sync theme with backend when it changes
   useEffect(() => {
-    localStorage.setItem("theme", isDarkMode ? "dark" : "light");
-    if (isDarkMode) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
+    if (authToken) {
+      syncThemeWithBackend();
     }
-  }, [isDarkMode]);
-
-  const toggleTheme = async () => {
-    const newTheme = !isDarkMode;
-    setIsDarkMode(newTheme);
-
-    // Save theme preference to backend if user is authenticated
-    const token = localStorage.getItem("token");
-    if (token) {
-      try {
-        await fetch(`${API_BASE_URL}/api/settings/theme`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            theme: newTheme ? "dark" : "light",
-          }),
-        });
-      } catch (error) {
-        console.error("Failed to save theme preference:", error);
-        // Theme still changes locally even if backend save fails
-      }
-    }
-  };
+  }, [isDarkMode, authToken, syncThemeWithBackend]);
 
   const theme = isDarkMode ? themes.dark : themes.light;
 

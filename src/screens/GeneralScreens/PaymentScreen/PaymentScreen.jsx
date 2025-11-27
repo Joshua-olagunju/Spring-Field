@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../../../context/useTheme";
 import { useUser } from "../../../../context/useUser";
+import useStore from "../../../store/useStore";
 import { Icon } from "@iconify/react";
 import { API_BASE_URL } from "../../../config/apiConfig";
 
@@ -24,13 +25,9 @@ const PaymentScreen = () => {
       data,
     };
 
-    // Save to localStorage for persistence
+    // Save to store for persistence
     try {
-      const existingLogs = JSON.parse(
-        localStorage.getItem("payment_logs") || "[]"
-      );
-      existingLogs.push(logEntry);
-      localStorage.setItem("payment_logs", JSON.stringify(existingLogs));
+      useStore.getState().addPaymentLog(logEntry);
     } catch {
       // Ignore localStorage errors
     }
@@ -97,7 +94,7 @@ const PaymentScreen = () => {
   const initializeFlutterwavePayment = async (plan, packageType) => {
     try {
       // Clear previous logs
-      localStorage.removeItem("payment_logs");
+      useStore.getState().clearPaymentLogs();
 
       setIsPaymentLoading(true);
       logPayment("🚀 STARTING PAYMENT PROCESS");
@@ -396,7 +393,7 @@ const PaymentScreen = () => {
           );
 
           // Show logs when modal closes
-          const logs = JSON.parse(localStorage.getItem("payment_logs") || "[]");
+          const logs = useStore.getState().paymentLogs;
           console.table(logs);
 
           alert(

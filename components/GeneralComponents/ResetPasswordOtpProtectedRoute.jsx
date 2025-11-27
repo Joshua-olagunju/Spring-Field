@@ -1,4 +1,5 @@
 import { Navigate, useLocation } from "react-router-dom";
+import useStore from "../../src/store/useStore";
 
 /**
  * ResetPasswordOtpProtectedRoute Component
@@ -15,19 +16,19 @@ const ResetPasswordOtpProtectedRoute = ({ children }) => {
   const resetState = location.state;
   const hasResetState = resetState?.email;
 
-  // Check localStorage for reset password data
+  // Check store for reset password data
   let hasStoredResetData = false;
   try {
-    const storedData = localStorage.getItem("resetPasswordData");
+    const storedData = useStore.getState().resetPasswordData;
     if (storedData) {
-      const resetData = JSON.parse(storedData);
+      const resetData = storedData;
       hasStoredResetData = !!resetData.email;
     }
   } catch (error) {
-    console.warn("Error reading resetPasswordData from localStorage:", error);
+    console.warn("Error reading resetPasswordData from store:", error);
   }
 
-  // Allow access if user has reset state from forgot-password OR stored data in localStorage
+  // Allow access if user has reset state from forgot-password OR stored data in store
   if (hasResetState || hasStoredResetData) {
     return children;
   }

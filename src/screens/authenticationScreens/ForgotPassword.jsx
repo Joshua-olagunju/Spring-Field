@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../../context/useTheme";
 import { API_BASE_URL } from "../../config/apiConfig";
+import useStore from "../../store/useStore";
 import AnimatedSecurityBackground from "../../../components/GeneralComponents/AnimatedSecurityBackground";
 import PoweredByDriftTech from "../../../components/GeneralComponents/PoweredByDrifttech";
 import { Icon } from "@iconify/react";
@@ -47,7 +48,14 @@ const ForgotPassword = () => {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        // Navigate to OTP screen with email
+        // Save email to store so it persists when user checks email
+        const resetData = {
+          email: email,
+          timestamp: Date.now(),
+        };
+        useStore.getState().setResetPasswordData(resetData);
+
+        // Navigate to OTP screen with email in both state and store
         navigate("/reset-password-otp", { state: { email } });
       } else {
         setError(

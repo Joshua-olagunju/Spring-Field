@@ -27,9 +27,7 @@ const LandlordUsers = () => {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${
-                authToken || localStorage.getItem("authToken")
-              }`,
+              Authorization: `Bearer ${authToken}`,
             },
           }
         );

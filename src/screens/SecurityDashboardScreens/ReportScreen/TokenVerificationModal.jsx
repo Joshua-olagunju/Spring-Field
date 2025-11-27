@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Icon } from "@iconify/react";
 import { Html5Qrcode } from "html5-qrcode";
 import { API_BASE_URL } from "../../../config/apiConfig";
+import useStore from "../../../store/useStore";
 
 const TokenVerificationModal = ({ theme, isOpen, onClose }) => {
   const [verificationMode, setVerificationMode] = useState(null); // 'input' or 'scan'
@@ -34,8 +35,7 @@ const TokenVerificationModal = ({ theme, isOpen, onClose }) => {
     setCurrentToken(token); // Track the token being verified
 
     try {
-      const authToken =
-        localStorage.getItem("authToken") || localStorage.getItem("token");
+      const authToken = useStore.getState().authToken;
 
       if (!authToken) {
         setErrorMessage("Authentication required. Please log in again.");
@@ -211,8 +211,7 @@ const TokenVerificationModal = ({ theme, isOpen, onClose }) => {
     setSuccessMessage("");
 
     try {
-      const authToken =
-        localStorage.getItem("authToken") || localStorage.getItem("token");
+      const authToken = useStore.getState().authToken;
 
       if (!authToken) {
         setErrorMessage("Authentication required. Please log in again.");
@@ -264,8 +263,7 @@ const TokenVerificationModal = ({ theme, isOpen, onClose }) => {
     setSuccessMessage("");
 
     try {
-      const authToken =
-        localStorage.getItem("authToken") || localStorage.getItem("token");
+      const authToken = useStore.getState().authToken;
 
       if (!authToken) {
         setErrorMessage("Authentication required. Please log in again.");
@@ -539,7 +537,7 @@ const TokenVerificationModal = ({ theme, isOpen, onClose }) => {
                     </div>
                     <button
                       onClick={startScanner}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+                      className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-purple-500/50 flex items-center justify-center gap-2"
                     >
                       <Icon icon="mdi:refresh" />
                       Try Again
@@ -557,7 +555,7 @@ const TokenVerificationModal = ({ theme, isOpen, onClose }) => {
                         stopScanner();
                         setVerificationMode(null); // Go back to mode selection
                       }}
-                      className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 mx-auto"
+                      className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-medium py-2 px-4 rounded-lg transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-red-500/50 flex items-center justify-center gap-2 mx-auto"
                     >
                       <Icon icon="mdi:stop" />
                       Stop Scanner
@@ -758,7 +756,7 @@ const TokenVerificationModal = ({ theme, isOpen, onClose }) => {
                         disabled={
                           isCheckingOut || isGrantingEntry || successMessage
                         }
-                        className="flex-1 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+                        className="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 disabled:opacity-50 text-white font-medium py-3 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-red-500/50 flex items-center justify-center gap-2"
                       >
                         {isCheckingOut ? (
                           <>
@@ -778,7 +776,7 @@ const TokenVerificationModal = ({ theme, isOpen, onClose }) => {
                         disabled={
                           isGrantingEntry || isCheckingOut || successMessage
                         }
-                        className="flex-1 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+                        className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:opacity-50 text-white font-medium py-3 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-green-500/50 flex items-center justify-center gap-2"
                       >
                         {isGrantingEntry ? (
                           <>

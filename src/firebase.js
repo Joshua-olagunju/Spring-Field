@@ -2,6 +2,7 @@
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
+import useStore from "./store/useStore";
 
 // Your web app's Firebase configuration
 // Uses environment variables for production deployment
@@ -83,7 +84,7 @@ export function onForegroundMessage(callback) {
  */
 export async function saveFcmTokenToBackend(token) {
   try {
-    const authToken = localStorage.getItem("token");
+    const authToken = useStore.getState().authToken;
     const apiUrl =
       import.meta.env.VITE_API_BASE_URL || "http://192.168.145.118:8000";
 

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useTheme } from "../../context/useTheme";
 import { useNotifications } from "../../hooks/useNotifications";
 import { Icon } from "@iconify/react";
+import useStore from "../../src/store/useStore";
 
 /**
  * NotificationTester Component
@@ -38,7 +39,7 @@ const NotificationTester = () => {
     setMessage("");
 
     try {
-      const authToken = localStorage.getItem("token");
+      const authToken = useStore.getState().authToken;
       const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
       const response = await fetch(`${apiUrl}/api/test-notification`, {

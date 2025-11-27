@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { Icon } from "@iconify/react";
 import { useTheme } from "../../../../context/useTheme";
+import { useUser } from "../../../../context/useUser";
 import { API_BASE_URL } from "../../../config/apiConfig";
 
 const ProfileModal = ({ isOpen, onClose }) => {
   const { theme } = useTheme();
+  const { authToken, user } = useUser();
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -44,7 +46,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${authToken}`,
         },
       });
 
@@ -59,11 +61,8 @@ const ProfileModal = ({ isOpen, onClose }) => {
           phone: data.phone || "",
           address: data.address || "",
         });
-        // Get user role from response or localStorage
-        const role =
-          data.role ||
-          JSON.parse(localStorage.getItem("userData") || "{}").role ||
-          "";
+        // Get user role from response or context
+        const role = data.role || user?.role || "";
         setUserRole(role);
       } else {
         setError(result.message || "Failed to load profile");
@@ -115,7 +114,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${authToken}`,
         },
         body: JSON.stringify(dataToSend),
       });
@@ -343,7 +342,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
                         !editData.first_name.trim() ||
                         !editData.last_name.trim()
                       }
-                      className="flex-1 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                      className="flex-1 px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-purple-500/50 disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                       {isSaving ? (
                         <>
@@ -451,7 +450,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
                   {/* Close Button */}
                   <button
                     onClick={handleClose}
-                    className="w-full px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors"
+                    className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-purple-500/50"
                   >
                     Close
                   </button>

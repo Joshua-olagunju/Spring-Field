@@ -4,7 +4,7 @@ import { useUser } from "../../../../context/useUser";
 import { API_BASE_URL } from "../../../config/apiConfig";
 import UserDetailsModal from "../../../../components/AdminComponents/UserDetailsModal";
 
-const LandlordUsersActions = ({ theme, user, userIndex, onUserUpdate }) => {
+const LandlordUsersActions = ({ theme, user, onUserUpdate }) => {
   const { authToken } = useUser();
   const [activeModal, setActiveModal] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -15,7 +15,7 @@ const LandlordUsersActions = ({ theme, user, userIndex, onUserUpdate }) => {
   // User management API calls
   const handleActivateUser = async () => {
     try {
-      const token = authToken || localStorage.getItem("authToken");
+      const token = authToken;
       const response = await fetch(
         `${API_BASE_URL}/api/landlord/users/${user.id}/activate`,
         {
@@ -49,7 +49,7 @@ const LandlordUsersActions = ({ theme, user, userIndex, onUserUpdate }) => {
 
   const handleDeactivateUser = async () => {
     try {
-      const token = authToken || localStorage.getItem("authToken");
+      const token = authToken;
       const response = await fetch(
         `${API_BASE_URL}/api/landlord/users/${user.id}/deactivate`,
         {
@@ -83,7 +83,7 @@ const LandlordUsersActions = ({ theme, user, userIndex, onUserUpdate }) => {
 
   const handleDeleteUser = async () => {
     try {
-      const token = authToken || localStorage.getItem("authToken");
+      const token = authToken;
       const response = await fetch(
         `${API_BASE_URL}/api/landlord/users/${user.id}`,
         {
@@ -302,7 +302,7 @@ const LandlordUsersActions = ({ theme, user, userIndex, onUserUpdate }) => {
                 </button>
                 <button
                   onClick={() => confirmAction("deactivate")}
-                  className="flex-1 px-4 py-3 rounded-lg bg-yellow-600 hover:bg-yellow-700 text-white font-medium transition-colors"
+                  className="flex-1 px-4 py-3 rounded-lg bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white font-medium transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-yellow-500/50"
                 >
                   Deactivate
                 </button>
@@ -345,7 +345,7 @@ const LandlordUsersActions = ({ theme, user, userIndex, onUserUpdate }) => {
                 </button>
                 <button
                   onClick={() => confirmAction("activate")}
-                  className="flex-1 px-4 py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium transition-colors"
+                  className="flex-1 px-4 py-3 rounded-lg bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-medium transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-green-500/50"
                 >
                   Activate
                 </button>
@@ -385,7 +385,7 @@ const LandlordUsersActions = ({ theme, user, userIndex, onUserUpdate }) => {
                 </button>
                 <button
                   onClick={() => confirmAction("Delete")}
-                  className="flex-1 px-4 py-3 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium transition-colors"
+                  className="flex-1 px-4 py-3 rounded-lg bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-medium transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-red-500/50"
                 >
                   Delete
                 </button>

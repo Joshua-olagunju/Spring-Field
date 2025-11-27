@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Icon } from "@iconify/react";
 import { API_BASE_URL } from "../../../config/apiConfig";
+import useStore from "../../../store/useStore";
 import ViewSecurityModal from "./ViewSecurityModal";
 
 const SecurityActions = ({
@@ -24,7 +25,7 @@ const SecurityActions = ({
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+            Authorization: `Bearer ${useStore.getState().authToken}`,
           },
         }
       );
@@ -55,7 +56,7 @@ const SecurityActions = ({
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+            Authorization: `Bearer ${useStore.getState().authToken}`,
           },
         }
       );
@@ -85,7 +86,7 @@ const SecurityActions = ({
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+            Authorization: `Bearer ${useStore.getState().authToken}`,
           },
         }
       );
@@ -296,7 +297,7 @@ const SecurityActions = ({
               <button
                 onClick={handleDelete}
                 disabled={isProcessing}
-                className="flex-1 px-4 py-2 rounded-lg font-medium bg-red-600 hover:bg-red-700 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2 rounded-lg font-medium bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-red-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isProcessing ? "Deleting..." : "Delete"}
               </button>

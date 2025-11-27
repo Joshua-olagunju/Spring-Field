@@ -11,6 +11,7 @@ import { ThemeProvider } from "../context/ThemeContext";
 import { UserProvider } from "../context/UserContext";
 import { useUser } from "../context/useUser";
 import { useTheme } from "../context/useTheme";
+import useStore from "./store/useStore";
 
 // Simple Error Boundary Component
 class ErrorBoundary extends React.Component {
@@ -131,7 +132,7 @@ const AutoRedirect = () => {
     if (!user?.email_verified_at) {
       // Check if there's stored verification data
       try {
-        const storedData = localStorage.getItem("emailVerificationData");
+        const storedData = useStore.getState().emailVerificationData;
         if (storedData) {
           // Found stored verification data
         }
@@ -204,7 +205,7 @@ function AppContent() {
   useEffect(() => {
     const preventRefresh = () => {
       // Only prevent refresh if user is authenticated and has token
-      const token = localStorage.getItem("authToken");
+      const token = useStore.getState().authToken;
       if (token && isAuthenticated) {
         // Don't prevent the event, just log it
       }
@@ -212,7 +213,7 @@ function AppContent() {
 
     // Handle app state changes
     const handleAppStateChange = () => {
-      const token = localStorage.getItem("authToken");
+      const token = useStore.getState().authToken;
       if (token) {
         // Force maintain auth state
         window.dispatchEvent(new Event("maintain-auth"));

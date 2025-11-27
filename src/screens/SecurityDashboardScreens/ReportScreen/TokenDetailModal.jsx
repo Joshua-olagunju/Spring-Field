@@ -1,6 +1,7 @@
 import { Icon } from "@iconify/react";
 import { useState } from "react";
 import { API_BASE_URL } from "../../../config/apiConfig";
+import useStore from "../../../store/useStore";
 
 const TokenDetailModal = ({ theme, isOpen, onClose, tokenData }) => {
   const [isCheckingOut, setIsCheckingOut] = useState(false);
@@ -9,8 +10,8 @@ const TokenDetailModal = ({ theme, isOpen, onClose, tokenData }) => {
   if (!isOpen || !tokenData) return null;
 
   // Check if current user is security personnel
-  const userData = JSON.parse(localStorage.getItem("userData") || "{}");
-  const isSecurity = userData.role === "security";
+  const userData = useStore.getState().user;
+  const isSecurity = userData?.role === "security";
 
   // Calculate actual status based on token data
   const calculateStatus = () => {
@@ -103,7 +104,7 @@ const TokenDetailModal = ({ theme, isOpen, onClose, tokenData }) => {
     setCheckoutMessage("");
 
     try {
-      const authToken = localStorage.getItem("authToken");
+      const authToken = useStore.getState().authToken;
       const response = await fetch(
         `${API_BASE_URL}/api/visitor-tokens/exit-visitor`,
         {

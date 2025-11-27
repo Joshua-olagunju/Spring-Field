@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Icon } from "@iconify/react";
 import { useTheme } from "../../../../context/useTheme";
+import { useUser } from "../../../../context/useUser";
 import { API_BASE_URL } from "../../../config/apiConfig";
 
 const ChangePasswordModal = ({ isOpen, onClose }) => {
   const { theme } = useTheme();
+  const { authToken } = useUser();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -59,7 +61,7 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${authToken}`,
           },
           body: JSON.stringify({
             current_password: currentPassword,
@@ -292,7 +294,7 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
                 !newPassword.trim() ||
                 !confirmPassword.trim()
               }
-              className="flex-1 px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-2 rounded-lg bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-medium transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-green-500/50 disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isLoading ? (
                 <>

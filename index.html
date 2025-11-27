@@ -48,9 +48,18 @@
 
     <!-- Theme-based status bar color -->
     <script>
-      // Update status bar color based on theme
+      // Update status bar color based on theme from Zustand store
       function updateStatusBarColor() {
-        const theme = localStorage.getItem("theme") || "light";
+        let theme = "light";
+        try {
+          const storage = localStorage.getItem("springfield-storage");
+          if (storage) {
+            const data = JSON.parse(storage);
+            theme = data.state?.theme || "light";
+          }
+        } catch (e) {
+          // Fallback to light theme
+        }
         const isDark = theme === "dark";
 
         // Update color-scheme meta tag

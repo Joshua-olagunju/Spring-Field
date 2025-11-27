@@ -23,9 +23,7 @@ const ActiveTokensModal = ({ theme, isOpen, onClose }) => {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${
-              authToken || localStorage.getItem("authToken")
-            }`,
+            Authorization: `Bearer ${authToken}`,
           },
         }
       );
@@ -76,9 +74,7 @@ const ActiveTokensModal = ({ theme, isOpen, onClose }) => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${
-              authToken || localStorage.getItem("authToken")
-            }`,
+            Authorization: `Bearer ${authToken}`,
           },
           body: JSON.stringify({
             entry_id: selectedToken.id,
@@ -326,7 +322,7 @@ const ActiveTokensModal = ({ theme, isOpen, onClose }) => {
                     {/* Checkout Button */}
                     <button
                       onClick={() => handleCheckoutClick(token)}
-                      className="flex-shrink-0 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
+                      className="flex-shrink-0 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-4 py-2 rounded-lg transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-red-500/50 flex items-center gap-2 text-sm font-medium"
                     >
                       <Icon icon="mdi:logout" className="text-lg" />
                       Check Out
@@ -383,7 +379,7 @@ const ActiveTokensModal = ({ theme, isOpen, onClose }) => {
               <button
                 onClick={handleCheckoutConfirm}
                 disabled={isCheckingOut}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
+                className="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-4 py-3 rounded-lg transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-red-500/50 font-medium flex items-center justify-center gap-2"
               >
                 {isCheckingOut ? (
                   <>

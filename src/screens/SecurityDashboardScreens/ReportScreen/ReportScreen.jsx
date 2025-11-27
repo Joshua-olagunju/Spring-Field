@@ -29,7 +29,7 @@ const ReportScreen = () => {
       try {
         setIsLoading(true);
         setError(null);
-        const token = authToken || localStorage.getItem("authToken");
+        const token = authToken;
 
         if (!token || !isAuthenticated) {
           setError(

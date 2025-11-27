@@ -479,7 +479,7 @@ const SuperAdminDashboard = () => {
                       setShowPendingTokensModal(false);
                       setShowVisitorTokenModal(true);
                     }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-4 py-2 rounded-lg transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
                   >
                     Generate Visitor Token
                   </button>

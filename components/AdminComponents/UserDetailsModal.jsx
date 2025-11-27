@@ -251,7 +251,7 @@ const UserDetailsModal = ({ user, theme, isOpen, onClose }) => {
           <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
             <button
               onClick={onClose}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition-colors"
+              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium py-3 rounded-lg transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-purple-500/50"
             >
               Close
             </button>

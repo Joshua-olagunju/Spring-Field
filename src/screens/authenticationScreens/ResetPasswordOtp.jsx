@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTheme } from "../../../context/useTheme";
+import useStore from "../../store/useStore";
 import { API_BASE_URL } from "../../config/apiConfig";
 import AnimatedSecurityBackground from "../../../components/GeneralComponents/AnimatedSecurityBackground";
 import PoweredByDriftTech from "../../../components/GeneralComponents/PoweredByDrifttech";
@@ -10,6 +11,7 @@ const ResetPasswordOtp = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { theme, isDarkMode } = useTheme();
+  const resetPasswordData = useStore((state) => state.resetPasswordData);
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -17,24 +19,35 @@ const ResetPasswordOtp = () => {
   const [resendTimer, setResendTimer] = useState(0);
   const [successMessage, setSuccessMessage] = useState("");
 
-  // Get email from navigation state or localStorage
+  // Get email from navigation state or store
   const [userEmail, setUserEmail] = useState("");
 
   // Refs for each OTP input
   const inputRefs = useRef([]);
 
-  // Initialize email from navigation state or localStorage
+  // Initialize email from navigation state or store
   useEffect(() => {
-    // First try to get from location.state
-    if (location.state?.email) {
-      setUserEmail(location.state.email);
-    } else {
-      // If not in location.state, try localStorage
-      try {
-        const storedData = localStorage.getItem("resetPasswordData");
-        if (storedData) {
-          const resetData = JSON.parse(storedData);
+    let emailFound = false;
+
+    console.log("ResetPasswordOtp: Initializing component", {
+      hasLocationState: !!location.state?.email,
+      hasStoreData: !!resetPasswordData,
+    });
+
+    try {
+      // First try to get from location.state
+      if (location.state?.email) {
+        console.log("ResetPasswordOtp: Found email in location.state");
+        setUserEmail(location.state.email);
+        emailFound = true;
+      } else {
+        // If not in location.state, try store
+        const storedData = resetPasswordData;
+        if (storedData && storedData.email) {
+          console.log("ResetPasswordOtp: Restored email from store");
+          const resetData = storedData;
           setUserEmail(resetData.email || "");
+          emailFound = true;
 
           // Restore partially entered OTP if available
           if (resetData.currentOtp && resetData.currentOtp.length <= 6) {
@@ -44,25 +57,51 @@ const ResetPasswordOtp = () => {
                 .concat(["", "", "", "", "", ""])
                 .slice(0, 6);
               setOtp(restoredOtp);
+              console.log("ResetPasswordOtp: Restored partial OTP", {
+                length: resetData.currentOtp.length,
+              });
             } catch (otpError) {
               console.warn("Error restoring OTP:", otpError);
             }
           }
+        } else {
+          console.warn("ResetPasswordOtp: No email found in store");
         }
-      } catch (error) {
-        console.warn("Error parsing stored reset password data:", error);
       }
+
+      // If no email found anywhere, redirect to forgot password
+      if (!emailFound) {
+        console.error(
+          "ResetPasswordOtp: No email found, redirecting to forgot password"
+        );
+        setError("Session expired. Please request a new password reset code.");
+        setTimeout(() => {
+          navigate("/forgot-password", { replace: true });
+        }, 2000);
+      } else {
+        console.log("ResetPasswordOtp: Successfully initialized with email");
+      }
+    } catch (error) {
+      console.error("Error initializing reset password OTP:", error);
+      setError("An error occurred. Redirecting to forgot password...");
+      setTimeout(() => {
+        navigate("/forgot-password", { replace: true });
+      }, 2000);
     }
 
     // Focus on first input when component mounts
-    if (inputRefs.current[0]) {
-      inputRefs.current[0].focus();
+    try {
+      if (inputRefs.current[0]) {
+        inputRefs.current[0].focus();
+      }
+    } catch (focusError) {
+      console.warn("Error focusing input:", focusError);
     }
-  }, [location.state]);
+  }, [location.state, resetPasswordData, navigate]);
 
-  // Save current reset password state to localStorage
+  // Save current reset password state to store
   useEffect(() => {
-    // Save current verification state to localStorage periodically
+    // Save current verification state to store periodically
     const saveResetPasswordState = () => {
       try {
         if (userEmail) {
@@ -71,10 +110,14 @@ const ResetPasswordOtp = () => {
             currentOtp: otp.join(""),
             timestamp: Date.now(),
           };
-          localStorage.setItem("resetPasswordData", JSON.stringify(resetData));
+          useStore.getState().setResetPasswordData(resetData);
+          console.log("ResetPasswordOtp: Saved state to store", {
+            email: userEmail,
+            otpLength: otp.join("").length,
+          });
         }
       } catch (error) {
-        console.warn("Error saving reset password state:", error);
+        console.error("Error saving reset password state:", error);
       }
     };
 
@@ -82,10 +125,13 @@ const ResetPasswordOtp = () => {
     const handleVisibilityChange = () => {
       try {
         if (document.visibilityState === "hidden") {
+          console.log("ResetPasswordOtp: App hidden, saving state");
           saveResetPasswordState();
+        } else if (document.visibilityState === "visible") {
+          console.log("ResetPasswordOtp: App visible again");
         }
       } catch (error) {
-        console.warn("Error in visibility change handler:", error);
+        console.error("Error in visibility change handler:", error);
       }
     };
 
@@ -126,14 +172,14 @@ const ResetPasswordOtp = () => {
     setOtp(newOtp);
     setError("");
 
-    // Save current OTP state to localStorage as user types
+    // Save current OTP state to store as user types
     try {
-      const storedData = localStorage.getItem("resetPasswordData");
+      const storedData = useStore.getState().resetPasswordData;
       if (storedData) {
-        const resetData = JSON.parse(storedData);
+        const resetData = storedData;
         resetData.currentOtp = newOtp.join("");
         resetData.timestamp = Date.now();
-        localStorage.setItem("resetPasswordData", JSON.stringify(resetData));
+        useStore.getState().setResetPasswordData(resetData);
       } else if (userEmail) {
         // Create new entry if it doesn't exist
         const resetData = {
@@ -141,7 +187,7 @@ const ResetPasswordOtp = () => {
           currentOtp: newOtp.join(""),
           timestamp: Date.now(),
         };
-        localStorage.setItem("resetPasswordData", JSON.stringify(resetData));
+        useStore.getState().setResetPasswordData(resetData);
       }
     } catch (storageError) {
       console.warn("Error saving OTP state:", storageError);
@@ -230,9 +276,21 @@ const ResetPasswordOtp = () => {
       return;
     }
 
+    // Validate that we have the email
+    if (!userEmail) {
+      setError("Email is missing. Please go back and try again.");
+      console.error("ResetPasswordOtp: Email is missing during submit");
+      return;
+    }
+
     setIsLoading(true);
     setError("");
     setSuccessMessage("");
+
+    console.log("ResetPasswordOtp: Submitting OTP verification", {
+      email: userEmail,
+      otpLength: otpCode.length,
+    });
 
     try {
       // API call to verify reset password OTP
@@ -251,33 +309,42 @@ const ResetPasswordOtp = () => {
       );
 
       const result = await response.json();
+      console.log("ResetPasswordOtp: API Response", {
+        status: response.status,
+        success: result.success,
+        hasToken: !!result.token,
+      });
 
       if (response.ok && result.success) {
-        // Save token to localStorage before navigation
+        // Save token to store before navigation
         try {
           const tokenData = {
             email: userEmail,
             token: result.token,
             timestamp: Date.now(),
           };
-          localStorage.setItem("resetPasswordToken", JSON.stringify(tokenData));
+          useStore.getState().setResetPasswordToken(tokenData);
+          console.log("ResetPasswordOtp: Token saved to store successfully");
         } catch (error) {
-          console.warn("Error saving reset token to localStorage:", error);
+          console.error("Error saving reset token to store:", error);
         }
 
         // Clear OTP data after successful verification
         try {
-          localStorage.removeItem("resetPasswordData");
+          useStore.getState().clearResetPasswordData();
+          console.log("ResetPasswordOtp: Cleared reset password data");
         } catch (error) {
-          console.warn("Error clearing localStorage:", error);
+          console.warn("Error clearing reset data:", error);
         }
 
         // Navigate to reset password screen with email and verified OTP token
+        console.log("ResetPasswordOtp: Navigating to reset password screen");
         navigate("/reset-password", {
           state: { email: userEmail, token: result.token },
         });
       } else {
         setError(result.message || "Invalid OTP. Please try again.");
+        console.error("ResetPasswordOtp: Verification failed", result.message);
       }
     } catch (error) {
       console.error("OTP verification error:", error);
@@ -442,9 +509,9 @@ const ResetPasswordOtp = () => {
                   <button
                     type="button"
                     onClick={() => {
-                      // Clear localStorage when going back
+                      // Clear store when going back
                       try {
-                        localStorage.removeItem("resetPasswordData");
+                        useStore.getState().clearResetPasswordData();
                       } catch (error) {
                         console.warn("Error clearing localStorage:", error);
                       }

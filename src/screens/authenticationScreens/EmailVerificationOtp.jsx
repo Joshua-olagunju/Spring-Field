@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useTheme } from "../../../context/useTheme";
 import { useUser } from "../../../context/useUser";
 import { API_BASE_URL } from "../../config/apiConfig";
+import useStore from "../../store/useStore";
 import AnimatedSecurityBackground from "../../../components/GeneralComponents/AnimatedSecurityBackground";
 import PoweredByDriftTech from "../../../components/GeneralComponents/PoweredByDrifttech";
 import { Icon } from "@iconify/react";
@@ -35,7 +36,11 @@ const EmailVerificationOtp = () => {
   // Refs for each OTP input
   const inputRefs = useRef([]);
 
-  // Initialize user data from navigation state or localStorage
+  // Initialize user data from navigation state or Zustand store
+  const emailVerificationData = useStore(
+    (state) => state.emailVerificationData
+  );
+
   useEffect(() => {
     // First try to get from location.state
     if (location.state?.email && location.state?.user_id) {
@@ -45,11 +50,10 @@ const EmailVerificationOtp = () => {
       setTempToken(location.state.tempToken);
       setShouldAutoResend(location.state.autoResend || false);
     } else {
-      // If not in location.state, try localStorage
+      // If not in location.state, try Zustand store
       try {
-        const storedData = localStorage.getItem("emailVerificationData");
-        if (storedData) {
-          const verificationData = JSON.parse(storedData);
+        if (emailVerificationData) {
+          const verificationData = emailVerificationData;
           setUserEmail(verificationData.email || "");
           setUserId(verificationData.user_id || null);
           setUserRole(verificationData.role || "resident");
@@ -76,7 +80,7 @@ const EmailVerificationOtp = () => {
         console.warn("Error parsing stored verification data:", error);
       }
     }
-  }, [location.state]);
+  }, [location.state, emailVerificationData]);
 
   // Focus on first input only when component mounts (runs once)
   useEffect(() => {
@@ -90,7 +94,7 @@ const EmailVerificationOtp = () => {
     // Prevent back navigation to dashboard by replacing history
     window.history.replaceState(null, "", window.location.pathname);
 
-    // Save current verification state to localStorage periodically
+    // Save current verification state to store periodically
     const saveVerificationState = () => {
       try {
         if (userEmail && userId) {
@@ -103,10 +107,7 @@ const EmailVerificationOtp = () => {
             currentOtp: otp.join(""),
             timestamp: Date.now(),
           };
-          localStorage.setItem(
-            "emailVerificationData",
-            JSON.stringify(verificationData)
-          );
+          useStore.getState().setEmailVerificationData(verificationData);
         }
       } catch (error) {
         console.warn("Error saving verification state:", error);
@@ -173,17 +174,14 @@ const EmailVerificationOtp = () => {
     setOtp(newOtp);
     setError("");
 
-    // Save current OTP state to localStorage as user types
+    // Save current OTP state to store as user types
     try {
-      const storedData = localStorage.getItem("emailVerificationData");
+      const storedData = useStore.getState().emailVerificationData;
       if (storedData) {
-        const verificationData = JSON.parse(storedData);
+        const verificationData = storedData;
         verificationData.currentOtp = newOtp.join("");
         verificationData.timestamp = Date.now();
-        localStorage.setItem(
-          "emailVerificationData",
-          JSON.stringify(verificationData)
-        );
+        useStore.getState().setEmailVerificationData(verificationData);
       }
     } catch (storageError) {
       console.warn("Error saving OTP state:", storageError);
@@ -341,9 +339,9 @@ const EmailVerificationOtp = () => {
           email_verified_at: new Date().toISOString(),
         };
 
-        // Clear localStorage after successful email verification
+        // Clear store after successful email verification
         try {
-          localStorage.removeItem("emailVerificationData");
+          useStore.getState().clearEmailVerificationData();
         } catch (error) {
           console.warn("Error clearing localStorage:", error);
         }
@@ -584,7 +582,7 @@ const EmailVerificationOtp = () => {
 
               <button
                 onClick={() => setShowModal(false)}
-                className="w-full px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors flex items-center justify-center gap-2"
+                className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-purple-500/50 flex items-center justify-center gap-2"
               >
                 <Icon icon="mdi:check" />
                 OK

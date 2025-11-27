@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Icon } from "@iconify/react";
+import useStore from "../../src/store/useStore";
 import {
   requestNotificationPermission,
   saveFcmTokenToBackend,
@@ -53,7 +54,7 @@ const NotificationTestButton = () => {
     setMessage("");
 
     try {
-      const authToken = localStorage.getItem("token");
+      const authToken = useStore.getState().authToken;
       const apiUrl =
         import.meta.env.VITE_API_BASE_URL || "http://192.168.145.118:8000";
 

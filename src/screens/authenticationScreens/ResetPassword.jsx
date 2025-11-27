@@ -1,10 +1,16 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTheme } from "../../../context/useTheme";
+import useStore from "../../store/useStore";
 import { API_BASE_URL } from "../../config/apiConfig";
 import AnimatedSecurityBackground from "../../../components/GeneralComponents/AnimatedSecurityBackground";
 import PoweredByDriftTech from "../../../components/GeneralComponents/PoweredByDrifttech";
 import { Icon } from "@iconify/react";
+import {
+  validatePassword,
+  getPasswordStrengthColor,
+  getPasswordStrengthText,
+} from "../../utils/formValidation";
 
 const ResetPassword = () => {
   const navigate = useNavigate();
@@ -32,6 +38,12 @@ const ResetPassword = () => {
     confirmPassword: "",
   });
 
+  // Real-time validation state
+  const [touched, setTouched] = useState({
+    password: false,
+    confirmPassword: false,
+  });
+
   // Password requirements state
   const [passwordRequirements, setPasswordRequirements] = useState({
     minLength: false,
@@ -46,6 +58,8 @@ const ResetPassword = () => {
   const [resetToken, setResetToken] = useState("");
 
   // Initialize email and token from navigation state or localStorage
+  const resetPasswordToken = useStore((state) => state.resetPasswordToken);
+
   useEffect(() => {
     // First try to get from location.state
     if (location.state?.email && location.state?.token) {
@@ -53,33 +67,34 @@ const ResetPassword = () => {
       setResetToken(location.state.token);
       // Loaded reset credentials from navigation state
 
-      // Save to localStorage for persistence
+      // Save to store for persistence
       try {
         const tokenData = {
           email: location.state.email,
           token: location.state.token,
           timestamp: Date.now(),
         };
-        localStorage.setItem("resetPasswordToken", JSON.stringify(tokenData));
-        // Saved reset token to localStorage
+        useStore.getState().setResetPasswordToken(tokenData);
+        // Saved reset token to store
       } catch (error) {
-        console.warn("Error saving reset token to localStorage:", error);
+        console.warn("Error saving reset token to store:", error);
       }
-    } else {
-      // If not in location.state, try localStorage
+    } else if (!location.state?.email && !location.state?.token) {
+      // Only try to restore from store if location.state is empty
       try {
-        const storedData = localStorage.getItem("resetPasswordToken");
-        if (storedData) {
-          const tokenData = JSON.parse(storedData);
+        const storedData = resetPasswordToken;
+        if (storedData && storedData.email && storedData.token) {
+          const tokenData = storedData;
           setUserEmail(tokenData.email || "");
           setResetToken(tokenData.token || "");
-          // Restored reset credentials from localStorage
+          // Restored reset credentials from store
         }
       } catch (error) {
         console.warn("Error parsing stored reset token:", error);
       }
     }
-  }, [location.state]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state]); // Only depend on location.state to avoid infinite loop
 
   useEffect(() => {
     // Redirect if no email or token provided (now checking state variables)
@@ -200,11 +215,11 @@ const ResetPassword = () => {
       // Reset password response received
 
       if (response.ok && result.success) {
-        // Clear localStorage after successful password reset
+        // Clear store after successful password reset
         try {
-          localStorage.removeItem("resetPasswordToken");
-          localStorage.removeItem("resetPasswordData");
-          // Cleared reset password data from localStorage
+          useStore.getState().clearResetPasswordToken();
+          useStore.getState().clearResetPasswordData();
+          // Cleared reset password data from store
         } catch (error) {
           console.warn("Error clearing localStorage:", error);
         }
@@ -299,13 +314,26 @@ const ResetPassword = () => {
                       id="password"
                       value={formData.password}
                       onChange={handleInputChange}
+                      onBlur={() => setTouched({ ...touched, password: true })}
                       className={`w-full px-4 py-3 pr-12 placeholder:text-[0.8rem] ${theme.background.input} ${theme.text.primary} border rounded-[0.3rem] focus:outline-none transition-all focus:${theme.brand.primaryRing}`}
                       placeholder="Create new password"
+                      aria-label="New password"
+                      aria-required="true"
+                      aria-invalid={
+                        touched.password &&
+                        !Object.values(passwordRequirements).every((v) => v)
+                          ? "true"
+                          : "false"
+                      }
+                      aria-describedby="password-requirements"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute inset-y-0 right-0 pr-4 flex items-center"
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
                     >
                       <Icon
                         icon={showPassword ? "mdi:eye" : "mdi:eye-off"}
@@ -314,8 +342,55 @@ const ResetPassword = () => {
                     </button>
                   </div>
 
+                  {/* Password Strength Indicator */}
+                  {formData.password && (
+                    <div className="mt-2">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full transition-all duration-300 ${getPasswordStrengthColor(
+                              validatePassword(formData.password).strength
+                            )}`}
+                            style={{
+                              width: `${
+                                (validatePassword(formData.password).strength /
+                                  5) *
+                                100
+                              }%`,
+                            }}
+                          />
+                        </div>
+                        <span
+                          className={`text-xs font-semibold ${
+                            getPasswordStrengthText(
+                              validatePassword(formData.password).strength
+                            ) === "Weak"
+                              ? "text-red-500"
+                              : getPasswordStrengthText(
+                                  validatePassword(formData.password).strength
+                                ) === "Fair"
+                              ? "text-yellow-500"
+                              : getPasswordStrengthText(
+                                  validatePassword(formData.password).strength
+                                ) === "Good"
+                              ? "text-blue-500"
+                              : getPasswordStrengthText(
+                                  validatePassword(formData.password).strength
+                                ) === "Strong"
+                              ? "text-green-500"
+                              : "text-green-600"
+                          }`}
+                        >
+                          {getPasswordStrengthText(
+                            validatePassword(formData.password).strength
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Password Requirements */}
-                  <div className="mt-3 space-y-1.5">
+                  <div id="password-requirements" className="mt-3 space-y-1.5">
                     <p
                       className={`text-xs font-semibold ${theme.text.secondary}`}
                     >
@@ -487,12 +562,12 @@ const ResetPassword = () => {
                   <button
                     type="button"
                     onClick={() => {
-                      // Clear localStorage when going back
+                      // Clear store when going back
                       try {
-                        localStorage.removeItem("resetPasswordToken");
-                        localStorage.removeItem("resetPasswordData");
+                        useStore.getState().clearResetPasswordToken();
+                        useStore.getState().clearResetPasswordData();
                       } catch (error) {
-                        console.warn("Error clearing localStorage:", error);
+                        console.warn("Error clearing store:", error);
                       }
                       navigate("/login");
                     }}
@@ -563,7 +638,7 @@ const ResetPassword = () => {
 
               <button
                 onClick={() => setShowModal(false)}
-                className="w-full px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors flex items-center justify-center gap-2"
+                className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-purple-500/50 flex items-center justify-center gap-2"
               >
                 <Icon icon="mdi:check" />
                 OK
